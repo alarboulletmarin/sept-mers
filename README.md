@@ -42,7 +42,9 @@ npm run verify     # types, tests et build
 npm run build      # bundle de production dans dist/
 ```
 
-Node 22.12 ou plus récent.
+Node 22. Le champ `engines` déclare `22.x` plutôt qu'une plage : c'est la forme
+que les hébergeurs reconnaissent sans discuter. Vite 7 demande au minimum
+Node 22.12, que toute version 22 récente satisfait.
 
 | Script | Ce qu'il fait |
 |---|---|
@@ -133,6 +135,11 @@ npm run verify \
 L'app est un site statique : `npm run build` produit `dist/`, et n'importe quel
 hébergeur de fichiers suffit. `vercel.json` est fourni pour Vercel — préréglage
 Vite, aucune variable d'environnement, aucune fonction serveur.
+
+Ce fichier ne contient **aucun commentaire** : JSON n'en a pas, et le schéma de
+Vercel refuse toute propriété inconnue, y compris une clé `"//"`. Le
+déploiement échouerait dès l'import. `src/deploy.test.ts` le vérifie, avec le
+reste de la configuration.
 
 Deux détails y comptent vraiment. `sw.js` et `sw-version.js` sont servis sans
 cache : ce sont eux qui portent la liste des fichiers à précacher, et un service
