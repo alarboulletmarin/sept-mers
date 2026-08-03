@@ -119,6 +119,9 @@
 
   /* Publiée par la barre d'action, pour que le bandeau se pose au-dessus. */
   --actionbar-h: 0px;
+
+  /* Publiée par le bandeau de mise à jour, pour la même raison. */
+  --update-h: 0px;
 }
 
 :root[data-theme='dark'] {

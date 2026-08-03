@@ -1,27 +1,24 @@
 /*
- * Le bandeau remplace toute boîte de confirmation : on agit d'abord, on peut
- * revenir en arrière. Il se pose au-dessus de la barre d'action et du bandeau
- * de mise à jour, jamais par-dessus, sinon il intercepte le tap suivant.
+ * Le bandeau de mise à jour ne s'efface pas tout seul : il attend une réponse.
+ * Il se pose donc juste au-dessus de la barre de navigation, sous le bandeau de
+ * confirmation — celui-là est plus pressé, il ne dure qu'une seconde.
  *
- * Il dure une seconde, et trois gestes l'écourtent : la croix, le glissé vers
- * le bas, un appui n'importe où dessus.
+ * La surface est celle d'une carte, pas celle de l'accent : la mise à jour
+ * n'est pas urgente, et rien ne justifie qu'elle crie plus fort qu'un score.
  */
 .wrap {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(var(--tabbar-h) + var(--actionbar-h) + var(--update-h));
-  z-index: 50;
+  bottom: calc(var(--tabbar-h) + var(--actionbar-h));
+  z-index: 45;
   padding: var(--space-2) var(--space-4);
   display: flex;
   justify-content: center;
   pointer-events: none;
 }
 
-.toast {
-  --surface: var(--accent);
-  --surface-on: var(--accent-on);
-  --surface-muted: var(--accent-muted);
+.banner {
   pointer-events: auto;
   width: 100%;
   max-width: 560px;
@@ -30,15 +27,11 @@
   gap: var(--space-2);
   min-height: 46px;
   padding: var(--space-1) var(--space-1) var(--space-1) var(--space-4);
-  background: var(--surface);
-  color: var(--surface-on);
+  background: var(--card);
+  color: var(--card-on);
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-toast);
   animation: rise var(--dur-base) var(--ease);
-  /* Le glissé suit le doigt : pas de défilement parasite pendant le geste. */
-  touch-action: none;
-  transition: transform var(--dur-fast) var(--ease);
-  cursor: pointer;
 }
 
 .message {
@@ -51,13 +44,14 @@
   white-space: nowrap;
 }
 
+/* L'action porte l'accent : c'est la seule chose à faire ici. */
 .action {
   flex: none;
   min-height: 38px;
   padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
-  background: var(--accent-on);
-  color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-on);
   font-size: var(--size-label);
   font-weight: 600;
   touch-action: manipulation;
@@ -72,7 +66,7 @@
   place-items: center;
   border-radius: var(--radius-pill);
   border: 1px solid currentColor;
-  color: var(--accent-on);
+  color: var(--card-on);
   opacity: 0.5;
   touch-action: manipulation;
   transition: opacity var(--dur-fast) var(--ease);
@@ -80,8 +74,8 @@
 
 .close:active {
   opacity: 1;
-  background: var(--accent-on);
-  color: var(--accent);
+  background: var(--card-on);
+  color: var(--card);
   transition-duration: 0s;
 }
 
@@ -93,7 +87,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .toast {
+  .banner {
     animation: none;
   }
 }
