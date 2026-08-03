@@ -8,11 +8,9 @@
   "nav.settings": "Réglages",
   "nav.back": "Retour",
   "nav.close": "Fermer",
-
   "update.available": "Une nouvelle version est prête.",
   "update.action": "Recharger",
   "update.dismiss": "Plus tard",
-
   "action.cancel": "Annuler",
   "action.undo": "Annuler",
   "action.delete": "Supprimer",
@@ -249,5 +247,22 @@
   "summary.lede": "Dix manches jouées. Voilà ce que ça donne.",
   "bonus.count": "{count} bonus posés",
   "bonus.countOne": "{count} bonus posé",
-  "nav.sections": "Sections"
+  "nav.sections": "Sections",
+  "newGame.seaMonsters": "Kraken et Baleine blanche",
+  "newGame.seaMonsters.on": "Un pli peut n'être remporté par personne. La manche compte ses plis écartés.",
+  "newGame.seaMonsters.off": "Chaque pli revient à quelqu'un.",
+  "newGame.advancedPirates": "Pouvoirs des pirates",
+  "newGame.advancedPirates.on": "Le pari de Rascal Jack se saisit avec les primes.",
+  "newGame.advancedPirates.off": "Les pirates n'ont aucun pouvoir particulier.",
+  "game.voided": "Plis écartés",
+  "game.voided.help": "Kraken ou Baleine blanche",
+  "a11y.voided.decrease": "Retirer un pli écarté",
+  "a11y.voided.increase": "Ajouter un pli écarté",
+  "issue.voided.range": "Entre 0 et {max} plis écartés",
+  "bonus.rascal": "Pari de Rascal Jack",
+  "bonus.rascal.help": "Gagné ou perdu, quoi qu'il arrive à la mise.",
+  "bonus.rascal.none": "Aucun",
+  "bonus.rascal.taken": "{name} a déjà posé le pari cette manche",
+  "issue.rascal.multiple": "Il n'y a qu'un seul Rascal Jack dans le paquet",
+  "issue.rascal.value": "Le pari vaut 0, 10 ou 20 points"
 }

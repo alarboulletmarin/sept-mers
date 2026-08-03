@@ -15,6 +15,7 @@ export function entryScore(entry: RoundEntry, round: Round, game: Game): ScoreRe
     tricks: entry.tricks,
     cards: round.cards,
     bonus: entry.bonus,
+    rascal: entry.rascal,
     options: game.options,
   })
 }

@@ -15,7 +15,24 @@ export interface RoundBonus {
 export interface GameOptions {
   /** Un joueur qui rate sa mise garde-t-il ses bonus ? */
   bonusIfBidMissed: boolean
+  /** Kraken et Baleine blanche dans le paquet : un pli peut n'aller à personne. */
+  seaMonsters: boolean
+  /** Pouvoirs des pirates. Seul le pari de Rascal Jack compte des points. */
+  advancedPirates: boolean
 }
+
+/** Le score classique, sans aucune variante : le réglage de toujours. */
+export const DEFAULT_OPTIONS: GameOptions = {
+  bonusIfBidMissed: true,
+  seaMonsters: false,
+  advancedPirates: false,
+}
+
+/**
+ * Le pari de Rascal Jack, signé : 0, 10 ou 20 points, gagnés ou perdus. Il se
+ * compte quoi qu'il arrive à la mise, d'où sa place hors des primes.
+ */
+export const RASCAL_VALUES = [-20, -10, 0, 10, 20] as const
 
 export interface Player {
   id: Id
@@ -28,11 +45,18 @@ export interface RoundEntry {
   bid: number
   tricks: number
   bonus: RoundBonus
+  /** Pari de Rascal Jack. Absent quand il n'y en a pas eu. */
+  rascal?: number
 }
 
 export interface Round {
   index: number // 1..10
   cards: number // cartesDeLaManche
+  /**
+   * Plis écartés par le Kraken ou la Baleine blanche, que personne ne remporte.
+   * Absent quand il n'y en a pas eu.
+   */
+  voided?: number
   entries: RoundEntry[]
 }
 
@@ -67,6 +91,10 @@ export interface Draft {
   bids: Record<Id, number | null>
   tricks: Record<Id, number | null>
   bonus: Record<Id, RoundBonus>
+  /** Pari de Rascal Jack, par joueur. Zéro quand il n'y en a pas. */
+  rascal: Record<Id, number>
+  /** Plis écartés de la manche par le Kraken ou la Baleine blanche. */
+  voided: number
   /**
    * Joueurs dont les plis ont été posés à la main. Les autres gardent la valeur
    * semée depuis leur mise : c'est ce qui permet à la fois de resemer après une

@@ -11,15 +11,24 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 ## Ce qu'elle fait
 
 - **Score classique**, 2 à 8 joueurs, 10 manches, tout calculé par l'app.
+- **Deux variantes en option**, choisies au lancement d'une partie et
+  expliquées dans les règles : le Kraken et la Baleine blanche, qui font qu'un
+  pli peut n'être remporté par personne ; les pouvoirs des pirates, dont seul le
+  pari de Rascal Jack change le score.
 - **Saisie sans clavier** : une grille de tuiles, une par joueur, avec un
-  contrôle moins / plus. Appui maintenu pour défiler. Le dernier joueur non
-  renseigné se complète tout seul, et sa valeur se recalcule à chaque saisie.
+  contrôle moins / plus. Appui maintenu pour défiler. Les mises partent à zéro,
+  les plis partent sur la mise de chacun, et le dernier joueur qu'on n'a pas
+  repris en main se complète tout seul — une manche où tout le monde tient sa
+  mise se valide sans un geste.
 - **Les cinq bonus** derrière un bouton nommé sur chaque tuile, avec leurs
   bornes matérielles : on ne peut pas attribuer trois sirènes ni faire capturer
   le Skull King deux fois.
 - **Plafond du paquet** appliqué automatiquement : à 8 joueurs, les manches 9 et
-  10 se jouent à 8 cartes.
+  10 se jouent à 8 cartes — 9 avec les monstres marins, que les 2 cartes de plus
+  suffisent à faire tenir la manche 9.
 - **Reprise exacte** de la manche et de la phase après fermeture de l'app.
+- **Marche arrière** : on revient à la manche précédente pour la corriger, et la
+  saisie en cours est mise de côté le temps qu'on y retourne.
 - **Trois graphiques** en SVG écrit à la main, historique, joueurs récurrents et
   statistiques par joueur.
 - **Règles réécrites**, consultables depuis l'accueil ou en feuille modale sans
@@ -100,7 +109,7 @@ src/
                 useWakeLock
   screens/      Home, NewGame, Game, GameSummary, History, Players, Rules, Settings
   components/   Widget, Button, Stepper, Rail, PlayerChip, ScoreTable, Sheet,
-                Toast, Icon, EmptyState, BonusDrawer
+                Toast, Icon, EmptyState, BonusDrawer, OptionSwitch
   domain/       scoring, deck, validation, stats, types
   store/        storage, reducer, migrations
   charts/       ScoreLines, AccuracyBars, RankingBars, primitives
@@ -122,8 +131,10 @@ graphiques sur du SVG calculé à la main.
 
 Le moteur de score (`domain/scoring.ts`) est un module pur : il prend une mise,
 des plis, un nombre de cartes et un objet d'options, et rend un score. Il ne lit
-ni horloge ni stockage. Les variantes à venir — système Rascal, extensions —
-passeront par cet objet d'options, pas par une réécriture.
+ni horloge ni stockage. C'est par cet objet d'options que les variantes sont
+arrivées, et non par une réécriture : le pari de Rascal Jack s'ajoute au total
+sans passer par les primes, puisque l'option qui annule les primes d'une mise
+ratée ne l'annule pas.
 
 Le stockage tient dans une clé `localStorage`, écrite avec 300 ms de debounce et
 vidée dès que l'onglet passe en arrière-plan. La lecture est défensive : un
@@ -133,12 +144,13 @@ version de schéma soit une addition et pas une réécriture.
 
 ## Tests
 
-167 tests unitaires couvrent le moteur de score — dont les huit cas de référence
+220 tests unitaires couvrent le moteur de score — dont les huit cas de référence
 du cahier des charges —, la validation de saisie, le plafonnement du paquet, les
-statistiques, le réducteur, la complétion automatique du dernier joueur,
-l'aller-retour export/import, la lecture défensive du stockage, les pluriels, la
-géométrie des graphiques, la configuration de déploiement, les jetons de la
-palette et le système typographique — familles, échelle, fichiers de fonte
+variantes, les statistiques, le réducteur, le préremplissage et la complétion
+automatique du dernier joueur, la marche arrière entre manches, l'aller-retour
+export/import, la lecture défensive du stockage, les pluriels, la géométrie des
+graphiques, la configuration de déploiement, les icônes d'installation, les
+jetons de la palette et le système typographique — familles, échelle, fichiers de fonte
 embarqués, et l'absence de toute famille écrite en dur hors des jetons. Le
 parcours navigateur complète le tout sur l'app réellement construite.
 

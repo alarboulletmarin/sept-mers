@@ -8,7 +8,8 @@ const score = (
   cards: number,
   bonus = makeBonus(),
   bonusIfBidMissed = true,
-) => scoreRound({ bid, tricks, cards, bonus, options: { bonusIfBidMissed } })
+  rascal = 0,
+) => scoreRound({ bid, tricks, cards, bonus, rascal, options: { bonusIfBidMissed } })
 
 describe('les huit cas du cahier des charges', () => {
   it('mise 3, plis 3, 3 cartes, sans bonus : +60', () => {
@@ -121,5 +122,34 @@ describe('barème des bonus', () => {
       skullKingTakenByMermaid: 0,
     })
     expect(score(10, 10, 10, full).bonusPoints).toBe(30 + 20 + 40 + 180)
+  })
+})
+
+describe('pari de Rascal Jack', () => {
+  it('ajoute le pari tenu au total', () => {
+    expect(score(1, 1, 5, makeBonus(), true, 20).rascalPoints).toBe(20)
+    expect(score(1, 1, 5, makeBonus(), true, 20).total).toBe(40)
+  })
+
+  it('retire le pari perdu du total', () => {
+    expect(score(1, 1, 5, makeBonus(), true, -10).total).toBe(10)
+  })
+
+  it('se compte même quand la mise est ratée et les primes annulées', () => {
+    // C'est toute la raison pour laquelle le pari ne vit pas dans les primes.
+    const missed = score(1, 0, 5, makeBonus({ blackFourteen: 1 }), false, 20)
+    expect(missed.bonusPoints).toBe(0)
+    expect(missed.rascalPoints).toBe(20)
+    expect(missed.total).toBe(-10 + 20)
+  })
+
+  it('ne se mêle pas aux points de primes', () => {
+    const both = score(1, 1, 5, makeBonus({ blackFourteen: 1 }), true, -20)
+    expect(both.bonusPoints).toBe(20)
+    expect(both.rascalPoints).toBe(-20)
+  })
+
+  it('vaut zéro quand il n y en a pas', () => {
+    expect(score(1, 1, 5).rascalPoints).toBe(0)
   })
 })

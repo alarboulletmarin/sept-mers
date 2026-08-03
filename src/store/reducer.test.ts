@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { draftFor, reducer, runningGame, type Action } from './reducer.ts'
 import { emptyStore, normalise, parseStore, serialiseStore } from './storage.ts'
-import { makeBonus, type Store } from '../domain/types.ts'
+import { DEFAULT_OPTIONS, makeBonus, type Store } from '../domain/types.ts'
 
 const run = (store: Store, ...actions: Action[]): Store =>
   actions.reduce((current, action) => reducer(current, action), store)
@@ -19,7 +19,7 @@ function started(): Store {
   return run(seeded(), {
     type: 'game/start',
     playerIds: ['p1', 'p2', 'p3'],
-    options: { bonusIfBidMissed: true },
+    options: { ...DEFAULT_OPTIONS },
     id: 'g1',
     now: '2026-01-01T20:00:00.000Z',
   })
@@ -79,7 +79,7 @@ describe('déroulé d une partie', () => {
     const store = run(seeded(), {
       type: 'game/start',
       playerIds: ['p1', 'p2'],
-      options: { bonusIfBidMissed: false },
+      options: { ...DEFAULT_OPTIONS, bonusIfBidMissed: false },
     })
     expect(store.settings.lastOptions.bonusIfBidMissed).toBe(false)
   })
@@ -164,7 +164,7 @@ describe('déroulé d une partie', () => {
     const store = run(started(), {
       type: 'game/start',
       playerIds: ['p1', 'p2'],
-      options: { bonusIfBidMissed: true },
+      options: { ...DEFAULT_OPTIONS },
       id: 'g2',
       now: '2026-01-02T20:00:00.000Z',
     })
@@ -183,7 +183,7 @@ describe('déroulé d une partie', () => {
     const rematch = run(finished, { type: 'game/rematch', id: 'g2' })
     const game = runningGame(rematch)
     expect(game?.playerIds).toEqual(['p1', 'p2', 'p3'])
-    expect(game?.options).toEqual({ bonusIfBidMissed: true })
+    expect(game?.options).toEqual(DEFAULT_OPTIONS)
   })
 
   it('conserve les bonus saisis à la validation', () => {
@@ -551,8 +551,118 @@ describe('navigation entre manches', () => {
     const restarted = run(store, {
       type: 'game/start',
       playerIds: ['p1', 'p2'],
-      options: { bonusIfBidMissed: true },
+      options: { ...DEFAULT_OPTIONS },
     })
     expect(restarted.liveDraft).toBeUndefined()
+  })
+})
+
+describe('variantes', () => {
+  /** Une partie à 3, monstres marins et pouvoirs des pirates activés. */
+  const withVariants = () =>
+    run(seeded(), {
+      type: 'game/start',
+      playerIds: ['p1', 'p2', 'p3'],
+      options: { ...DEFAULT_OPTIONS, seaMonsters: true, advancedPirates: true },
+      id: 'g1',
+      now: '2026-01-01T20:00:00.000Z',
+    })
+
+  it('ignore les plis écartés quand la variante n est pas en jeu', () => {
+    const store = run(started(), { type: 'game/setVoided', voided: 1 })
+    expect(store.draft?.voided).toBe(0)
+  })
+
+  it('ignore le pari quand la variante n est pas en jeu', () => {
+    const store = run(started(), { type: 'game/setRascal', playerId: 'p1', value: 20 })
+    expect(store.draft?.rascal.p1).toBe(0)
+  })
+
+  it('refuse une valeur de pari hors barème', () => {
+    const store = run(withVariants(), { type: 'game/setRascal', playerId: 'p1', value: 15 })
+    expect(store.draft?.rascal.p1).toBe(0)
+  })
+
+  it('borne les plis écartés au nombre de cartes', () => {
+    const store = run(withVariants(), { type: 'game/setVoided', voided: 4 })
+    expect(store.draft?.voided).toBe(1)
+  })
+
+  it('ramène la déduction à ce qui reste à distribuer', () => {
+    // Manche 3, 3 cartes, 1 pli écarté : il n'en reste que 2 à répartir.
+    let store = withVariants()
+    store = playRound(store, [['p1', 1, 1], ['p2', 0, 0], ['p3', 0, 0]])
+    store = playRound(store, [['p1', 2, 2], ['p2', 0, 0], ['p3', 0, 0]])
+    store = run(
+      store,
+      { type: 'game/phase', phase: 'results' },
+      { type: 'game/setVoided', voided: 1 },
+      { type: 'game/setTricks', playerId: 'p1', tricks: 2 },
+      { type: 'game/setTricks', playerId: 'p2', tricks: 0 },
+    )
+    expect(store.draft?.tricks.p3).toBe(0)
+  })
+
+  it('recalcule la déduction quand le nombre de plis écartés change', () => {
+    let store = withVariants()
+    store = playRound(store, [['p1', 1, 1], ['p2', 0, 0], ['p3', 0, 0]])
+    store = run(
+      store,
+      { type: 'game/phase', phase: 'results' },
+      { type: 'game/setTricks', playerId: 'p1', tricks: 0 },
+      { type: 'game/setTricks', playerId: 'p2', tricks: 0 },
+    )
+    expect(store.draft?.tricks.p3).toBe(2)
+    store = run(store, { type: 'game/setVoided', voided: 1 })
+    expect(store.draft?.tricks.p3).toBe(1)
+  })
+
+  it('écrit les plis écartés et le pari sur la manche validée', () => {
+    const store = run(
+      withVariants(),
+      { type: 'game/phase', phase: 'results' },
+      { type: 'game/setVoided', voided: 1 },
+      { type: 'game/setRascal', playerId: 'p2', value: -20 },
+      { type: 'game/commitRound' },
+    )
+    const round = runningGame(store)?.rounds[0]
+    expect(round?.voided).toBe(1)
+    expect(round?.entries[1].rascal).toBe(-20)
+  })
+
+  it('n écrit ni pli écarté ni pari quand il n y en a pas', () => {
+    // La forme sur disque d'une partie sans variante ne change pas.
+    const store = run(
+      withVariants(),
+      { type: 'game/phase', phase: 'results' },
+      { type: 'game/setTricks', playerId: 'p1', tricks: 1 },
+      { type: 'game/commitRound' },
+    )
+    const round = runningGame(store)?.rounds[0]
+    expect(round && 'voided' in round).toBe(false)
+    expect(round?.entries[0] && 'rascal' in round.entries[0]).toBe(false)
+  })
+
+  it('restitue un pari perdu à la relecture', () => {
+    // `isCount` refuse les négatifs : un pari perdu doit passer à côté.
+    const store = run(
+      withVariants(),
+      { type: 'game/phase', phase: 'results' },
+      { type: 'game/setRascal', playerId: 'p1', value: -20 },
+      { type: 'game/setTricks', playerId: 'p1', tricks: 1 },
+      { type: 'game/commitRound' },
+    )
+    const { store: reimported } = parseStore(serialiseStore(store))
+    expect(reimported.games[0].rounds[0].entries[0].rascal).toBe(-20)
+    expect(reimported).toEqual(store)
+  })
+
+  it('relit une partie d avant les variantes en score classique', () => {
+    const store = normalise({
+      schemaVersion: 1,
+      players: [{ id: 'p1', name: 'Ana' }],
+      games: [{ id: 'g', playerIds: ['p1', 'p2'], options: {}, rounds: [] }],
+    })
+    expect(store.games[0].options).toEqual(DEFAULT_OPTIONS)
   })
 })

@@ -4,10 +4,12 @@ import type { Route } from '../app/Router.tsx'
 import { useStore } from '../app/StoreProvider.tsx'
 import { Button } from '../components/Button.tsx'
 import { Icon } from '../components/Icon.tsx'
+import { OptionSwitch } from '../components/OptionSwitch.tsx'
 import { Sheet } from '../components/Sheet.tsx'
 import { useToast } from '../components/Toast.tsx'
 import type { Locale, Store, Theme } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
+import { OPTIONS } from './NewGame.tsx'
 import styles from './Settings.module.css'
 import {
   ImportError,
@@ -111,32 +113,25 @@ export function Settings({ go }: { go: (route: Route) => void }) {
       <section className="stack-tight">
         <h2 className="section-title">{t('settings.defaults')}</h2>
         <div className={styles.panel}>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={store.settings.lastOptions.bonusIfBidMissed}
-            className="switch"
-            onClick={() =>
-              dispatch({
-                type: 'settings/defaultOptions',
-                options: {
-                  bonusIfBidMissed: !store.settings.lastOptions.bonusIfBidMissed,
-                },
-              })
-            }
-          >
-            <span className="stack-tight" style={{ gap: 2 }}>
-              <span className={styles.switchLabel}>{t('newGame.bonusIfBidMissed')}</span>
-              <span className={styles.help}>
-                {store.settings.lastOptions.bonusIfBidMissed
-                  ? t('newGame.bonusIfBidMissed.on')
-                  : t('newGame.bonusIfBidMissed.off')}
-              </span>
-            </span>
-            <span className="switch-track">
-              <span className="switch-knob" />
-            </span>
-          </button>
+          {OPTIONS.map(({ key }) => {
+            const checked = store.settings.lastOptions[key]
+            return (
+              <OptionSwitch
+                key={key}
+                label={t(`newGame.${key}`)}
+                help={t(`newGame.${key}.${checked ? 'on' : 'off'}`)}
+                checked={checked}
+                onToggle={() =>
+                  dispatch({
+                    type: 'settings/defaultOptions',
+                    // On étale : écrire l'objet en littéral effacerait en
+                    // silence les options qu'on n'a pas nommées.
+                    options: { ...store.settings.lastOptions, [key]: !checked },
+                  })
+                }
+              />
+            )
+          })}
         </div>
       </section>
 

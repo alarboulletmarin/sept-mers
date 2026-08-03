@@ -12,7 +12,7 @@ import { Sheet } from '../components/Sheet.tsx'
 import { Stepper } from '../components/Stepper.tsx'
 import { Tag, Widget } from '../components/Widget.tsx'
 import { useToast } from '../components/Toast.tsx'
-import { cardsForRound, isCapped } from '../domain/deck.ts'
+import { cardsForRound, deckSize, isCapped } from '../domain/deck.ts'
 import { scoreRound } from '../domain/scoring.ts'
 import { totals } from '../domain/stats.ts'
 import { TOTAL_ROUNDS, bonusIsEmpty, type Id, type RoundBonus } from '../domain/types.ts'
@@ -21,9 +21,12 @@ import {
   issuesFor,
   remainingTricks,
   sumBids,
+  trickTarget,
   validateBids,
   validateBonuses,
+  validateRascal,
   validateTricks,
+  validateVoided,
   type Issue,
 } from '../domain/validation.ts'
 import { useT } from '../i18n/index.ts'
@@ -55,20 +58,30 @@ export function Game({ go }: { go: (route: Route) => void }) {
 
   if (!game || !draft) return null
 
-  const cards = cardsForRound(draft.roundIndex, game.playerIds.length)
-  const capped = isCapped(draft.roundIndex, game.playerIds.length)
+  const deck = deckSize(game.options)
+  const cards = cardsForRound(draft.roundIndex, game.playerIds.length, deck)
+  const capped = isCapped(draft.roundIndex, game.playerIds.length, deck)
+  // Les monstres marins écartent des plis : il y a alors moins à distribuer
+  // que de cartes distribuées.
+  const target = trickTarget(cards, draft.voided)
   const isEditing = isEditingRound(game, draft)
   const running = totals(game)
 
   const bidIssues = validateBids(draft.bids, cards, game.playerIds)
-  const trickIssues = validateTricks(draft.tricks, cards, game.playerIds)
-  const bonusIssues = validateBonuses(draft.bonus, draft.tricks, game.playerIds)
+  const trickIssues = [
+    ...validateVoided(draft.voided, cards),
+    ...validateTricks(draft.tricks, cards, game.playerIds, draft.voided),
+  ]
+  const bonusIssues = [
+    ...validateBonuses(draft.bonus, draft.tricks, game.playerIds),
+    ...validateRascal(draft.rascal, game.playerIds),
+  ]
 
   const bidsReady = bidIssues.length === 0
   const resultsReady = trickIssues.length === 0 && bonusIssues.length === 0
 
   const bidTotal = sumBids(draft.bids, game.playerIds)
-  const left = remainingTricks(draft.tricks, cards, game.playerIds)
+  const left = remainingTricks(draft.tricks, cards, game.playerIds, draft.voided)
 
   const isBids = draft.phase === 'bids'
 
@@ -252,10 +265,11 @@ export function Game({ go }: { go: (route: Route) => void }) {
               key={playerId}
               name={game.nameSnapshot[playerId] ?? ''}
               phase={draft.phase}
-              cards={cards}
+              cards={isBids ? cards : target}
               bid={draft.bids[playerId] ?? null}
               tricks={draft.tricks[playerId] ?? null}
               bonus={draft.bonus[playerId]}
+              rascal={draft.rascal[playerId] ?? 0}
               auto={!isBids && draft.autoTricks === playerId}
               issues={
                 touched
@@ -272,6 +286,26 @@ export function Game({ go }: { go: (route: Route) => void }) {
               t={t}
             />
           ))}
+
+          {/* Le Kraken et la Baleine blanche écartent des plis : la somme des
+              plis remportés vaut alors moins que le nombre de cartes, et il
+              faut bien dire à l'app combien il en manque. */}
+          {!isBids && game.options.seaMonsters && (
+            <Widget surface="sunken" span="sm" tight marker="voided">
+              <h2 className={styles.name}>{t('game.voided')}</h2>
+              <Stepper
+                max={cards}
+                value={draft.voided}
+                onChange={(value) => dispatch({ type: 'game/setVoided', voided: value })}
+                label={t('game.voided')}
+                decreaseLabel={t('a11y.voided.decrease')}
+                increaseLabel={t('a11y.voided.increase')}
+              />
+              <div className={styles.tileMeta}>
+                <span className={styles.bidRecall}>{t('game.voided.help')}</span>
+              </div>
+            </Widget>
+          )}
         </div>
 
         {/* Les anomalies qui portent sur la manche entière et non sur un
@@ -299,7 +333,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
                 ? t('game.results.remaining', { count: left })
                 : left < 0
                   ? t('game.results.over', { count: -left })
-                  : t('game.results.complete', { count: cards })}
+                  : t('game.results.complete', { count: target })}
           </p>
 
           {isBids ? (
@@ -335,6 +369,15 @@ export function Game({ go }: { go: (route: Route) => void }) {
               tricks={draft.tricks}
               onChange={(key, value) =>
                 dispatch({ type: 'game/setBonus', playerId: openPlayer.id, key, value })
+              }
+              rascal={game.options.advancedPirates ? draft.rascal : null}
+              rascalHeldBy={
+                game.playerIds
+                  .filter((id) => id !== openPlayer.id && (draft.rascal[id] ?? 0) !== 0)
+                  .map((id) => game.nameSnapshot[id] ?? '')[0] ?? null
+              }
+              onRascalChange={(value) =>
+                dispatch({ type: 'game/setRascal', playerId: openPlayer.id, value })
               }
             />
             <Button variant="primary" onClick={() => setOpenBonus(null)}>
@@ -383,6 +426,8 @@ interface PlayerTileProps {
   bid: number | null
   tricks: number | null
   bonus: RoundBonus
+  /** Pari de Rascal Jack, signé. */
+  rascal: number
   /** Tuile dont la valeur se déduit des autres. */
   auto: boolean
   issues: Issue[]
@@ -402,6 +447,7 @@ function PlayerTile(props: PlayerTileProps) {
     bid,
     tricks,
     bonus,
+    rascal,
     auto,
     issues,
     onBid,
@@ -417,7 +463,8 @@ function PlayerTile(props: PlayerTileProps) {
   const complete = bid !== null && tricks !== null
 
   // Le total s'affiche en direct dès que la ligne est complète.
-  const score = !isBids && complete ? scoreRound({ bid, tricks, cards, bonus, options }) : null
+  const score =
+    !isBids && complete ? scoreRound({ bid, tricks, cards, bonus, rascal, options }) : null
   const bonusCount = Object.values(bonus).reduce((total, count) => total + count, 0)
 
   return (

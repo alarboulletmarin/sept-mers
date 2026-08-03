@@ -1,14 +1,18 @@
 import {
   BONUS_KEYS,
+  DEFAULT_OPTIONS,
   EMPTY_BONUS,
   MAX_PLAYERS,
   MIN_PLAYERS,
+  RASCAL_VALUES,
   TOTAL_ROUNDS,
   type Draft,
+  type GameOptions,
   type Locale,
   type Store,
   type Theme,
 } from '../domain/types.ts'
+import { cardsForRound, deckSize } from '../domain/deck.ts'
 import { CURRENT_SCHEMA_VERSION, migrate } from './migrations.ts'
 
 export const STORAGE_KEY = 'sept-mers'
@@ -27,7 +31,7 @@ export function emptyStore(): Store {
     settings: {
       locale: defaultLocale(),
       theme: 'system',
-      lastOptions: { bonusIfBidMissed: true },
+      lastOptions: { ...DEFAULT_OPTIONS },
     },
   }
 }
@@ -44,6 +48,28 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
 
 const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isInteger(value) && value >= 0
+
+/**
+ * Les options d'une partie, relues en liste blanche : ce qui n'est pas nommé
+ * ici est effacé au chargement. L'option historique vaut vrai par défaut, les
+ * variantes valent faux — un fichier d'avant n'a jamais joué les monstres.
+ */
+const readOptions = (value: unknown): GameOptions =>
+  isObject(value)
+    ? {
+        bonusIfBidMissed: value.bonusIfBidMissed !== false,
+        seaMonsters: value.seaMonsters === true,
+        advancedPirates: value.advancedPirates === true,
+      }
+    : { ...DEFAULT_OPTIONS }
+
+/**
+ * Le pari de Rascal Jack. Il est signé, donc il ne passe pas par `isCount`,
+ * qui refuse les négatifs : un pari perdu y serait ramené à zéro en silence,
+ * et le score dériverait de 20 points à chaque relecture.
+ */
+const readRascal = (value: unknown): number =>
+  typeof value === 'number' && (RASCAL_VALUES as readonly number[]).includes(value) ? value : 0
 
 export interface ImportSummary {
   players: number
@@ -120,9 +146,7 @@ export function normalise(input: unknown): Store {
         )
         if (playerIds.length < MIN_PLAYERS || playerIds.length > MAX_PLAYERS) return []
 
-        const options = isObject(game.options)
-          ? { bonusIfBidMissed: game.options.bonusIfBidMissed !== false }
-          : { bonusIfBidMissed: true }
+        const options = readOptions(game.options)
 
         const rounds = (Array.isArray(game.rounds) ? game.rounds : []).flatMap(
           (round): Store['games'][number]['rounds'] => {
@@ -142,11 +166,30 @@ export function normalise(input: unknown): Store {
                   const value = source[key]
                   bonus[key] = isCount(value) ? value : 0
                 }
-                return [{ playerId: entry.playerId, bid: entry.bid, tricks: entry.tricks, bonus }]
+                // Le pari du Rascal peut être négatif : il ne passe surtout
+                // pas par `isCount`, qui le ramènerait à zéro en silence.
+                const rascal = readRascal(entry.rascal)
+                return [
+                  {
+                    playerId: entry.playerId,
+                    bid: entry.bid,
+                    tricks: entry.tricks,
+                    bonus,
+                    ...(rascal !== 0 ? { rascal } : {}),
+                  },
+                ]
               },
             )
 
-            return [{ index: round.index, cards: round.cards, entries }]
+            const voided = isCount(round.voided) ? Math.min(round.cards, round.voided) : 0
+            return [
+              {
+                index: round.index,
+                cards: round.cards,
+                ...(voided > 0 ? { voided } : {}),
+                entries,
+              },
+            ]
           },
         )
 
@@ -184,9 +227,7 @@ export function normalise(input: unknown): Store {
     themeValue === 'light' || themeValue === 'dark' || themeValue === 'system'
       ? themeValue
       : 'system'
-  const lastOptions = isObject(settingsSource.lastOptions)
-    ? { bonusIfBidMissed: settingsSource.lastOptions.bonusIfBidMissed !== false }
-    : { bonusIfBidMissed: true }
+  const lastOptions = readOptions(settingsSource.lastOptions)
 
   // Une seule partie en cours à la fois : on garde la plus récente et on
   // clôt les autres, un fichier bricolé à la main ne doit pas bloquer l'app.
@@ -216,6 +257,7 @@ export function normalise(input: unknown): Store {
     const bids: Record<string, number | null> = {}
     const tricks: Record<string, number | null> = {}
     const bonus: Record<string, typeof EMPTY_BONUS> = {}
+    const rascal: Record<string, number> = {}
     const readMap = (value: unknown): Record<string, unknown> => (isObject(value) ? value : {})
 
     for (const id of game.playerIds) {
@@ -230,7 +272,11 @@ export function normalise(input: unknown): Store {
         entry[key] = isCount(value) ? value : 0
       }
       bonus[id] = entry
+      rascal[id] = readRascal(readMap(source.rascal)[id])
     }
+
+    const cards = cardsForRound(source.roundIndex, game.playerIds.length, deckSize(game.options))
+    const voided = isCount(source.voided) ? Math.min(cards, source.voided) : 0
 
     // On repart de la liste des joueurs, pas de celle du fichier : les
     // doublons et les identifiants inconnus tombent d'eux-mêmes.
@@ -247,6 +293,8 @@ export function normalise(input: unknown): Store {
       bids,
       tricks,
       bonus,
+      rascal,
+      voided,
       touchedTricks,
       autoTricks: typeof auto === 'string' && game.playerIds.includes(auto) ? auto : null,
     }

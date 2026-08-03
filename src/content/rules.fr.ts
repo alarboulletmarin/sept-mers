@@ -146,6 +146,53 @@ export const rulesFr: RuleSection[] = [
     ],
   },
   {
+    id: 'variants',
+    title: 'Les variantes, à activer au lancement',
+    blocks: [
+      {
+        kind: 'p',
+        text: "Deux réglages se choisissent au moment de composer la table, et l'app s'en souvient d'une partie à l'autre. Rien n'est imposé : une table qui les laisse fermés joue le score classique, à l'identique.",
+      },
+      {
+        kind: 'p',
+        text: 'Kraken et Baleine blanche : 2 cartes de plus dans le paquet, soit 72.',
+      },
+      {
+        kind: 'ul',
+        items: [
+          "Le Kraken écarte le pli. Personne ne le remporte et il ne compte pour personne : les plis de la manche font alors moins que le nombre de cartes distribuées.",
+          "La Baleine blanche prive toutes les cartes spéciales de leur pouvoir, le temps de ce pli : c'est le plus grand numéro qui l'emporte, quelle que soit la couleur. Si personne n'a posé de numéro, le pli est écarté lui aussi.",
+        ],
+      },
+      {
+        kind: 'p',
+        text: "L'app demande donc, à chaque manche, combien de plis ont été écartés. C'est tout ce qu'elle a besoin d'en savoir.",
+      },
+      {
+        kind: 'p',
+        text: 'Pouvoirs des pirates : chacun des 5 pirates en gagne un, annoncé au moment où on le pose.',
+      },
+      {
+        kind: 'ul',
+        items: [
+          "Harry le Géant permet de changer sa propre mise de 1 pli, vers le haut ou vers le bas. Pour la corriger dans l'app, revenir à l'étape des mises : la saisie de la manche n'est pas perdue.",
+          'Rosie D’Laney désigne qui entame le pli suivant.',
+          'Bendt le Bandit pioche 2 cartes dans le talon, puis en défausse 2.',
+          "Juanita Jade permet de regarder les cartes non distribuées et d'en échanger une contre une carte de sa main.",
+          "Rascal Jack parie 0, 10 ou 20 points sur le fait de remporter ce pli. Pari tenu, on marque la somme ; pari perdu, on la perd.",
+        ],
+      },
+      {
+        kind: 'p',
+        text: "Le pari de Rascal Jack se saisit dans la feuille des primes, mais ce n'en est pas une : il se compte quoi qu'il arrive, y compris quand la mise est ratée et que les primes sautent. Il n'y a qu'un Rascal Jack dans le paquet, donc au plus un pari par manche.",
+      },
+      {
+        kind: 'p',
+        text: "L'app ne suit pas les cartes jouées. De ces 7 nouveautés, elle ne demande que les 2 qui changent le score : les plis écartés, et le pari du Rascal.",
+      },
+    ],
+  },
+  {
     id: 'faq',
     title: 'Questions qui reviennent',
     blocks: [

@@ -126,6 +126,10 @@ for (const theme of ['light', 'dark']) {
     await page.getByRole('button', { name: 'Ajouter', exact: true }).click()
   }
   await page.getByRole('button', { name: 'Options' }).click()
+  // Variantes activées : le compteur de plis écartés et le pari du Rascal
+  // n'apparaissent qu'avec elles, et sont à contrôler comme le reste.
+  await page.getByRole('switch', { name: /Kraken/ }).click()
+  await page.getByRole('switch', { name: /Pouvoirs/ }).click()
   await audit('nouvelle partie, options dépliées')
 
   await page.getByRole('button', { name: 'Commencer la partie' }).click()

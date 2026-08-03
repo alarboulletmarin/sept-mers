@@ -1,6 +1,7 @@
-import { cardsForRound } from '../domain/deck.ts'
+import { cardsForRound, deckSize } from '../domain/deck.ts'
 import {
   EMPTY_BONUS,
+  RASCAL_VALUES,
   TOTAL_ROUNDS,
   type Draft,
   type Game,
@@ -12,7 +13,7 @@ import {
   type Store,
   type Theme,
 } from '../domain/types.ts'
-import { soleUntouchedPlayer } from '../domain/validation.ts'
+import { soleUntouchedPlayer, trickTarget } from '../domain/validation.ts'
 import { newId } from './storage.ts'
 
 export type Action =
@@ -26,6 +27,8 @@ export type Action =
   | { type: 'game/setBid'; playerId: Id; bid: number | null }
   | { type: 'game/setTricks'; playerId: Id; tricks: number | null }
   | { type: 'game/setBonus'; playerId: Id; key: keyof RoundBonus; value: number }
+  | { type: 'game/setVoided'; voided: number }
+  | { type: 'game/setRascal'; playerId: Id; value: number }
   | { type: 'game/phase'; phase: Draft['phase'] }
   | { type: 'game/commitRound' }
   | { type: 'game/undoRound' }
@@ -52,12 +55,14 @@ function emptyDraft(game: Game, roundIndex: number): Draft {
   const bids: Record<Id, number | null> = {}
   const tricks: Record<Id, number | null> = {}
   const bonus: Record<Id, RoundBonus> = {}
+  const rascal: Record<Id, number> = {}
   for (const id of game.playerIds) {
     // Les compteurs partent à zéro plutôt qu'à vide : une manche où personne
     // ne mise doit pouvoir se valider sans toucher une seule tuile.
     bids[id] = 0
     tricks[id] = 0
     bonus[id] = { ...EMPTY_BONUS }
+    rascal[id] = 0
   }
   return {
     gameId: game.id,
@@ -66,6 +71,8 @@ function emptyDraft(game: Game, roundIndex: number): Draft {
     bids,
     tricks,
     bonus,
+    rascal,
+    voided: 0,
     touchedTricks: [],
     autoTricks: null,
   }
@@ -76,10 +83,12 @@ function draftFromRound(game: Game, round: Round): Draft {
   const draft = emptyDraft(game, round.index)
   draft.phase = 'results'
   draft.autoTricks = null
+  draft.voided = round.voided ?? 0
   for (const entry of round.entries) {
     draft.bids[entry.playerId] = entry.bid
     draft.tricks[entry.playerId] = entry.tricks
     draft.bonus[entry.playerId] = { ...entry.bonus }
+    draft.rascal[entry.playerId] = entry.rascal ?? 0
   }
   // Une manche validée a été saisie en entier : ni resemis, ni déduction.
   // Sans ça, la rouvrir pour relire un chiffre la réécrirait.
@@ -125,6 +134,16 @@ function withDeduction(
 }
 
 const marked = (list: Id[], id: Id): Id[] => (list.includes(id) ? list : [...list, id])
+
+/** Cartes distribuées à la manche du brouillon, paquet de la partie compris. */
+function cardsOf(game: Game, draft: Draft): number {
+  return cardsForRound(draft.roundIndex, game.playerIds.length, deckSize(game.options))
+}
+
+/** Plis réellement attribuables : les cartes, moins ce que les monstres ont pris. */
+function targetOf(game: Game, draft: Draft): number {
+  return trickTarget(cardsOf(game, draft), draft.voided)
+}
 
 export function nextRoundIndex(game: Game): number {
   return game.rounds.length + 1
@@ -237,10 +256,37 @@ export function reducer(store: Store, action: Action): Store {
         { ...draft.tricks, [action.playerId]: action.tricks },
         touchedTricks,
         game.playerIds,
-        cardsForRound(draft.roundIndex, game.playerIds.length),
+        targetOf(game, draft),
       )
 
       return { ...store, draft: { ...draft, ...deduced, touchedTricks } }
+    }
+
+    case 'game/setVoided': {
+      const game = runningGame(store)
+      if (!game || !game.options.seaMonsters) return store
+      const draft = draftFor(store, game)
+      const cards = cardsOf(game, draft)
+      const voided = Math.min(cards, Math.max(0, action.voided))
+      // Écarter un pli change le total à distribuer : la déduction périme.
+      const deduced = withDeduction(
+        draft.tricks,
+        draft.touchedTricks,
+        game.playerIds,
+        trickTarget(cards, voided),
+      )
+      return { ...store, draft: { ...draft, ...deduced, voided } }
+    }
+
+    case 'game/setRascal': {
+      const game = runningGame(store)
+      if (!game || !game.options.advancedPirates) return store
+      if (!(RASCAL_VALUES as readonly number[]).includes(action.value)) return store
+      const draft = draftFor(store, game)
+      return {
+        ...store,
+        draft: { ...draft, rascal: { ...draft.rascal, [action.playerId]: action.value } },
+      }
     }
 
     case 'game/setBonus': {
@@ -275,7 +321,7 @@ export function reducer(store: Store, action: Action): Store {
         seedTricks(draft, game.playerIds),
         draft.touchedTricks,
         game.playerIds,
-        cardsForRound(draft.roundIndex, game.playerIds.length),
+        targetOf(game, draft),
       )
       return { ...store, draft: { ...draft, ...deduced, phase: 'results' } }
     }
@@ -284,17 +330,24 @@ export function reducer(store: Store, action: Action): Store {
       const game = runningGame(store)
       if (!game || !store.draft) return store
       const draft = store.draft
-      const cards = cardsForRound(draft.roundIndex, game.playerIds.length)
+      const cards = cardsOf(game, draft)
 
+      // Un zéro ne s'écrit pas : une partie sans variante garde sur disque la
+      // forme qu'elle avait avant qu'elles existent.
       const round: Round = {
         index: draft.roundIndex,
         cards,
-        entries: game.playerIds.map((playerId) => ({
-          playerId,
-          bid: draft.bids[playerId] ?? 0,
-          tricks: draft.tricks[playerId] ?? 0,
-          bonus: { ...(draft.bonus[playerId] ?? EMPTY_BONUS) },
-        })),
+        ...(draft.voided > 0 ? { voided: draft.voided } : {}),
+        entries: game.playerIds.map((playerId) => {
+          const rascal = draft.rascal[playerId] ?? 0
+          return {
+            playerId,
+            bid: draft.bids[playerId] ?? 0,
+            tricks: draft.tricks[playerId] ?? 0,
+            bonus: { ...(draft.bonus[playerId] ?? EMPTY_BONUS) },
+            ...(rascal !== 0 ? { rascal } : {}),
+          }
+        }),
       }
 
       const existing = game.rounds.some((candidate) => candidate.index === round.index)

@@ -146,6 +146,53 @@ export const rulesEn: RuleSection[] = [
     ],
   },
   {
+    id: 'variants',
+    title: 'The optional variants',
+    blocks: [
+      {
+        kind: 'p',
+        text: "Two settings are chosen as the table is set, and the app remembers them from one game to the next. Nothing is forced: a table that leaves them off plays the classic score, unchanged.",
+      },
+      {
+        kind: 'p',
+        text: 'Kraken and White Whale: 2 more cards in the deck, so 72.',
+      },
+      {
+        kind: 'ul',
+        items: [
+          'The Kraken voids the trick. Nobody takes it and it counts for nobody: the tricks of the round then add up to less than the number of cards dealt.',
+          "The White Whale strips every special card of its power for that trick: the highest number wins, whatever the suit. If nobody played a number, that trick is voided too.",
+        ],
+      },
+      {
+        kind: 'p',
+        text: 'So the app asks, each round, how many tricks were voided. That is all it needs to know about them.',
+      },
+      {
+        kind: 'p',
+        text: 'Pirate powers: each of the 5 pirates gains one, announced as it is played.',
+      },
+      {
+        kind: 'ul',
+        items: [
+          'Harry the Giant lets you change your own bid by 1 trick, up or down. To correct it in the app, step back to the bids: the round entry is not lost.',
+          'Rosie D’Laney names who leads the next trick.',
+          'Bendt the Bandit draws 2 cards from the stock, then discards 2.',
+          'Juanita Jade lets you look through the undealt cards and swap one for a card in your hand.',
+          'Rascal Jack wagers 0, 10 or 20 points on taking this trick. Wager met, you score it; wager lost, you pay it.',
+        ],
+      },
+      {
+        kind: 'p',
+        text: "Rascal Jack's wager is entered in the bonus sheet, but it is not a bonus: it counts whatever happens, including when the bid is missed and the bonuses are cancelled. There is only one Rascal Jack in the deck, so at most one wager per round.",
+      },
+      {
+        kind: 'p',
+        text: "The app does not track the cards played. Of those 7 additions it only asks for the 2 that change the score: the voided tricks, and the Rascal's wager.",
+      },
+    ],
+  },
+  {
     id: 'faq',
     title: 'Recurring questions',
     blocks: [

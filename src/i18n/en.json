@@ -8,11 +8,9 @@
   "nav.settings": "Settings",
   "nav.back": "Back",
   "nav.close": "Close",
-
   "update.available": "A new version is ready.",
   "update.action": "Reload",
   "update.dismiss": "Later",
-
   "action.cancel": "Cancel",
   "action.undo": "Undo",
   "action.delete": "Delete",
@@ -249,5 +247,22 @@
   "summary.lede": "Ten rounds played. Here is how it went.",
   "bonus.count": "{count} bonuses recorded",
   "bonus.countOne": "{count} bonus recorded",
-  "nav.sections": "Sections"
+  "nav.sections": "Sections",
+  "newGame.seaMonsters": "Kraken and White Whale",
+  "newGame.seaMonsters.on": "A trick can be won by nobody. The round counts its voided tricks.",
+  "newGame.seaMonsters.off": "Every trick goes to someone.",
+  "newGame.advancedPirates": "Pirate powers",
+  "newGame.advancedPirates.on": "Rascal Jack's wager is entered with the bonuses.",
+  "newGame.advancedPirates.off": "Pirates have no special power.",
+  "game.voided": "Voided tricks",
+  "game.voided.help": "Kraken or White Whale",
+  "a11y.voided.decrease": "One less voided trick",
+  "a11y.voided.increase": "One more voided trick",
+  "issue.voided.range": "Between 0 and {max} voided tricks",
+  "bonus.rascal": "Rascal Jack's wager",
+  "bonus.rascal.help": "Won or lost, whatever happens to the bid.",
+  "bonus.rascal.none": "None",
+  "bonus.rascal.taken": "{name} already placed the wager this round",
+  "issue.rascal.multiple": "The deck holds only one Rascal Jack",
+  "issue.rascal.value": "The wager is 0, 10 or 20 points"
 }
