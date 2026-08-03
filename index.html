@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Sept Mers</title>
+    <meta
+      name="description"
+      content="Compteur de points non officiel pour Skull King. Hors ligne, sans compte, sans suivi."
+    />
+    <meta name="theme-color" content="#E4E4E2" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Sept Mers" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+    <script>
+      // Le thème s'applique avant le premier rendu : sans ça, un écran clair
+      // clignote avant de passer au sombre.
+      (function () {
+        try {
+          var raw = localStorage.getItem('sept-mers')
+          var theme = raw ? JSON.parse(raw).settings.theme : 'system'
+          var dark =
+            theme === 'dark' ||
+            (theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute('content', dark ? '#131313' : '#E4E4E2')
+        } catch (error) {
+          document.documentElement.setAttribute('data-theme', 'light')
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

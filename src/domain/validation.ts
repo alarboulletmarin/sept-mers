@@ -1,0 +1,287 @@
+import {
+  BONUS_KEYS,
+  BONUS_LIMITS,
+  EMPTY_BONUS,
+  type Id,
+  type RoundBonus,
+} from './types.ts'
+
+export type IssueCode =
+  | 'bid.missing'
+  | 'bid.range'
+  | 'tricks.missing'
+  | 'tricks.range'
+  | 'tricks.sum'
+  | 'bonus.colorFourteens'
+  | 'bonus.blackFourteen'
+  | 'bonus.piratesTakenBySkullKing'
+  | 'bonus.skullKingTakenByMermaid'
+  | 'bonus.mermaidBudget'
+  | 'bonus.skullKingCaptured'
+  | 'bonus.moreCapturesThanTricks'
+
+export interface Issue {
+  code: IssueCode
+  /** Absent quand la contrainte porte sur la manche entière. */
+  playerId?: Id
+  /** Valeurs à injecter dans le message. */
+  data?: Record<string, number>
+}
+
+export type BidMap = Record<Id, number | null>
+export type TrickMap = Record<Id, number | null>
+export type BonusMap = Record<Id, RoundBonus>
+
+/** Les trois bonus qui découlent d'un pli remporté. Les 14 sont de la possession. */
+export const CAPTURE_KEYS = [
+  'mermaidsTakenByPirate',
+  'piratesTakenBySkullKing',
+  'skullKingTakenByMermaid',
+] as const
+
+function bonusOf(bonuses: BonusMap, playerId: Id): RoundBonus {
+  return bonuses[playerId] ?? EMPTY_BONUS
+}
+
+function sumBonus(bonuses: BonusMap, playerIds: Id[], key: keyof RoundBonus): number {
+  return playerIds.reduce((total, id) => total + bonusOf(bonuses, id)[key], 0)
+}
+
+function captureCount(bonus: RoundBonus): number {
+  return CAPTURE_KEYS.reduce((total, key) => total + bonus[key], 0)
+}
+
+// ---------------------------------------------------------------- Phase mises
+
+/**
+ * Les mises sont libres : leur somme peut dépasser ou rester sous le nombre de
+ * plis, c'est le sel du jeu. On vérifie seulement qu'elles sont renseignées et
+ * dans les bornes.
+ */
+export function validateBids(bids: BidMap, cards: number, playerIds: Id[]): Issue[] {
+  const issues: Issue[] = []
+  for (const id of playerIds) {
+    const bid = bids[id]
+    if (bid === null || bid === undefined) {
+      issues.push({ code: 'bid.missing', playerId: id })
+      continue
+    }
+    if (!Number.isInteger(bid) || bid < 0 || bid > cards) {
+      issues.push({ code: 'bid.range', playerId: id, data: { max: cards } })
+    }
+  }
+  return issues
+}
+
+/** Somme des mises, pour l'indicateur informatif de pied d'écran. */
+export function sumBids(bids: BidMap, playerIds: Id[]): number {
+  return playerIds.reduce((total, id) => total + (bids[id] ?? 0), 0)
+}
+
+// ------------------------------------------------------------ Phase résultats
+
+/**
+ * Sans Kraken ni Baleine blanche, aucun pli ne disparaît : la somme des plis
+ * vaut exactement le nombre de cartes de la manche.
+ */
+export function validateTricks(tricks: TrickMap, cards: number, playerIds: Id[]): Issue[] {
+  const issues: Issue[] = []
+  let assigned = 0
+  let complete = true
+
+  for (const id of playerIds) {
+    const value = tricks[id]
+    if (value === null || value === undefined) {
+      issues.push({ code: 'tricks.missing', playerId: id })
+      complete = false
+      continue
+    }
+    if (!Number.isInteger(value) || value < 0 || value > cards) {
+      issues.push({ code: 'tricks.range', playerId: id, data: { max: cards } })
+      complete = false
+      continue
+    }
+    assigned += value
+  }
+
+  if (complete && assigned !== cards) {
+    issues.push({ code: 'tricks.sum', data: { assigned, cards, diff: cards - assigned } })
+  }
+  return issues
+}
+
+/** Plis restant à attribuer, pour le compteur de pied d'écran. */
+export function remainingTricks(tricks: TrickMap, cards: number, playerIds: Id[]): number {
+  const assigned = playerIds.reduce((total, id) => total + (tricks[id] ?? 0), 0)
+  return cards - assigned
+}
+
+/**
+ * Le joueur dont la valeur se déduit des autres, ou `null` s'il en manque
+ * plusieurs. La phase résultats le complète automatiquement.
+ */
+export function soleMissingPlayer(tricks: TrickMap, playerIds: Id[]): Id | null {
+  const missing = playerIds.filter((id) => tricks[id] === null || tricks[id] === undefined)
+  return missing.length === 1 ? missing[0] : null
+}
+
+// -------------------------------------------------------------------- Bonus
+
+export function validateBonuses(
+  bonuses: BonusMap,
+  tricks: TrickMap,
+  playerIds: Id[],
+): Issue[] {
+  const issues: Issue[] = []
+  const total = (key: keyof RoundBonus) => sumBonus(bonuses, playerIds, key)
+
+  const fourteens = total('colorFourteens')
+  if (fourteens > BONUS_LIMITS.colorFourteens) {
+    issues.push({ code: 'bonus.colorFourteens', data: { max: BONUS_LIMITS.colorFourteens } })
+  }
+
+  const black = total('blackFourteen')
+  if (black > BONUS_LIMITS.blackFourteen) {
+    issues.push({ code: 'bonus.blackFourteen', data: { max: BONUS_LIMITS.blackFourteen } })
+  }
+
+  const pirates = total('piratesTakenBySkullKing')
+  if (pirates > BONUS_LIMITS.piratesTakenBySkullKing) {
+    issues.push({
+      code: 'bonus.piratesTakenBySkullKing',
+      data: { max: BONUS_LIMITS.piratesTakenBySkullKing },
+    })
+  }
+
+  const skullKingCaught = total('skullKingTakenByMermaid')
+  if (skullKingCaught > BONUS_LIMITS.skullKingTakenByMermaid) {
+    issues.push({ code: 'bonus.skullKingTakenByMermaid' })
+  }
+
+  // Une sirène qui capture le Skull King n'est pas elle-même capturée par un
+  // pirate : les deux sirènes du paquet se partagent ces deux rôles.
+  const mermaids = total('mermaidsTakenByPirate')
+  if (mermaids + skullKingCaught > BONUS_LIMITS.mermaidsTakenByPirate) {
+    issues.push({
+      code: 'bonus.mermaidBudget',
+      data: { max: BONUS_LIMITS.mermaidsTakenByPirate },
+    })
+  }
+
+  // Le Skull King capturé ne remporte aucun pli : il ne peut donc pas avoir
+  // capturé de pirate dans la même manche.
+  if (pirates > 0 && skullKingCaught > 0) {
+    issues.push({ code: 'bonus.skullKingCaptured' })
+  }
+
+  for (const id of playerIds) {
+    const won = tricks[id]
+    if (won === null || won === undefined) continue
+    const captures = captureCount(bonusOf(bonuses, id))
+    if (captures > won) {
+      issues.push({
+        code: 'bonus.moreCapturesThanTricks',
+        playerId: id,
+        data: { captures, tricks: won },
+      })
+    }
+  }
+
+  return issues
+}
+
+/**
+ * Plafond d'un compteur de bonus pour un joueur donné, compte tenu de ce que
+ * les autres ont déjà déclaré. Le tiroir s'en sert pour désactiver un bouton
+ * en affichant la raison plutôt qu'en refusant en silence.
+ */
+export interface Ceiling {
+  max: number
+  /** Contrainte qui mord en premier, `null` si c'est simplement la borne du paquet. */
+  reason: IssueCode | null
+}
+
+export function bonusCeiling(
+  key: keyof RoundBonus,
+  playerId: Id,
+  bonuses: BonusMap,
+  tricks: TrickMap,
+  playerIds: Id[],
+): Ceiling {
+  const others = playerIds.filter((id) => id !== playerId)
+  const othersTotal = (k: keyof RoundBonus) => sumBonus(bonuses, others, k)
+
+  const candidates: { max: number; reason: IssueCode | null }[] = [
+    { max: BONUS_LIMITS[key] - othersTotal(key), reason: null },
+  ]
+
+  if (key === 'mermaidsTakenByPirate') {
+    candidates.push({
+      max:
+        BONUS_LIMITS.mermaidsTakenByPirate -
+        othersTotal('mermaidsTakenByPirate') -
+        sumBonus(bonuses, playerIds, 'skullKingTakenByMermaid'),
+      reason: 'bonus.mermaidBudget',
+    })
+  }
+
+  if (key === 'skullKingTakenByMermaid') {
+    candidates.push({
+      max:
+        BONUS_LIMITS.mermaidsTakenByPirate -
+        sumBonus(bonuses, playerIds, 'mermaidsTakenByPirate') -
+        othersTotal('skullKingTakenByMermaid'),
+      reason: 'bonus.mermaidBudget',
+    })
+    if (sumBonus(bonuses, playerIds, 'piratesTakenBySkullKing') > 0) {
+      candidates.push({ max: 0, reason: 'bonus.skullKingCaptured' })
+    }
+  }
+
+  if (key === 'piratesTakenBySkullKing') {
+    if (sumBonus(bonuses, playerIds, 'skullKingTakenByMermaid') > 0) {
+      candidates.push({ max: 0, reason: 'bonus.skullKingCaptured' })
+    }
+  }
+
+  if ((CAPTURE_KEYS as readonly string[]).includes(key)) {
+    const won = tricks[playerId]
+    if (won !== null && won !== undefined) {
+      const otherCaptures = CAPTURE_KEYS.filter((k) => k !== key).reduce(
+        (total, k) => total + bonusOf(bonuses, playerId)[k],
+        0,
+      )
+      candidates.push({ max: won - otherCaptures, reason: 'bonus.moreCapturesThanTricks' })
+    }
+  }
+
+  const tightest = candidates.reduce((best, candidate) =>
+    candidate.max < best.max ? candidate : best,
+  )
+  return { max: Math.max(0, tightest.max), reason: tightest.reason }
+}
+
+/** Toutes les manches sont-elles saisissables en l'état ? */
+export function validateRound(
+  bids: BidMap,
+  tricks: TrickMap,
+  bonuses: BonusMap,
+  cards: number,
+  playerIds: Id[],
+): Issue[] {
+  return [
+    ...validateBids(bids, cards, playerIds),
+    ...validateTricks(tricks, cards, playerIds),
+    ...validateBonuses(bonuses, tricks, playerIds),
+  ]
+}
+
+export function issuesFor(issues: Issue[], playerId: Id): Issue[] {
+  return issues.filter((issue) => issue.playerId === playerId)
+}
+
+export function globalIssues(issues: Issue[]): Issue[] {
+  return issues.filter((issue) => issue.playerId === undefined)
+}
+
+export { BONUS_KEYS }

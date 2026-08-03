@@ -1,0 +1,68 @@
+.base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.base:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.base:not(:disabled):active {
+  transform: scale(0.985);
+  opacity: 0.85;
+}
+
+.full {
+  width: 100%;
+}
+
+/* Une seule par écran, ancrée en bas. C'est la seule zone pleine de l'écran. */
+.primary {
+  height: 56px;
+  background: var(--accent);
+  color: var(--accent-on);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.secondary {
+  min-height: 56px;
+  background: var(--card);
+  color: var(--card-on);
+  border: 1px solid var(--hairline);
+}
+
+.ghost {
+  background: transparent;
+  border: 1px solid var(--hairline);
+  color: var(--surface-on, var(--canvas-on));
+}
+
+.quiet {
+  background: transparent;
+  color: var(--surface-muted, var(--canvas-muted));
+  padding: 0 var(--space-3);
+  font-size: 13px;
+}
+
+/*
+ * Sans teinte, c'est la forme du contour qui avertit : un filet tireté, plus
+ * le mot. Aucun autre bouton de l'app n'est tireté.
+ */
+.danger {
+  background: transparent;
+  border: 1px dashed var(--surface-on, var(--canvas-on));
+  color: var(--surface-on, var(--canvas-on));
+}

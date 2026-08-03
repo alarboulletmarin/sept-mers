@@ -1,0 +1,69 @@
+/*
+ * Le bandeau remplace toute boîte de confirmation : on agit d'abord, on peut
+ * revenir en arrière. Il se pose au-dessus de la barre d'action, jamais
+ * par-dessus, sinon il intercepte le tap suivant.
+ */
+.wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--actionbar-h);
+  z-index: 50;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast {
+  --surface: var(--accent);
+  --surface-on: var(--accent-on);
+  --surface-muted: var(--accent-muted);
+  pointer-events: auto;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-5);
+  background: var(--surface);
+  color: var(--surface-on);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-toast);
+  animation: rise var(--dur-base) var(--ease);
+}
+
+.message {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action {
+  flex: none;
+  min-height: 36px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--accent-on);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

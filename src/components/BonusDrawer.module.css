@@ -1,0 +1,79 @@
+/* Cinq compteurs, chacun avec son libellé complet et sa valeur en points. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--canvas);
+  color: var(--canvas-on);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.help {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--canvas-muted);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.step {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--canvas-on);
+  color: var(--canvas);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.step:disabled {
+  opacity: 0.25;
+}
+
+.step:not(:disabled):active {
+  transform: scale(0.92);
+}
+
+.minus {
+  display: block;
+  width: 15px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.value {
+  min-width: 26px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}

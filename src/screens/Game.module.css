@@ -1,0 +1,262 @@
+/*
+ * L'écran de partie est une mosaïque : un widget d'en-tête, une tuile par
+ * joueur. Voir docs/design-system.md.
+ */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--canvas);
+  padding: calc(env(safe-area-inset-top) + var(--space-3)) var(--space-4) var(--space-2);
+}
+
+.headerInner {
+  max-width: 560px;
+  margin: 0 auto;
+  min-width: 0;
+}
+
+/* Le widget de manche : encre, chiffre héros, actions rondes à droite. */
+.roundWidget {
+  --surface: var(--accent);
+  --surface-on: var(--accent-on);
+  --surface-muted: var(--accent-muted);
+  background: var(--surface);
+  color: var(--surface-on);
+  border-radius: var(--radius-widget);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.roundTop {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.roundLeft {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.roundFigure {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.roundNumber {
+  font-size: 56px;
+  line-height: 0.85;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-on);
+  flex: none;
+}
+
+.roundTotal {
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-muted);
+  flex: none;
+}
+
+.roundCaption {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roundActions {
+  display: flex;
+  gap: var(--space-2);
+  flex: none;
+}
+
+/* Action ronde, comme la flèche en coin de la référence. */
+.action {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--accent-on);
+  color: var(--accent);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.action:active {
+  transform: scale(0.92);
+}
+
+/*
+ * Totaux courants, dans l'ordre à table. Nom entier et chiffre : jamais une
+ * initiale, jamais une couleur pour désigner quelqu'un.
+ */
+.totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 0 var(--space-4);
+  min-width: 0;
+}
+
+.totalItem {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-1) 0;
+  border-top: 1px solid rgb(255 255 255 / 0.12);
+}
+
+.totalName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.totalValue {
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+/* ------------------------------------------------------------ tuile joueur */
+
+/* Le nom entier, sur deux lignes s'il le faut. Jamais réduit à une initiale. */
+.name {
+  font-size: 15px;
+  line-height: 1.15;
+  font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.3em;
+}
+
+.tileMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.bidRecall {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--surface-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Le score de la manche : le signe porte l'information, pas la couleur. */
+.tileScore {
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  flex: none;
+}
+
+/* Le bonus est une action nommée, visible sans rien déplier. */
+.bonusButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 36px;
+  border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  color: var(--surface-muted);
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 0;
+  padding: 0 var(--space-2);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.bonusButton:active {
+  transform: scale(0.96);
+}
+
+.bonusSet {
+  border-color: transparent;
+  background: var(--surface-on);
+  color: var(--surface);
+}
+
+.tileIssue {
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--surface-on);
+}
+
+/* ------------------------------------------------------------------ pieds */
+
+.counter {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--canvas-muted);
+}
+
+.counterWarn {
+  color: var(--canvas-on);
+}
+
+.notice {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--sunken);
+  color: var(--sunken-on);
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--canvas-muted);
+  padding: 0 var(--space-1);
+}
+
+.footRow {
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.footRow > * {
+  flex: 1;
+  min-width: 0;
+}

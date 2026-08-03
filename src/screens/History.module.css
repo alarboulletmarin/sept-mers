@@ -1,0 +1,92 @@
+/* Chaque partie terminée est un widget de la mosaïque. */
+.item {
+  --surface: var(--card);
+  --surface-on: var(--card-on);
+  --surface-muted: var(--card-muted);
+  grid-column: span 1;
+  position: relative;
+  display: flex;
+  min-width: 0;
+  background: var(--card);
+  color: var(--card-on);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-widget);
+  overflow: hidden;
+}
+
+.link {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-3);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.link:active {
+  transform: scale(0.985);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.tag {
+  align-self: flex-start;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--card-on);
+  color: var(--card);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winner {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.score {
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.names {
+  font-size: 11px;
+  color: var(--card-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Pas de boîte de confirmation : on agit, on peut revenir. */
+.remove {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  color: var(--card-muted);
+}
+
+.remove:active {
+  background: var(--card-on);
+  color: var(--card);
+}

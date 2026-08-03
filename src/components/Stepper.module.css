@@ -1,0 +1,65 @@
+/*
+ * Le contrôle central : moins, la valeur, plus.
+ *
+ * Les boutons prennent la couleur du texte de la surface qui les porte : sur
+ * une tuile sable ils sont encre, sur une tuile écume ils sont encre aussi,
+ * et le contraste tient tout seul quelle que soit la surface.
+ */
+.stepper {
+  display: grid;
+  grid-template-columns: var(--tap-min) minmax(0, 1fr) var(--tap-min);
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.button {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--surface-on);
+  color: var(--surface);
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+  touch-action: manipulation;
+}
+
+.button:disabled {
+  opacity: 0.25;
+}
+
+.button:not(:disabled):active {
+  transform: scale(0.92);
+}
+
+/* Le moins est dessiné : une icône de moins dans le jeu. */
+.minus {
+  display: block;
+  width: 16px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+/* La valeur est l'objet du widget : c'est elle qu'on lit à bout de bras. */
+.value {
+  min-width: 0;
+  text-align: center;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  color: var(--surface-on);
+}
+
+/* Un tiret de la taille d'un chiffre lisait comme un filet de séparation :
+   la valeur absente se dit plus petit et plus discret. */
+.unset {
+  font-size: 20px;
+  opacity: 0.4;
+  font-weight: 600;
+}

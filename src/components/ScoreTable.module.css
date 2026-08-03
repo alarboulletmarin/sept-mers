@@ -1,0 +1,220 @@
+/*
+ * Le tableau complet, logé dans un widget. Les noms de colonne sont écrits en
+ * diagonale : c'est ce qui permet d'afficher huit noms entiers dans la largeur
+ * d'un téléphone sans les réduire à une initiale.
+ *
+ * Aucun défilement horizontal, à aucune largeur.
+ */
+.frame {
+  border-radius: var(--radius-control);
+  overflow: hidden;
+  background: var(--surface, var(--card));
+  color: var(--surface-on, var(--card-on));
+}
+
+.table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: var(--space-2) var(--space-1);
+  text-align: right;
+  overflow: hidden;
+}
+
+.head th {
+  vertical-align: bottom;
+  padding: 0;
+}
+
+/* --------------------------------------------------- noms en diagonale */
+
+.diagonal {
+  height: 94px;
+  position: relative;
+}
+
+.diagonalInner {
+  position: absolute;
+  bottom: var(--space-2);
+  left: 50%;
+  transform-origin: left bottom;
+  transform: rotate(-58deg);
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  /* Au-delà on abrège proprement : le nom entier reste dans la ligne de totaux. */
+  max-width: 86px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roundHead {
+  padding: var(--space-2) 2px var(--space-2) var(--space-2);
+  text-align: left;
+  vertical-align: bottom;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--surface-muted, var(--card-muted));
+}
+
+.roundCol {
+  width: 16%;
+  min-width: 38px;
+  text-align: left;
+  padding-left: var(--space-2);
+}
+
+.roundLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.roundIndex {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.roundCards {
+  font-size: 10px;
+  color: var(--surface-muted, var(--card-muted));
+}
+
+/* Une manche jouée sur deux prend un fond très léger : le zébrage remplace
+   les filets, qui alourdissaient. */
+.body tr:nth-child(even) th,
+.body tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--surface-on, #000) 5%, transparent);
+}
+
+/* La manche en cours est pleine sur toute sa ligne. */
+.current th,
+.current td {
+  background: var(--accent);
+  color: var(--accent-on);
+}
+
+.current .roundCards,
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  padding-right: var(--space-2);
+}
+
+.delta {
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 800;
+}
+
+.running {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--surface-muted, var(--card-muted));
+}
+
+.pending {
+  color: var(--surface-muted, var(--card-muted));
+  padding-right: var(--space-2);
+  display: block;
+  text-align: right;
+  font-size: 13px;
+}
+
+/* Ligne de totaux : nom entier et score, la dernière qu'on lit. */
+.totalRow th,
+.totalRow td {
+  background: var(--surface-on, #000);
+  color: var(--surface, #fff);
+  vertical-align: top;
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+.totalCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding-right: var(--space-2);
+}
+
+.totalName {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.7;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.total {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.totalLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+
+.editable {
+  cursor: pointer;
+}
+
+/* Six joueurs ou plus : on resserre, et le cumul cède la place. */
+.dense .roundCol {
+  width: 13%;
+}
+
+.dense .delta {
+  font-size: 12px;
+}
+
+.dense .total {
+  font-size: 15px;
+}
+
+.dense .roundIndex {
+  font-size: 13px;
+}
+
+.dense .totalName {
+  font-size: 9px;
+}
+
+.dense .cell,
+.dense .total,
+.dense .totalCell,
+.dense .pending {
+  padding-right: var(--space-1);
+}
+
+.dense .running {
+  display: none;
+}
+
+.dense .table th,
+.dense .table td {
+  padding-left: 1px;
+  padding-right: 1px;
+}
+
+.dense .diagonalInner {
+  font-size: 11px;
+}
