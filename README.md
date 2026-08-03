@@ -11,10 +11,12 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 ## Ce qu'elle fait
 
 - **Score classique**, 2 à 8 joueurs, 10 manches, tout calculé par l'app.
-- **Saisie sans clavier** : une rangée de pastilles numériques, deux taps par
-  joueur et par manche. Le dernier joueur non renseigné se complète tout seul.
-- **Les cinq bonus** dans un tiroir replié, avec leurs bornes matérielles : on ne
-  peut pas attribuer trois sirènes ni faire capturer le Skull King deux fois.
+- **Saisie sans clavier** : une grille de tuiles, une par joueur, avec un
+  contrôle moins / plus. Appui maintenu pour défiler. Le dernier joueur non
+  renseigné se complète tout seul, et sa valeur se recalcule à chaque saisie.
+- **Les cinq bonus** derrière un bouton nommé sur chaque tuile, avec leurs
+  bornes matérielles : on ne peut pas attribuer trois sirènes ni faire capturer
+  le Skull King deux fois.
 - **Plafond du paquet** appliqué automatiquement : à 8 joueurs, les manches 9 et
   10 se jouent à 8 cartes.
 - **Reprise exacte** de la manche et de la phase après fermeture de l'app.
@@ -25,6 +27,9 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 - **Français et anglais**, thème clair, sombre ou système, changeables à chaud.
 - **Export / import** du fichier de données.
 - **Aucun scroll latéral**, à aucune largeur : tout se plie à l'écran.
+- **Noms entiers partout**, jamais une initiale ni une pastille de couleur. Dans
+  le tableau des scores, les huit noms sont écrits en diagonale pour tenir dans
+  la largeur d'un téléphone. La couleur ne porte jamais seule une information.
 
 ## Faire tourner le projet
 
@@ -69,7 +74,7 @@ src/
   main.tsx
   app/          App, Router, Layout, StoreProvider, ThemeProvider, useWakeLock
   screens/      Home, NewGame, Game, GameSummary, History, Players, Rules, Settings
-  components/   Button, NumberPicker, PlayerChip, ScoreTable, Sheet, Toast,
+  components/   Button, Stepper, PlayerChip, ScoreTable, Sheet, Toast,
                 Icon, EmptyState, BonusDrawer
   domain/       scoring, deck, validation, stats, types
   store/        storage, reducer, migrations
@@ -99,10 +104,11 @@ version de schéma soit une addition et pas une réécriture.
 
 ## Tests
 
-128 tests unitaires couvrent le moteur de score — dont les huit cas de référence
+133 tests unitaires couvrent le moteur de score — dont les huit cas de référence
 du cahier des charges —, la validation de saisie, le plafonnement du paquet, les
-statistiques, le réducteur, l'aller-retour export/import, la lecture défensive du
-stockage, les pluriels et la géométrie des graphiques. Le parcours navigateur
+statistiques, le réducteur, la complétion automatique du dernier joueur,
+l'aller-retour export/import, la lecture défensive du stockage, les pluriels et
+la géométrie des graphiques. Le parcours navigateur
 complète le tout sur l'app réellement construite.
 
 ```bash

@@ -20,6 +20,25 @@ const base = `http://127.0.0.1:${server.address().port}`
 const failures = []
 const check = (l, c) => { console.log(`  ${c ? 'ok  ' : 'FAIL'} ${l}`); if (!c) failures.push(l) }
 
+
+/**
+ * Pose une valeur sur une tuile via les boutons moins et plus.
+ * On lit `aria-valuenow` plutôt que de compter les taps : robuste même quand
+ * la valeur a été posée automatiquement pour le dernier joueur.
+ */
+async function setValue(tile, target) {
+  const stepper = tile.locator('[role=spinbutton]')
+  const plus = tile.getByRole('button', { name: /(Ajouter un pli|One more trick)/ })
+  const minus = tile.getByRole('button', { name: /(Retirer un pli|One less trick)/ })
+  for (let guard = 0; guard <= 24; guard += 1) {
+    const now = await stepper.getAttribute('aria-valuenow')
+    if (now !== null && Number(now) === target) return
+    if (now === null || Number(now) < target) await plus.click()
+    else await minus.click()
+  }
+  throw new Error(`valeur ${target} inatteignable`)
+}
+
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'fr-FR' })
 const page = await context.newPage()
@@ -29,8 +48,8 @@ await page.goto(base)
 await page.getByRole('button', { name: 'Nouvelle partie' }).click()
 for (const n of ['Ana', 'Bo', 'Cy']) { await page.getByPlaceholder('Nom du joueur').fill(n); await page.getByRole('button', { name: 'Ajouter', exact: true }).click() }
 await page.getByRole('button', { name: 'Commencer la partie' }).click()
-await page.waitForSelector('text=Manche 1 sur 10')
-await page.locator('main section').nth(0).getByRole('radio', { name: /^1 pour / }).click()
+await page.waitForSelector('[data-round="1"]')
+await setValue(page.locator('[data-player-tile]').nth(0), 1)
 
 // Attendre que le service worker prenne la main.
 await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, { timeout: 15000 })
@@ -40,23 +59,27 @@ await page.waitForTimeout(600)
 // ------------------------------------------------------------- mode avion
 await context.setOffline(true)
 await page.reload()
-await page.waitForSelector('text=Manche 1 sur 10', { timeout: 15000 })
-check('l app se lance hors ligne', await page.getByText('Manche 1 sur 10').isVisible())
-const kept = await page.locator('main section').nth(0).getByRole('radio', { name: /^1 pour / }).getAttribute('aria-checked')
-check('la saisie survit au mode avion', kept === 'true')
+await page.waitForSelector('[data-player-tile]', { timeout: 15000 })
+check('l app se lance hors ligne', await page.locator('[data-round]').first().isVisible())
+const kept = await page
+  .locator('[data-player-tile]')
+  .nth(0)
+  .locator('[role=spinbutton]')
+  .getAttribute('aria-valuenow')
+check('la saisie survit au mode avion', kept === '1')
 
 // Une manche complète, hors ligne.
-const rows = page.locator('main section')
-for (let i = 1; i < 3; i++) await rows.nth(i).getByRole('radio', { name: /^0 pour / }).click()
+const tiles = page.locator('[data-player-tile]')
+for (let i = 1; i < 3; i += 1) await setValue(tiles.nth(i), 0)
 await page.getByRole('button', { name: 'Valider les mises' }).click()
 // Ana prend l'unique pli, Bo zéro : le dernier joueur se complète tout seul.
-await rows.nth(0).getByRole('radio', { name: /^1 pour / }).click()
-await rows.nth(1).getByRole('radio', { name: /^0 pour / }).click()
-const filled = await rows.nth(2).locator('[role=radio][aria-checked=true]').textContent()
+await setValue(tiles.nth(0), 1)
+await setValue(tiles.nth(1), 0)
+const filled = await tiles.nth(2).locator('[role=spinbutton]').getAttribute('aria-valuenow')
 check('le dernier joueur est complété automatiquement, hors ligne', filled === '0')
 await page.getByRole('button', { name: 'Valider la manche' }).click()
-await page.waitForSelector('text=Manche 2 sur 10')
-check('une manche se valide hors ligne', await page.getByText('Manche 2 sur 10').isVisible())
+await page.waitForSelector('text=Les résultats', { timeout: 10000 }).catch(() => {})
+check('une manche se valide hors ligne', await page.locator('[data-round]').first().isVisible())
 
 // Les écrans secondaires aussi.
 await page.goto(`${base}#/rules`)

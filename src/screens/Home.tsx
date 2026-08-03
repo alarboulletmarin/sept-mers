@@ -1,7 +1,6 @@
 import { Button } from '../components/Button.tsx'
 import { EmptyState } from '../components/EmptyState.tsx'
 import { Icon, Logo } from '../components/Icon.tsx'
-import { Initial } from '../components/PlayerChip.tsx'
 import { standings, totals } from '../domain/stats.ts'
 import { TOTAL_ROUNDS } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
@@ -151,11 +150,8 @@ function ResumeCard({ go }: { go: (route: Route) => void }) {
         <span className={styles.resumeScores}>
           {ordered.map((playerId) => (
             <span key={playerId} className={styles.resumeScore}>
-              <Initial
-                name={game.nameSnapshot[playerId] ?? ''}
-                seat={game.playerIds.indexOf(playerId)}
-              />
-              <span className="t-label num">{number(scores[playerId])}</span>
+              <span className={styles.resumeName}>{game.nameSnapshot[playerId]}</span>
+              <span className={styles.resumeValue}>{number(scores[playerId])}</span>
             </span>
           ))}
         </span>

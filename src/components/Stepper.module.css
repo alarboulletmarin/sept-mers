@@ -1,0 +1,65 @@
+/*
+ * Le contrôle de saisie : moins un, la valeur, plus un.
+ *
+ * Il tient dans une tuile de bento, ce que la rangée de pastilles ne faisait
+ * pas. Appui maintenu pour défiler : atteindre 8 ne coûte pas huit taps.
+ */
+.stepper {
+  display: grid;
+  grid-template-columns: var(--tap-min) minmax(0, 1fr) var(--tap-min);
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.button {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  transition: background var(--dur-fast) var(--ease);
+  touch-action: manipulation;
+}
+
+.button:disabled {
+  opacity: 0.3;
+}
+
+.button:not(:disabled):active {
+  background: var(--brass-soft);
+  border-color: var(--brass);
+}
+
+/* Le moins est dessiné : une icône de moins dans le jeu. */
+.minus {
+  display: block;
+  width: 15px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+/* La valeur est l'illustration : c'est elle qu'on lit à bout de bras. */
+.value {
+  min-width: 0;
+  text-align: center;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.unset {
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.compact .value {
+  font-size: 24px;
+}

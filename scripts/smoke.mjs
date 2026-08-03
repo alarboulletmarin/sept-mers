@@ -93,29 +93,48 @@ await startButton.click()
 
 // ---------------------------------------------------------------- les manches
 
-await page.waitForSelector('text=Manche 1 sur 10')
+await page.waitForSelector('[data-round="1"]')
+
+
+/**
+ * Pose une valeur sur une tuile via les boutons moins et plus.
+ * On lit `aria-valuenow` plutôt que de compter les taps : robuste même quand
+ * la valeur a été posée automatiquement pour le dernier joueur.
+ */
+async function setValue(tile, target) {
+  const stepper = tile.locator('[role=spinbutton]')
+  const plus = tile.getByRole('button', { name: /(Ajouter un pli|One more trick)/ })
+  const minus = tile.getByRole('button', { name: /(Retirer un pli|One less trick)/ })
+  for (let guard = 0; guard <= 24; guard += 1) {
+    const now = await stepper.getAttribute('aria-valuenow')
+    if (now !== null && Number(now) === target) return
+    if (now === null || Number(now) < target) await plus.click()
+    else await minus.click()
+  }
+  throw new Error(`valeur ${target} inatteignable`)
+}
 
 /** Saisit une manche : mises puis plis, dont la somme vaut le nombre de cartes. */
 async function playRound(round, bids, tricks, bonus = null) {
-  await page.waitForSelector(`text=Manche ${round} sur 10`)
-  const rows = page.locator('main section')
+  await page.waitForSelector(`[data-round="${round}"]`)
+  const tiles = page.locator('[data-player-tile]')
 
   for (let seat = 0; seat < bids.length; seat += 1) {
-    await rows.nth(seat).getByRole('radio', { name: new RegExp(`^${bids[seat]} pour `) }).click()
+    await setValue(tiles.nth(seat), bids[seat])
   }
   await page.getByRole('button', { name: 'Valider les mises' }).click()
 
-  for (let seat = 0; seat < tricks.length; seat += 1) {
-    await rows.nth(seat).getByRole('radio', { name: new RegExp(`^${tricks[seat]} pour `) }).click()
+  // Le dernier joueur se complète tout seul : on ne saisit que les autres.
+  for (let seat = 0; seat < tricks.length - 1; seat += 1) {
+    await setValue(tiles.nth(seat), tricks[seat])
   }
 
   if (bonus) {
-    const row = rows.nth(bonus.seat)
-    await row.getByRole('button', { name: /^Bonus/ }).click()
+    await tiles.nth(bonus.seat).getByRole('button', { name: /^(Bonus|\+ ?Bonus)/ }).click()
     for (let i = 0; i < bonus.count; i += 1) {
-      await row.getByRole('button', { name: `Ajouter un ${bonus.label}` }).click()
+      await page.getByRole('button', { name: `Ajouter un ${bonus.label}` }).click()
     }
-    await row.getByRole('button', { name: /^Bonus/ }).click()
+    await page.getByRole('button', { name: 'Terminé' }).click()
   }
 
   await page.getByRole('button', { name: 'Valider la manche' }).click()
@@ -161,18 +180,18 @@ await page.getByRole('button', { name: 'Nouvelle partie' }).click()
 await page.getByRole('checkbox', { name: /Ana/ }).click()
 await page.getByRole('checkbox', { name: /Bo/ }).click()
 await page.getByRole('button', { name: 'Commencer la partie' }).click()
-await page.waitForSelector('text=Manche 1 sur 10')
-await page.locator('main section').nth(0).getByRole('radio', { name: /^1 pour / }).click()
+await page.waitForSelector('[data-round="1"]')
+await setValue(page.locator('[data-player-tile]').nth(0), 1)
 
 // Fermer et rouvrir doit restituer la manche, la phase et la saisie en cours.
 await page.reload()
-await page.waitForSelector('text=Manche 1 sur 10')
+await page.waitForSelector('[data-round="1"]')
 const restored = await page
-  .locator('main section')
+  .locator('[data-player-tile]')
   .nth(0)
-  .getByRole('radio', { name: /^1 pour / })
-  .getAttribute('aria-checked')
-check('la saisie en cours est restituée après rechargement', restored === 'true')
+  .locator('[role=spinbutton]')
+  .getAttribute('aria-valuenow')
+check('la saisie en cours est restituée après rechargement', restored === '1')
 await shot('reprise')
 
 // Depuis l'accueil, la partie en cours se reprend d'un tap.
@@ -180,8 +199,8 @@ await page.goto(`${base}#/`)
 await page.waitForSelector('text=Reprendre')
 check('l accueil propose de reprendre', await page.getByText('Reprendre').isVisible())
 await page.getByText('Reprendre').click()
-await page.waitForSelector('text=Manche 1 sur 10')
-check('la reprise rouvre la manche en cours', await page.getByText('Manche 1 sur 10').isVisible())
+await page.waitForSelector('[data-round="1"]')
+check('la reprise rouvre la manche en cours', await page.locator('[data-round]').first().isVisible())
 
 // ------------------------------------------------------------------ plafond à 8
 
@@ -202,7 +221,7 @@ for (const name of ['Ana', 'Bo']) {
 }
 check('la table accepte huit joueurs', (await page.locator('ol li').count()) === 8)
 await page.getByRole('button', { name: 'Commencer la partie' }).click()
-await page.waitForSelector('text=Manche 1 sur 10')
+await page.waitForSelector('[data-round="1"]')
 // L'écriture est debouncée à 300 ms : on la laisse passer avant d'injecter,
 // sinon la sauvegarde en attente écrase l'injection au rechargement.
 await page.waitForTimeout(500)
@@ -233,7 +252,7 @@ await page.evaluate(() => {
 })
 await page.goto(`${base}#/game`)
 await page.reload()
-await page.waitForSelector('text=Manche 9 sur 10')
+await page.waitForSelector("text=Le paquet ne suit plus")
 check('à huit joueurs, la manche 9 se joue à 8 cartes', await page.getByText('8 cartes').first().isVisible())
 check('le plafond est expliqué', await page.getByText(/Le paquet ne suit plus/).isVisible())
 await shot('plafond-huit-joueurs')

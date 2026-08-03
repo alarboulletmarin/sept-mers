@@ -5,7 +5,6 @@ import { AccuracyBars } from '../charts/AccuracyBars.tsx'
 import { BonusBars } from '../charts/BonusBars.tsx'
 import { ScoreLines } from '../charts/ScoreLines.tsx'
 import { Button } from '../components/Button.tsx'
-import { Initial } from '../components/PlayerChip.tsx'
 import { ScoreTable } from '../components/ScoreTable.tsx'
 import { standings, winnerIds } from '../domain/stats.ts'
 import { useT } from '../i18n/index.ts'
@@ -80,11 +79,6 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
             <span className={styles.rankNumber}>
               {row.rank === 1 ? t('summary.rankFirst') : t('summary.rank', { rank: row.rank })}
             </span>
-            <Initial
-              name={game.nameSnapshot[row.playerId] ?? ''}
-              seat={game.playerIds.indexOf(row.playerId)}
-              large
-            />
             <span className={styles.rankName}>{game.nameSnapshot[row.playerId]}</span>
             <span className={styles.rankScore}>
               <span className={index === 0 ? 't-score-xl' : 't-score'}>

@@ -67,6 +67,12 @@ export interface Draft {
   bids: Record<Id, number | null>
   tricks: Record<Id, number | null>
   bonus: Record<Id, RoundBonus>
+  /**
+   * Joueur dont les plis sont déduits des autres. On le retient pour pouvoir
+   * recalculer sa valeur à chaque saisie : sans ça, un `+` de plus sur un autre
+   * joueur laisserait une déduction périmée.
+   */
+  autoTricks?: Id | null
 }
 
 export interface Store {

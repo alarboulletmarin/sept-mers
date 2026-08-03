@@ -104,9 +104,10 @@ table {
 }
 
 .t-display {
-  font-size: 24px;
-  line-height: 1.2;
-  font-weight: 600;
+  font-size: 26px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 .t-section {
@@ -198,7 +199,7 @@ table {
   top: 0;
   z-index: 20;
   background: var(--paper);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 2px solid var(--ink);
   padding: calc(env(safe-area-inset-top) + var(--space-3)) var(--space-4) var(--space-3);
 }
 
@@ -271,39 +272,23 @@ table {
   padding: var(--space-4);
 }
 
+/* Intitulé de section : petites capitales espacées, comme un en-tête de
+   colonne dans un registre. Il porte un filet, pas un fond. */
 .section-title {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.4;
-  font-weight: 500;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   color: var(--ink-muted);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--line);
 }
 
 .divider {
   height: 1px;
   background: var(--line);
   border: 0;
-}
-
-/* Pastille d'initiale, teintée par la couleur du joueur. */
-.initial {
-  width: 28px;
-  height: 28px;
-  flex: none;
-  border-radius: var(--radius-pill);
-  display: grid;
-  place-items: center;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: var(--player-color, var(--ink-muted));
-}
-
-.initial-lg {
-  width: 36px;
-  height: 36px;
-  font-size: 15px;
 }
 
 /* Liste de navigation secondaire. */

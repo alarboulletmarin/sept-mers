@@ -6,7 +6,6 @@ import { RankingBars } from '../charts/RankingBars.tsx'
 import { Button } from '../components/Button.tsx'
 import { EmptyState } from '../components/EmptyState.tsx'
 import { Icon } from '../components/Icon.tsx'
-import { Initial } from '../components/PlayerChip.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { playerStats, ranking } from '../domain/stats.ts'
 import { useT } from '../i18n/index.ts'
@@ -69,7 +68,7 @@ function PlayerList({ go }: { go: (route: Route) => void }) {
         <section className="stack-tight">
           <h2 className="section-title">{t('players.title')}</h2>
           <ul className="linklist">
-            {store.players.map((player, seat) => (
+            {store.players.map((player) => (
               <li key={player.id}>
                 <a
                   className="linkrow"
@@ -79,7 +78,6 @@ function PlayerList({ go }: { go: (route: Route) => void }) {
                     go({ name: 'players', playerId: player.id })
                   }}
                 >
-                  <Initial name={player.name} seat={seat} />
                   <span className="linkrow-label">
                     <span className="t-label">{player.name}</span>
                     <br />
@@ -126,7 +124,6 @@ function PlayerDetail({ playerId, go }: { playerId: string; go: (route: Route) =
   }
 
   const stats = playerStats(player.id, store.games)
-  const seat = store.players.findIndex((candidate) => candidate.id === player.id)
 
   const rows: { label: string; value: string }[] = [
     { label: t('ranking.gamesPlayed'), value: number(stats.gamesPlayed) },
@@ -164,12 +161,6 @@ function PlayerDetail({ playerId, go }: { playerId: string; go: (route: Route) =
     <Screen
       title={player.name}
       onBack={() => go({ name: 'players' })}
-      header={
-        <div className="row topbar-title">
-          <Initial name={player.name} seat={seat} large />
-          <h1 className="t-display topbar-title">{player.name}</h1>
-        </div>
-      }
     >
       <section className="field">
         <label className="section-title" htmlFor="player-name">

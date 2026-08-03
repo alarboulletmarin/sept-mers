@@ -219,8 +219,9 @@
   "table.cards": "{count} c.",
   "table.currentRound": "Manche en cours",
   "table.notPlayed": "Non jouée",
-  "a11y.selectValue": "{value} pour {name}",
   "a11y.selected": "sélectionné",
-  "a11y.playerColor": "Couleur de {name}",
-  "a11y.scrollTable": "Tableau défilable horizontalement"
+  "game.scores": "Scores",
+  "a11y.decrease": "Retirer un pli à {name}",
+  "a11y.increase": "Ajouter un pli à {name}",
+  "game.roundLabel": "Manche"
 }

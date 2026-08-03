@@ -203,6 +203,78 @@ describe('déroulé d une partie', () => {
   })
 })
 
+describe('complétion automatique du dernier joueur', () => {
+  const setup = () =>
+    run(
+      started(),
+      { type: 'game/setBid', playerId: 'p1', bid: 1 },
+      { type: 'game/setBid', playerId: 'p2', bid: 1 },
+      { type: 'game/setBid', playerId: 'p3', bid: 1 },
+      { type: 'game/phase', phase: 'results' },
+    )
+
+  it('déduit le dernier joueur dès qu il est seul à manquer', () => {
+    let store = run(
+      setup(),
+      { type: 'game/setTricks', playerId: 'p1', tricks: 1 },
+      { type: 'game/setTricks', playerId: 'p2', tricks: 0 },
+    )
+    // Manche 1 : une seule carte, donc un seul pli à distribuer.
+    expect(store.draft?.tricks.p3).toBe(0)
+    expect(store.draft?.autoTricks).toBe('p3')
+    store = run(store, { type: 'game/setTricks', playerId: 'p1', tricks: 0 })
+    expect(store.draft?.tricks.p3).toBe(1)
+  })
+
+  it('recalcule la déduction quand un autre joueur change encore', () => {
+    // Le cas du stepper : la déduction tombe pendant qu'on incrémente encore.
+    let store = run(
+      setup(),
+      { type: 'game/setTricks', playerId: 'p1', tricks: 0 },
+      { type: 'game/setTricks', playerId: 'p2', tricks: 0 },
+    )
+    expect(store.draft?.tricks.p3).toBe(1)
+    store = run(store, { type: 'game/setTricks', playerId: 'p2', tricks: 1 })
+    expect(store.draft?.tricks.p3).toBe(0)
+  })
+
+  it('rend la main quand on touche soi-même la valeur déduite', () => {
+    let store = run(
+      setup(),
+      { type: 'game/setTricks', playerId: 'p1', tricks: 1 },
+      { type: 'game/setTricks', playerId: 'p2', tricks: 0 },
+    )
+    expect(store.draft?.autoTricks).toBe('p3')
+    store = run(store, { type: 'game/setTricks', playerId: 'p3', tricks: 1 })
+    expect(store.draft?.autoTricks).toBeNull()
+    expect(store.draft?.tricks.p3).toBe(1)
+  })
+
+  it('ne déduit rien tant que deux joueurs manquent', () => {
+    const store = run(setup(), { type: 'game/setTricks', playerId: 'p1', tricks: 1 })
+    expect(store.draft?.tricks.p2).toBeNull()
+    expect(store.draft?.tricks.p3).toBeNull()
+    expect(store.draft?.autoTricks).toBeNull()
+  })
+
+  it('borne la déduction plutôt que de rendre un nombre négatif', () => {
+    // Manche 3 : trois cartes, mais les deux premiers en annoncent déjà quatre.
+    let store = started()
+    store = playRound(store, [['p1', 1, 1], ['p2', 0, 0], ['p3', 0, 0]])
+    store = playRound(store, [['p1', 2, 2], ['p2', 0, 0], ['p3', 0, 0]])
+    store = run(
+      store,
+      { type: 'game/setBid', playerId: 'p1', bid: 3 },
+      { type: 'game/setBid', playerId: 'p2', bid: 0 },
+      { type: 'game/setBid', playerId: 'p3', bid: 0 },
+      { type: 'game/phase', phase: 'results' },
+      { type: 'game/setTricks', playerId: 'p1', tricks: 3 },
+      { type: 'game/setTricks', playerId: 'p2', tricks: 3 },
+    )
+    expect(store.draft?.tricks.p3).toBe(0)
+  })
+})
+
 describe('historique', () => {
   it('supprime une partie et sait la restituer', () => {
     const finished = run(started(), { type: 'game/finish' })

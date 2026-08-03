@@ -2,7 +2,6 @@ import { cardsForRound } from '../domain/deck.ts'
 import { roundScores, totals } from '../domain/stats.ts'
 import { TOTAL_ROUNDS, type Game, type Id } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
-import { Initial } from './PlayerChip.tsx'
 import styles from './ScoreTable.module.css'
 
 /** Au-delà de cinq colonnes, la table se resserre pour tenir dans la largeur. */
@@ -49,17 +48,14 @@ export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps)
       <table className={styles.table}>
         <thead className={styles.head}>
           <tr>
-            <th scope="col" className={styles.roundCol}>
+            <th scope="col" className={styles.roundHead}>
               {t('table.round')}
             </th>
-            {game.playerIds.map((playerId, seat) => (
-              <th key={playerId} scope="col" className={styles.playerHead}>
-                <span className={styles.playerName}>
-                  <Initial name={game.nameSnapshot[playerId] ?? ''} seat={seat} />
-                  <span className={styles.playerNameText}>{game.nameSnapshot[playerId]}</span>
-                </span>
-                {/* Le nom complet reste lu, même quand la colonne est étroite. */}
-                <span className="sr-only">{game.nameSnapshot[playerId]}</span>
+            {/* Nom entier, écrit en diagonale : c'est ce qui permet d'en tenir
+                huit dans la largeur sans se rabattre sur une initiale. */}
+            {game.playerIds.map((playerId) => (
+              <th key={playerId} scope="col" className={styles.diagonal}>
+                <span className={styles.diagonalInner}>{game.nameSnapshot[playerId]}</span>
               </th>
             ))}
           </tr>
@@ -86,7 +82,7 @@ export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps)
                 {row.cells.map((cell) => (
                   <td key={cell.playerId}>
                     {cell.delta === null ? (
-                      <span className={`${styles.pending} t-label`} aria-label={t('table.notPlayed')}>
+                      <span className={styles.pending} aria-label={t('table.notPlayed')}>
                         —
                       </span>
                     ) : (
@@ -108,7 +104,10 @@ export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps)
             </th>
             {game.playerIds.map((playerId) => (
               <td key={playerId}>
-                <span className={styles.total}>{number(finalTotals[playerId] ?? 0)}</span>
+                <span className={styles.totalCell}>
+                  <span className={styles.totalName}>{game.nameSnapshot[playerId]}</span>
+                  <span className={styles.total}>{number(finalTotals[playerId] ?? 0)}</span>
+                </span>
               </td>
             ))}
           </tr>

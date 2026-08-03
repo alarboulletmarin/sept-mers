@@ -8,7 +8,7 @@
   padding: var(--space-4);
   background: var(--surface);
   border: 1px solid var(--brass);
-  border-left-width: 3px;
+  border-left-width: 4px;
   border-radius: var(--radius-card);
   color: var(--ink);
 }
@@ -25,15 +25,36 @@
 }
 
 .resumeScores {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  padding-top: var(--space-3);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 0 var(--space-3);
+  padding-top: var(--space-2);
   border-top: 1px solid var(--line);
+  min-width: 0;
 }
 
 .resumeScore {
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-1) 0;
+}
+
+.resumeName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resumeValue {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex: none;
 }

@@ -230,6 +230,7 @@ export function normalise(input: unknown): Store {
         bonus[id] = entry
       }
 
+      const auto = draft.autoTricks
       store.draft = {
         gameId: game.id,
         roundIndex: draft.roundIndex,
@@ -237,6 +238,7 @@ export function normalise(input: unknown): Store {
         bids,
         tricks,
         bonus,
+        autoTricks: typeof auto === 'string' && game.playerIds.includes(auto) ? auto : null,
       }
     }
   }

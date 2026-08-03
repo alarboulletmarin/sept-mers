@@ -4,7 +4,7 @@ import { useStore } from '../app/StoreProvider.tsx'
 import type { Route } from '../app/Router.tsx'
 import { Button } from '../components/Button.tsx'
 import { Icon } from '../components/Icon.tsx'
-import { ChipGrid, Initial, PlayerChip } from '../components/PlayerChip.tsx'
+import { ChipGrid, PlayerChip } from '../components/PlayerChip.tsx'
 import { MAX_PLAYERS, MIN_PLAYERS, type Id } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import { runningGame } from '../store/reducer.ts'
@@ -114,7 +114,6 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
                 <PlayerChip
                   key={player.id}
                   name={player.name}
-                  seat={seated.indexOf(player.id)}
                   selected={seated.includes(player.id)}
                   onToggle={() => toggle(player.id)}
                 />
@@ -186,7 +185,6 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
                   <span className={styles.grip} aria-hidden="true">
                     <Icon name="grip" />
                   </span>
-                  <Initial name={player.name} seat={index} />
                   <span className={styles.seatName}>{player.name}</span>
                   {/* Le glisser-déposer ne suffit pas : les flèches font le
                       même travail au clavier et au doigt. */}

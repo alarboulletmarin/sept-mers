@@ -55,13 +55,14 @@ function emptyDraft(game: Game, roundIndex: number): Draft {
     tricks[id] = null
     bonus[id] = { ...EMPTY_BONUS }
   }
-  return { gameId: game.id, roundIndex, phase: 'bids', bids, tricks, bonus }
+  return { gameId: game.id, roundIndex, phase: 'bids', bids, tricks, bonus, autoTricks: null }
 }
 
 /** Draft repeuplé à partir d'une manche déjà validée, pour la corriger. */
 function draftFromRound(game: Game, round: Round): Draft {
   const draft = emptyDraft(game, round.index)
   draft.phase = 'results'
+  draft.autoTricks = null
   for (const entry of round.entries) {
     draft.bids[entry.playerId] = entry.bid
     draft.tricks[entry.playerId] = entry.tricks
@@ -164,10 +165,33 @@ export function reducer(store: Store, action: Action): Store {
       const game = runningGame(store)
       if (!game) return store
       const draft = draftFor(store, game)
-      return {
-        ...store,
-        draft: { ...draft, tricks: { ...draft.tricks, [action.playerId]: action.tricks } },
+      const cards = cardsForRound(draft.roundIndex, game.playerIds.length)
+
+      const tricks: Record<Id, number | null> = {
+        ...draft.tricks,
+        [action.playerId]: action.tricks,
       }
+
+      // Toucher soi-même la valeur déduite, c'est la reprendre en main.
+      let auto = draft.autoTricks ?? null
+      if (auto === action.playerId) auto = null
+
+      const missing = game.playerIds.filter(
+        (id) => tricks[id] === null || tricks[id] === undefined,
+      )
+      if (missing.length === 1) auto = missing[0]
+
+      // On recalcule la déduction à chaque saisie, pas seulement au moment où
+      // elle apparaît : sinon un incrément de plus la laisserait périmée.
+      if (auto !== null && auto !== action.playerId) {
+        const assigned = game.playerIds.reduce(
+          (total, id) => (id === auto ? total : total + (tricks[id] ?? 0)),
+          0,
+        )
+        tricks[auto] = Math.min(cards, Math.max(0, cards - assigned))
+      }
+
+      return { ...store, draft: { ...draft, tricks, autoTricks: auto } }
     }
 
     case 'game/setBonus': {

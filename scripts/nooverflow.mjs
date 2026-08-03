@@ -57,6 +57,25 @@ const AUDIT = () => {
   return [...new Set(problems)]
 }
 
+
+/**
+ * Pose une valeur sur une tuile via les boutons moins et plus.
+ * On lit `aria-valuenow` plutôt que de compter les taps : robuste même quand
+ * la valeur a été posée automatiquement pour le dernier joueur.
+ */
+async function setValue(tile, target) {
+  const stepper = tile.locator('[role=spinbutton]')
+  const plus = tile.getByRole('button', { name: /(Ajouter un pli|One more trick)/ })
+  const minus = tile.getByRole('button', { name: /(Retirer un pli|One less trick)/ })
+  for (let guard = 0; guard <= 24; guard += 1) {
+    const now = await stepper.getAttribute('aria-valuenow')
+    if (now !== null && Number(now) === target) return
+    if (now === null || Number(now) < target) await plus.click()
+    else await minus.click()
+  }
+  throw new Error(`valeur ${target} inatteignable`)
+}
+
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
 
 for (const width of WIDTHS) {
@@ -87,40 +106,33 @@ for (const width of WIDTHS) {
   await audit('nouvelle partie, huit joueurs')
 
   await page.getByRole('button', { name: 'Commencer la partie' }).click()
-  await page.waitForSelector('text=Manche 1 sur 10')
+  await page.waitForSelector('[data-player-tile]')
   await audit('manche 1, mises')
 
-  const rows = page.locator('[data-player-row]')
+  const tiles = page.locator('[data-player-tile]')
   const play = async (round) => {
-    await page.waitForSelector(`text=Manche ${round} sur 10`)
     const cards = Math.min(round, 8)
-    for (let i = 0; i < 8; i += 1) {
-      await rows.nth(i).getByRole('radio', { name: new RegExp(`^${i === 0 ? cards : 0} pour `) }).click()
-    }
+    for (let i = 0; i < 8; i += 1) await setValue(tiles.nth(i), i === 0 ? cards : 0)
     await page.getByRole('button', { name: 'Valider les mises' }).click()
-    for (let i = 0; i < 8; i += 1) {
-      await rows.nth(i).getByRole('radio', { name: new RegExp(`^${i === 0 ? cards : 0} pour `) }).click()
-    }
+    for (let i = 0; i < 7; i += 1) await setValue(tiles.nth(i), i === 0 ? cards : 0)
     await page.getByRole('button', { name: 'Valider la manche' }).click()
   }
 
-  // Manche 10 : le sélecteur le plus long et le tableau le plus rempli.
+  // Manche 10 : la valeur la plus haute et le tableau le plus rempli.
   for (let round = 1; round <= 9; round += 1) await play(round)
-  await page.waitForSelector('text=Manche 10 sur 10')
-  await audit('manche 10, sélecteur le plus long')
+  await audit('manche 10, valeur la plus haute')
 
-  // Le tiroir de bonus déplié.
-  await rows.nth(0).getByRole('radio', { name: /^8 pour / }).click()
-  for (let i = 1; i < 8; i += 1) await rows.nth(i).getByRole('radio', { name: /^0 pour / }).click()
+  // La feuille de bonus ouverte.
+  for (let i = 0; i < 8; i += 1) await setValue(tiles.nth(i), i === 0 ? 8 : 0)
   await page.getByRole('button', { name: 'Valider les mises' }).click()
-  await rows.nth(0).getByRole('radio', { name: /^8 pour / }).click()
-  // Les six suivants à zéro : le dernier se complète tout seul.
-  for (let i = 1; i < 7; i += 1) await rows.nth(i).getByRole('radio', { name: /^0 pour / }).click()
-  await rows.nth(0).getByRole('button', { name: /^Bonus/ }).click()
-  await audit('tiroir de bonus déplié')
+  for (let i = 0; i < 7; i += 1) await setValue(tiles.nth(i), i === 0 ? 8 : 0)
+  await tiles.nth(0).getByRole('button', { name: /^(Bonus|\+ ?Bonus)/ }).click()
+  await page.waitForSelector('text=14 noir')
+  await audit('feuille de bonus ouverte')
+  await page.keyboard.press('Escape')
 
   // Le tableau des scores, en feuille.
-  await page.getByRole('button', { name: 'Tableau des scores' }).click()
+  await page.getByRole('button', { name: 'Scores' }).click()
   await page.waitForSelector('text=Total')
   await audit('tableau des scores, huit joueurs')
   await page.keyboard.press('Escape')

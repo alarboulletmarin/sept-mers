@@ -21,7 +21,7 @@
 
 .rank:first-child {
   background: var(--brass-soft);
-  box-shadow: inset 3px 0 0 var(--brass);
+  box-shadow: inset 4px 0 0 var(--brass);
 }
 
 .rankNumber {
@@ -37,10 +37,8 @@
   flex: 1;
   min-width: 0;
   font-size: 18px;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .rankScore {

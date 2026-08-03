@@ -219,8 +219,9 @@
   "table.cards": "{count} c.",
   "table.currentRound": "Current round",
   "table.notPlayed": "Not played",
-  "a11y.selectValue": "{value} for {name}",
   "a11y.selected": "selected",
-  "a11y.playerColor": "Colour of {name}",
-  "a11y.scrollTable": "Horizontally scrollable table"
+  "game.scores": "Scores",
+  "a11y.decrease": "One less trick for {name}",
+  "a11y.increase": "One more trick for {name}",
+  "game.roundLabel": "Round"
 }

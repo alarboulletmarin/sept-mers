@@ -5,11 +5,10 @@ import { useActionBarHeight } from '../app/useActionBar.ts'
 import { useWakeLock } from '../app/useWakeLock.ts'
 import { Button } from '../components/Button.tsx'
 import { BonusDrawer } from '../components/BonusDrawer.tsx'
-import { Icon } from '../components/Icon.tsx'
-import { NumberPicker } from '../components/NumberPicker.tsx'
-import { Initial } from '../components/PlayerChip.tsx'
+import { Icon, Logo } from '../components/Icon.tsx'
 import { ScoreTable } from '../components/ScoreTable.tsx'
 import { Sheet } from '../components/Sheet.tsx'
+import { Stepper } from '../components/Stepper.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { cardsForRound, isCapped } from '../domain/deck.ts'
 import { scoreRound } from '../domain/scoring.ts'
@@ -18,7 +17,6 @@ import { TOTAL_ROUNDS, bonusIsEmpty, type Id, type RoundBonus } from '../domain/
 import {
   issuesFor,
   remainingTricks,
-  soleMissingPlayer,
   sumBids,
   validateBids,
   validateBonuses,
@@ -69,23 +67,6 @@ export function Game({ go }: { go: (route: Route) => void }) {
   const bidTotal = sumBids(draft.bids, game.playerIds)
   const left = remainingTricks(draft.tricks, cards, game.playerIds)
 
-  /**
-   * Quand il ne reste qu'un joueur non renseigné, sa valeur se déduit :
-   * l'app la pose plutôt que de la faire saisir.
-   */
-  const setTricks = (playerId: Id, value: number) => {
-    dispatch({ type: 'game/setTricks', playerId, tricks: value })
-
-    const after = { ...draft.tricks, [playerId]: value }
-    const missing = soleMissingPlayer(after, game.playerIds)
-    if (missing === null) return
-    const assigned = game.playerIds.reduce((total, id) => total + (after[id] ?? 0), 0)
-    const deduced = cards - assigned
-    if (deduced >= 0 && deduced <= cards) {
-      dispatch({ type: 'game/setTricks', playerId: missing, tricks: deduced })
-    }
-  }
-
   const commit = () => {
     if (!resultsReady) {
       setTouched(true)
@@ -111,44 +92,49 @@ export function Game({ go }: { go: (route: Route) => void }) {
   }
 
   const isBids = draft.phase === 'bids'
+  const openPlayer = openBonus
+    ? { id: openBonus, name: game.nameSnapshot[openBonus] ?? '' }
+    : null
 
   return (
     <div className="screen">
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <div className={styles.headerTop}>
-            <div className={styles.headerTitle}>
-              <span className="t-section">
-                {t('game.round', { round: draft.roundIndex, total: TOTAL_ROUNDS })}
-              </span>
-              <span className="t-caption muted">
-                {t('game.cards', { count: cards })} ·{' '}
-                {isBids ? t('game.phase.bids') : t('game.phase.results')}
-              </span>
-            </div>
+            <h1 className={styles.headerTitle} data-round={draft.roundIndex}>
+              <Logo size={20} className={styles.mark} />
+              <span className={styles.roundLabel}>{t('game.roundLabel')}</span>
+              <span className={styles.roundNumber}>{draft.roundIndex}</span>
+              <span className={styles.roundTotal}>/ {TOTAL_ROUNDS}</span>
+            </h1>
             <button
               type="button"
-              className={styles.headerButton}
+              className={styles.headerAction}
               onClick={() => setTableOpen(true)}
             >
-              <Icon name="chart" />
-              <span className="sr-only">{t('game.scoreTable')}</span>
+              <Icon name="chart" size={16} />
+              {t('game.scores')}
             </button>
             <button
               type="button"
-              className={styles.headerButton}
+              className={styles.headerAction}
               onClick={() => setRulesOpen(true)}
             >
-              <Icon name="book" />
-              <span className="sr-only">{t('game.rulesShortcut')}</span>
+              <Icon name="book" size={16} />
+              {t('game.rulesShortcut')}
             </button>
           </div>
 
+          <p className={styles.phaseLine}>
+            {t('game.cards', { count: cards })} ·{' '}
+            {isBids ? t('game.phase.bids') : t('game.phase.results')}
+          </p>
+
           {game.rounds.length > 0 && (
             <div className={styles.totals}>
-              {game.playerIds.map((playerId, seat) => (
+              {game.playerIds.map((playerId) => (
                 <span key={playerId} className={styles.totalItem}>
-                  <Initial name={game.nameSnapshot[playerId] ?? ''} seat={seat} />
+                  <span className={styles.totalName}>{game.nameSnapshot[playerId]}</span>
                   <span className={styles.totalValue}>{number(running[playerId] ?? 0)}</span>
                 </span>
               ))}
@@ -158,11 +144,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
       </header>
 
       <main className="screen-body" style={{ paddingTop: 'var(--space-4)' }}>
-        {capped && (
-          <p className="t-caption muted" role="note">
-            {t('game.capped', { count: cards })}
-          </p>
-        )}
+        {capped && <p className={styles.capped}>{t('game.capped', { count: cards })}</p>}
 
         {isEditing && (
           <div className={styles.editingBanner}>
@@ -174,40 +156,33 @@ export function Game({ go }: { go: (route: Route) => void }) {
           {isBids ? t('game.bids.hint') : t('game.results.hint')}
         </p>
 
-        <div className={styles.rows}>
-          {game.playerIds.map((playerId, seat) => (
-            <PlayerRow
-              key={playerId}
-              playerId={playerId}
-              seat={seat}
-              name={game.nameSnapshot[playerId] ?? ''}
-              phase={draft.phase}
-              cards={cards}
-              bid={draft.bids[playerId] ?? null}
-              tricks={draft.tricks[playerId] ?? null}
-              bonus={draft.bonus[playerId]}
-              bonuses={draft.bonus}
-              tricksMap={draft.tricks}
-              playerIds={game.playerIds}
-              issues={
-                touched
-                  ? issuesFor(isBids ? bidIssues : [...trickIssues, ...bonusIssues], playerId)
-                  : []
-              }
-              bonusOpen={openBonus === playerId}
-              onToggleBonus={() =>
-                setOpenBonus((current) => (current === playerId ? null : playerId))
-              }
-              onBid={(value) => dispatch({ type: 'game/setBid', playerId, bid: value })}
-              onTricks={(value) => setTricks(playerId, value)}
-              onBonus={(key, value) =>
-                dispatch({ type: 'game/setBonus', playerId, key, value })
-              }
-              options={game.options}
-              signed={signed}
-              t={t}
-            />
-          ))}
+        <div className={styles.board}>
+          <div className={styles.grid}>
+            {game.playerIds.map((playerId) => (
+              <PlayerTile
+                key={playerId}
+                name={game.nameSnapshot[playerId] ?? ''}
+                phase={draft.phase}
+                cards={cards}
+                bid={draft.bids[playerId] ?? null}
+                tricks={draft.tricks[playerId] ?? null}
+                bonus={draft.bonus[playerId]}
+                issues={
+                  touched
+                    ? issuesFor(isBids ? bidIssues : [...trickIssues, ...bonusIssues], playerId)
+                    : []
+                }
+                onBid={(value) => dispatch({ type: 'game/setBid', playerId, bid: value })}
+                onTricks={(value) =>
+                  dispatch({ type: 'game/setTricks', playerId, tricks: value })
+                }
+                onOpenBonus={() => setOpenBonus(playerId)}
+                options={game.options}
+                signed={signed}
+                t={t}
+              />
+            ))}
+          </div>
         </div>
 
         {touched && bonusIssues.filter((issue) => !issue.playerId).length > 0 && (
@@ -259,6 +234,31 @@ export function Game({ go }: { go: (route: Route) => void }) {
         </div>
       </div>
 
+      {/* Les bonus vivent dans une feuille : le tiroir sous la ligne était
+          introuvable, et une tuile n'a pas la place de cinq compteurs. */}
+      <Sheet
+        open={Boolean(openPlayer)}
+        onClose={() => setOpenBonus(null)}
+        title={openPlayer ? t('bonus.title', { name: openPlayer.name }) : ''}
+      >
+        {openPlayer && (
+          <div className="stack">
+            <BonusDrawer
+              playerId={openPlayer.id}
+              playerIds={game.playerIds}
+              bonuses={draft.bonus}
+              tricks={draft.tricks}
+              onChange={(key, value) =>
+                dispatch({ type: 'game/setBonus', playerId: openPlayer.id, key, value })
+              }
+            />
+            <Button variant="primary" onClick={() => setOpenBonus(null)}>
+              {t('action.done')}
+            </Button>
+          </div>
+        )}
+      </Sheet>
+
       <Sheet open={rulesOpen} onClose={() => setRulesOpen(false)} title={t('rules.quick')}>
         <RulesBody quickFirst />
       </Sheet>
@@ -289,132 +289,104 @@ export function Game({ go }: { go: (route: Route) => void }) {
   )
 }
 
-// ------------------------------------------------------------------ la ligne
+// ------------------------------------------------------------------ la tuile
 
-interface PlayerRowProps {
-  playerId: Id
-  seat: number
+interface PlayerTileProps {
   name: string
   phase: 'bids' | 'results'
   cards: number
   bid: number | null
   tricks: number | null
   bonus: RoundBonus
-  bonuses: Record<Id, RoundBonus>
-  tricksMap: Record<Id, number | null>
-  playerIds: Id[]
   issues: Issue[]
-  bonusOpen: boolean
-  onToggleBonus: () => void
   onBid: (value: number) => void
   onTricks: (value: number) => void
-  onBonus: (key: keyof RoundBonus, value: number) => void
+  onOpenBonus: () => void
   options: { bonusIfBidMissed: boolean }
   signed: (value: number) => string
   t: (key: string, vars?: Record<string, string | number>) => string
 }
 
-function PlayerRow(props: PlayerRowProps) {
+function PlayerTile(props: PlayerTileProps) {
   const {
-    playerId,
-    seat,
     name,
     phase,
     cards,
     bid,
     tricks,
     bonus,
-    bonuses,
-    tricksMap,
-    playerIds,
     issues,
-    bonusOpen,
-    onToggleBonus,
     onBid,
     onTricks,
-    onBonus,
+    onOpenBonus,
     options,
     signed,
     t,
   } = props
 
   const isBids = phase === 'bids'
+  const value = isBids ? bid : tricks
   const complete = bid !== null && tricks !== null
 
   // Le total s'affiche en direct dès que la ligne est complète.
-  const score =
-    !isBids && complete
-      ? scoreRound({ bid, tricks, cards, bonus, options })
-      : null
-
-  const bonusCount = Object.values(bonus).reduce((total, value) => total + value, 0)
+  const score = !isBids && complete ? scoreRound({ bid, tricks, cards, bonus, options }) : null
+  const bonusCount = Object.values(bonus).reduce((total, count) => total + count, 0)
 
   return (
     <section
-      data-player-row
-      className={`${styles.row} ${issues.length > 0 ? styles.rowInvalid : ''}`}
+      data-player-tile
+      className={`${styles.tile} ${value !== null ? styles.tileDone : ''} ${
+        issues.length > 0 ? styles.tileInvalid : ''
+      }`}
     >
-      <header className={styles.rowHead}>
-        <span className={styles.rowIdentity}>
-          <Initial name={name} seat={seat} />
-          <span className={styles.rowName}>{name}</span>
-          {!isBids && bid !== null && (
-            <span className={styles.rowBid}>{t('game.bid', { bid })}</span>
-          )}
-        </span>
-        {score && (
-          <span className={`${styles.rowTotal} ${score.total < 0 ? 'missed' : 'kept'}`}>
-            {signed(score.total)}
-          </span>
-        )}
-      </header>
+      {/* Le nom entier : deux joueurs en « D » doivent rester distinguables,
+          et la couleur ne doit jamais porter seule l'information. */}
+      <h2 className={styles.name}>{name}</h2>
 
-      <NumberPicker
+      <Stepper
         max={cards}
-        value={isBids ? bid : tricks}
+        value={value}
         onChange={isBids ? onBid : onTricks}
-        label={
-          isBids
-            ? `${t('game.phase.bids')} — ${name}`
-            : `${t('game.phase.results')} — ${name}`
-        }
-        optionLabel={(value) => t('a11y.selectValue', { value, name })}
+        label={`${isBids ? t('game.phase.bids') : t('game.phase.results')} — ${name}`}
+        decreaseLabel={t('a11y.decrease', { name })}
+        increaseLabel={t('a11y.increase', { name })}
       />
 
+      {!isBids && (
+        <div className={styles.tileMeta}>
+          <span className={styles.bidRecall}>
+            {bid !== null ? t('game.bid', { bid }) : ''}
+          </span>
+          {score && (
+            <span className={`${styles.tileScore} ${score.total < 0 ? 'missed' : 'kept'}`}>
+              {signed(score.total)}
+            </span>
+          )}
+        </div>
+      )}
+
+      {!isBids && (
+        <button
+          type="button"
+          className={`${styles.bonusButton} ${bonusIsEmpty(bonus) ? '' : styles.bonusSet}`}
+          onClick={onOpenBonus}
+        >
+          {bonusIsEmpty(bonus) ? (
+            <>
+              <Icon name="plus" size={14} />
+              {t('game.bonus')}
+            </>
+          ) : (
+            t('game.bonusCount', { count: bonusCount })
+          )}
+        </button>
+      )}
+
       {issues.map((issue, index) => (
-        <p key={index} className={styles.rowIssue} role="alert">
+        <p key={index} className={styles.tileIssue} role="alert">
           {t(`issue.${issue.code}`, issue.data)}
         </p>
       ))}
-
-      {!isBids && (
-        <>
-          <div className={styles.rowFoot}>
-            <button
-              type="button"
-              className={`${styles.bonusToggle} ${bonusCount > 0 ? styles.bonusActive : ''}`}
-              aria-expanded={bonusOpen}
-              onClick={onToggleBonus}
-            >
-              {bonusCount > 0 ? t('game.bonusCount', { count: bonusCount }) : t('game.bonus')}
-              <Icon name="chevron" rotate={bonusOpen ? 'up' : 'down'} size={16} />
-            </button>
-            {!bonusOpen && bonusIsEmpty(bonus) && (
-              <span className={styles.rowHint}>{t('bonus.none')}</span>
-            )}
-          </div>
-
-          {bonusOpen && (
-            <BonusDrawer
-              playerId={playerId}
-              playerIds={playerIds}
-              bonuses={bonuses}
-              tricks={tricksMap}
-              onChange={onBonus}
-            />
-          )}
-        </>
-      )}
     </section>
   )
 }
