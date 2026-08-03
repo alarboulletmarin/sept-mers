@@ -11,9 +11,9 @@
 
 /* La feuille est une surface du système : écume au clair, encre au sombre. */
 .sheet {
-  --surface: var(--foam);
-  --surface-on: var(--foam-on);
-  --surface-muted: var(--foam-muted);
+  --surface: var(--card);
+  --surface-on: var(--card-on);
+  --surface-muted: var(--card-muted);
   width: 100%;
   max-width: 560px;
   max-height: 88dvh;
@@ -26,12 +26,6 @@
   flex-direction: column;
   animation: rise var(--dur-sheet) var(--ease);
   padding-bottom: env(safe-area-inset-bottom);
-}
-
-:root[data-theme='dark'] .sheet {
-  --surface: var(--ink);
-  --surface-on: var(--ink-on);
-  --surface-muted: var(--ink-muted);
 }
 
 .grabber {

@@ -5,20 +5,14 @@
 }
 
 .section {
-  --surface: var(--foam);
-  --surface-gain: var(--gain-dark);
-  --surface-loss: var(--loss-dark);
-  --surface-on: var(--foam-on);
-  --surface-muted: var(--foam-muted);
-  background: var(--foam);
-  color: var(--foam-on);
+  --surface: var(--card);
+  --surface-on: var(--card-on);
+  --surface-muted: var(--card-muted);
+  background: var(--card);
+  color: var(--card-on);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-widget);
   overflow: hidden;
-}
-
-:root[data-theme='dark'] .section {
-  border-color: transparent;
 }
 
 .header {
@@ -63,5 +57,5 @@
 
 .unordered li::marker,
 .ordered li::marker {
-  color: var(--foam-muted);
+  color: var(--card-muted);
 }

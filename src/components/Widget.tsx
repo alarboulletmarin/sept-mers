@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import styles from './Widget.module.css'
 
-/** Les quatre surfaces du design system. Elles découpent, elles n'informent pas. */
-export type Surface = 'ink' | 'foam' | 'sand' | 'tide'
+/** Les trois surfaces du design system. Elles découpent, elles n'informent pas. */
+export type Surface = 'accent' | 'card' | 'sunken'
 export type Span = 'sm' | 'md' | 'lg'
 
 interface WidgetProps {
@@ -19,7 +19,7 @@ interface WidgetProps {
 }
 
 export function Widget({
-  surface = 'foam',
+  surface = 'card',
   span = 'sm',
   tight = false,
   className,

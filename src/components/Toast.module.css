@@ -16,9 +16,9 @@
 }
 
 .toast {
-  --surface: var(--ink);
-  --surface-on: var(--ink-on);
-  --surface-muted: var(--ink-muted);
+  --surface: var(--accent);
+  --surface-on: var(--accent-on);
+  --surface-muted: var(--accent-muted);
   pointer-events: auto;
   width: 100%;
   max-width: 560px;
@@ -49,8 +49,8 @@
   min-height: 36px;
   padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
-  background: var(--sand);
-  color: var(--sand-on);
+  background: var(--accent-on);
+  color: var(--accent);
   font-size: 13px;
   font-weight: 700;
 }

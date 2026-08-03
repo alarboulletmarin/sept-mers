@@ -2,7 +2,7 @@
 
 > Un tableau de bord posé au milieu de la table, pas une feuille de calcul.
 > Il doit se lire d'un coup d'œil, à bout de bras, par quelqu'un qui tient ses
-> cartes de l'autre main — et par quelqu'un qui ne distingue pas les couleurs.
+> cartes de l'autre main. Elle est monochrome : rien n'y dépend d'une teinte.
 
 ---
 
@@ -12,7 +12,7 @@
 
 L'information ne vit pas dans une grille de lignes et de colonnes, mais dans des
 **widgets** : des blocs autonomes, de tailles inégales, chacun avec sa propre
-couleur de fond, posés sur un canevas teinté. Un widget répond à une question et
+valeur de fond, posés sur un canevas neutre. Un widget répond à une question et
 une seule, et il l'annonce par un chiffre qu'on lit de loin.
 
 Trois principes.
@@ -20,8 +20,8 @@ Trois principes.
 1. **Le chiffre est l'objet.** Il occupe la moitié du widget, en graisse lourde
    et chasse fixe. Le libellé est une étiquette minuscule au-dessus. Jamais
    l'inverse.
-2. **La couleur découpe, elle n'informe pas.** Un widget est encre, écume, sable
-   ou marée. Ce choix crée le rythme de la mosaïque et hiérarchise l'écran. Il ne
+2. **La valeur découpe, elle n'informe pas.** Un widget est encre, papier ou
+   fumée. Ce choix crée le rythme de la mosaïque et hiérarchise l'écran. Il ne
    dit jamais si un score est bon ou mauvais.
 3. **Rien ne flotte sans raison.** Pas d'ombre décorative, pas de dégradé. Les
    widgets se distinguent par leur fond, pas par leur relief.
@@ -33,75 +33,81 @@ autour d'une table mal éclairée.
 
 ## 2. Couleurs
 
-### Le principe qui prime sur tous les autres
+**Monochrome. Noir, blanc, gris. Rien d'autre.**
 
-**La palette est construite sur la clarté, pas sur la teinte.** Chaque surface se
-distingue de ses voisines par sa luminosité, de sorte que la mosaïque reste
-lisible en vision dichromate comme en noir et blanc.
+Ce n'est pas une contrainte subie, c'est le parti. Une mosaïque qui ne dispose
+que de la valeur doit dire les choses par la **taille**, le **remplissage** et
+la **forme** — et ce sont précisément les signaux qui survivent à un écran mal
+éclairé, à une photocopie, et à une vision dichromate.
 
-Il en découle une règle absolue : **aucune information n'est portée par la seule
-couleur**. Un score positif ne se distingue pas d'un score négatif par du vert et
-du rouge, mais par son **signe** (`+60`, `−20`) et, quand il faut appuyer, par un
-**remplissage** contre un **contour**. La teinte n'est qu'un renfort pour ceux qui
-la perçoivent.
+Il en découle une règle qui n'a plus aucune exception : **aucune information
+n'est portée par une teinte**, puisqu'il n'y en a plus. Un score se lit à son
+signe, un état à son remplissage, une série à son tracé.
 
 ### Surfaces
 
-Quatre surfaces de widget, identiques dans les deux thèmes. C'est ce qui donne à
-l'app la même allure de jour comme de nuit.
-
-| Rôle | Valeur | Texte dessus | Sourdine dessus | Usage |
-|---|---|---|---|---|
-| `ink` | `#131C1B` | `#F5F3EC` | `#93A9A5` | Widget dense, chiffres clairs sur fond sombre |
-| `foam` | `#F5F3EC` | `#131C1B` | `#5C6B68` | Widget courant, le plus fréquent |
-| `sand` | `#DCEE6B` | `#131C1B` | `#46521C` | Ce qui est actif, en cours, à faire maintenant |
-| `tide` | `#9AA6F2` | `#131C1B` | `#23285C` | Second plan, information de contexte |
-
-Le **canevas** est la seule chose qui change avec le thème.
+Trois surfaces plus le canevas. Elles portent un **rôle**, pas une valeur, et
+**s'inversent avec le thème** : une surface figée aurait donné, en thème sombre,
+du noir sur du noir.
 
 | Rôle | Clair | Sombre | Usage |
 |---|---|---|---|
-| `canvas` | `#E9E5DA` | `#0C2A28` | Fond de page, derrière la mosaïque |
-| `canvas-ink` | `#131C1B` | `#F5F3EC` | Texte posé directement sur le canevas |
-| `canvas-muted` | `#5A6360` | `#8FA8A4` | Libellé secondaire sur le canevas |
-| `hairline` | `#D2CCBC` | `#1B403D` | Le peu de filets qui subsistent |
+| `accent` | `#0F0F0F` | `#FAFAFA` | Ce qui est actif, en cours, choisi, principal |
+| `card` | `#FFFFFF` | `#1E1E1E` | La surface courante, la plus fréquente |
+| `sunken` | `#BDBDBB` | `#323232` | Second plan, information de contexte |
+| `canvas` | `#E4E4E2` | `#131313` | Fond de page, derrière la mosaïque |
 
-Tous les couples texte/fond dépassent 4.9:1, la plupart 13:1.
+Chaque surface publie son texte et sa sourdine, si bien que ce qui vit dedans
+hérite du bon contraste sans le redéclarer.
 
-`sand` est l'accent : la manche en cours, l'action principale, la valeur choisie.
-Une seule zone `sand` par écran, sinon elle ne veut plus rien dire.
+| Sur | Texte clair | Sourdine claire | Texte sombre | Sourdine sombre |
+|---|---|---|---|---|
+| `accent` | `#FAFAFA` | `#A0A0A0` | `#0F0F0F` | `#575757` |
+| `card` | `#0F0F0F` | `#6A6A6A` | `#FAFAFA` | `#9A9A9A` |
+| `sunken` | `#0F0F0F` | `#3D3D3B` | `#FAFAFA` | `#B4B4B4` |
+| `canvas` | `#0F0F0F` | `#5B5B59` | `#FAFAFA` | `#9E9E9E` |
+
+**`accent` est le contraste maximal.** En monochrome, l'accent ne peut être que
+ça : ce qui compte est plein, le reste ne l'est pas. La tuile dont la valeur est
+posée, la manche en cours, l'action principale, la valeur choisie — tout cela est
+`accent`. Une seule zone `accent` dominante par écran.
+
+Tous les couples texte/fond dépassent 5.3:1 dans les deux thèmes, la plupart
+15:1. Un test les vérifie (`src/styles/tokens.test.ts`).
+
+**Règle du filet** : une surface dont l'écart au canevas tombe sous 1.4 se
+dissoudrait ; elle prend alors un filet `hairline`. C'est le cas de `card` dans
+les deux thèmes (1.27 et 1.11). Aucune autre bordure n'existe dans l'app.
 
 ### Ce qui remplace le vert et le rouge
 
 | Cas | Traitement |
 |---|---|
-| Score positif | `+60`, signe collé au chiffre. Sur fond `sand` quand il faut appuyer. |
-| Score négatif | `−20`, avec un vrai signe moins typographique. Fond `ink`, ou contour seul. |
-| Mise tenue | Pastille pleine + le mot |
-| Mise ratée | Pastille contourée + le mot |
+| Score positif | `+60`, signe collé au chiffre |
+| Score négatif | `−20`, avec un vrai signe moins typographique |
+| Valeur posée | Tuile `accent`, pleine |
+| Valeur manquante | Tuile `card`, vide |
+| Action destructrice | Bouton à **filet tireté** — la forme du contour, plus le mot |
 
-Deux teintes de renfort existent, `gain` et `loss`, mais elles n'apparaissent
-jamais seules : toujours accompagnées d'un signe ou d'un mot.
+Il n'existe aucun jeton `gain` ni `loss`. La question ne se pose plus.
 
-| Rôle | Clair | Sombre |
-|---|---|---|
-| `gain` | `#1F6B4A` | `#7BE0A8` |
-| `loss` | `#A8431F` | `#F0A07A` |
+### Séries de graphique
 
-### Couleurs de joueur
+Huit séries à distinguer sans une seule couleur. Trois signaux, dans cet ordre.
 
-Huit teintes, réservées **aux graphiques seuls**. Elles n'apparaissent jamais
-dans l'interface : ni pastille d'initiale, ni point coloré à côté d'un nom. Un
-joueur se reconnaît à son nom écrit en entier, jamais à sa couleur.
+1. **Le nom**, écrit en bout de tracé ou sous la barre. C'est le seul signal qui
+   se lit sans apprentissage.
+2. **Le tracé** : huit motifs de tiretés distincts, du plein au pointillé serré.
+3. **Le remplissage**, pour les barres : plein, hachures montantes, hachures
+   descendantes, quadrillage, pointillé, contour seul.
 
 ```
---player-1: #3D7DD8   --player-2: #2F9E6E   --player-3: #C2603F   --player-4: #7C6AC4
---player-5: #2AA3A8   --player-6: #C34F62   --player-7: #7E8F3A   --player-8: #6C7A85
+--dash-1: none        --dash-2: 7 3        --dash-3: 2 3        --dash-4: 11 3
+--dash-5: 7 3 2 3     --dash-6: 1 3        --dash-7: 13 3 2 3   --dash-8: 4 2 1 2
 ```
 
-Dans un graphique, chaque série porte **aussi** son nom en bout de tracé, et les
-séries empilées se distinguent **aussi** par un remplissage (plein, hachuré,
-pointillé). La couleur est toujours le troisième signal, jamais le premier.
+Les tracés eux-mêmes sont en `currentColor` : ils héritent de la surface qui les
+porte, et restent donc lisibles sur `accent` comme sur `card`.
 
 ## 3. Typographie
 
@@ -159,7 +165,7 @@ C'est le composant central. Tout écran est une mosaïque de widgets.
 **Anatomie**, de haut en bas :
 
 1. **Étiquette** (optionnelle) — pastille arrondie, texte `tag` en capitales.
-   Sur `ink` elle est `sand` ; sur les surfaces claires elle est `ink`.
+   Elle inverse toujours sa surface : claire sur `accent`, sombre sur les autres.
 2. **Chiffre** — `hero` ou `figure`, collé à gauche, signe compris.
 3. **Légende** — une ligne `label` en sourdine, qui dit de quoi le chiffre parle.
 4. **Contenu** (optionnel) — liste, mini-graphique, contrôle.
@@ -172,9 +178,9 @@ C'est le composant central. Tout écran est une mosaïque de widgets.
 | `md` | 2 colonnes | Un graphique, une liste courte |
 | `lg` | 2 colonnes, haut | Le classement, le tableau |
 
-Un widget ne porte jamais de bordure. Il se détache par son fond. La seule
-exception est le widget `foam` sur canevas clair, qui prend un filet `hairline`
-pour ne pas se dissoudre.
+Un widget ne porte de bordure que lorsque son fond est trop proche du canevas
+pour s'en détacher — voir la règle du filet en section 2. Partout ailleurs, c'est
+l'écart de valeur qui sépare.
 
 ## 6. Composants
 
@@ -195,11 +201,11 @@ celui-ci doit être parfait.
 
 | Variante | Apparence | Usage |
 |---|---|---|
-| `primary` | Fond `sand`, texte `ink`, hauteur 56, rayon 999, pleine largeur | Une seule par écran, ancrée en bas |
-| `secondary` | Fond `ink` sur canevas clair, `foam` sur canevas sombre | Action parallèle |
+| `primary` | Fond `accent`, texte `card`, hauteur 56, rayon 999, pleine largeur | Une seule par écran, ancrée en bas |
+| `secondary` | Fond `card`, texte `accent` | Action parallèle |
 | `ghost` | Sans fond, filet `hairline` | Action tertiaire |
 | `quiet` | Sans fond ni filet, texte en sourdine | Annuler, déplier |
-| `danger` | Contour et texte `loss`, sans fond | Supprimer. Le mot porte l'avertissement, la couleur ne fait que l'accompagner. |
+| `danger` | Filet **tireté**, sans fond | Supprimer. Le contour tireté et le mot portent l'avertissement à eux deux. |
 
 Le libellé décrit l'effet : « Valider la manche », pas « Suivant ». Et le message
 qui suit reprend le même verbe : « Manche 4 enregistrée ».
@@ -216,9 +222,9 @@ Widget `sm`. Nom entier en `subtitle`, sur deux lignes si nécessaire, **jamais*
 abrégé en initiale. Puis le stepper. Puis, en phase de résultats, le rappel de
 mise et le score de la manche.
 
-La tuile dont la valeur est posée passe en `sand`. C'est le seul retour dont on a
-besoin pour savoir où on en est dans la saisie : les tuiles restées claires sont
-celles qui manquent.
+La tuile dont la valeur est posée passe en `accent`, pleine. C'est le seul retour
+dont on a besoin pour savoir où on en est : les tuiles restées blanches sont
+celles qui manquent, et on les repère d'un coup d'œil sans rien lire.
 
 ### ScoreBoard
 
@@ -228,7 +234,7 @@ La mosaïque ne remplace pas le tableau complet, elle le met dans un widget `lg`
 - Les noms de colonne sont écrits **en diagonale**, à −58°. C'est ce qui permet
   d'afficher huit noms entiers dans la largeur d'un téléphone sans les réduire à
   une initiale.
-- La manche en cours porte un fond `sand` sur toute sa ligne.
+- La manche en cours porte un fond `accent` sur toute sa ligne.
 - Chaque résultat porte son signe. Le cumul est en dessous, en sourdine.
 - Au-delà de cinq joueurs la table se resserre et le cumul cède la place.
 - **Aucun défilement horizontal**, à aucune largeur.
@@ -236,17 +242,17 @@ La mosaïque ne remplace pas le tableau complet, elle le met dans un widget `lg`
 ### Sheet
 
 Feuille modale montant du bas, coins hauts à 20 px, poignée de 36 × 4, fermeture
-au glissé et par un bouton. Fond `foam` en thème clair, `ink` en thème sombre.
+au glissé et par un bouton. Fond `card` : elle suit le thème comme le reste.
 
 ### Toast
 
-Bandeau bas, fond `ink`, texte `foam`, rayon 999, action à droite. Cinq secondes.
+Bandeau bas, fond `accent`, texte `accent-on`, rayon 999, action à droite. Cinq secondes.
 Il remplace toute boîte de confirmation : on agit d'abord, on peut revenir.
 Il se pose **au-dessus** de la barre d'action, jamais par-dessus.
 
 ### EmptyState
 
-Un widget `md` en `tide`, un titre, une phrase qui dit quoi faire, un bouton.
+Un widget `md` en `sunken`, un titre, une phrase qui dit quoi faire, un bouton.
 Aucune illustration.
 
 ## 7. Règles absolues d'accessibilité
@@ -255,11 +261,12 @@ Elles priment sur toute considération esthétique.
 
 1. **Jamais d'initiale seule pour désigner un joueur.** Trois joueurs dont le nom
    commence par D doivent rester distinguables. Le nom entier, partout.
-2. **Jamais de couleur seule pour porter une information.** Signe, mot, forme ou
-   remplissage viennent toujours en premier.
+2. **Aucune teinte nulle part.** L'app est monochrome, donc la question ne se
+   pose plus : signe, mot, forme et remplissage portent tout.
 3. Cibles tactiles de 44 px, 48 px pour le stepper.
 4. Contraste AA sur tous les textes, dans les deux thèmes, sourdines comprises.
-5. Navigation clavier complète, focus visible en contour `sand` de 2 px.
+5. Navigation clavier complète, focus visible en contour de 2 px, dans la
+   couleur du texte de la surface.
 6. `prefers-reduced-motion` respecté : toutes les durées tombent à zéro.
 7. `env(safe-area-inset-*)` géré en haut et en bas.
 8. **Aucun défilement horizontal**, sur aucun écran ni aucun composant, de 320 px
@@ -275,10 +282,10 @@ Quatre composants SVG maison, sans librairie.
 - Grille : filets horizontaux seulement, jamais de verticales, jamais de fond.
 - Séries : trait de 2.5, sans lissage — les manches sont des points discrets, une
   courbe mentirait sur les valeurs intermédiaires. Point de 3.5 px sur la
-  dernière valeur, nom du joueur en bout de tracé.
-- Barres : rayon 6 en haut, valeur écrite au-dessus ou dedans.
-- Les séries empilées se distinguent par un **remplissage** autant que par une
-  couleur.
+  dernière valeur, nom du joueur en bout de tracé, et un motif de tiretés propre
+  à chaque série.
+- Barres : rayon 2 en haut, valeur écrite au-dessus, et un remplissage propre à
+  chaque série.
 - Aucun dégradé, aucune ombre, aucune animation, aucune infobulle au survol.
 - Chaque graphique porte un `<title>`, un `aria-label`, et une table de données
   en `.sr-only`.
@@ -315,8 +322,8 @@ et une forme qui évoque autant une vague qu'un relevé de scores.
 </svg>
 ```
 
-Il se pose en `sand` sur les surfaces sombres, en `ink` sur les claires. Sur
-l'icône PWA maskable, `sand` sur `ink`.
+Il se pose toujours dans la couleur de texte de sa surface. Sur l'icône PWA
+maskable, blanc sur noir.
 
 **Aucune imagerie de piraterie.** Pas de crâne, pas de couronne, pas de
 parchemin, pas de bois vieilli. Skull King est une marque déposée de Grandpa
@@ -342,36 +349,29 @@ qu'on met à distance.
 ```css
 /* src/styles/tokens.css */
 :root {
-  /* Surfaces de widget — identiques dans les deux thèmes. */
-  --ink: #131c1b;
-  --ink-on: #f5f3ec;
-  --ink-muted: #93a9a5;
+  /* Surfaces — elles portent un rôle et s'inversent avec le thème. */
+  --accent: #0f0f0f;
+  --accent-on: #fafafa;
+  --accent-muted: #a0a0a0;
 
-  --foam: #f5f3ec;
-  --foam-on: #131c1b;
-  --foam-muted: #5c6b68;
+  --card: #ffffff;
+  --card-on: #0f0f0f;
+  --card-muted: #6a6a6a;
 
-  --sand: #dcee6b;
-  --sand-on: #131c1b;
-  --sand-muted: #46521c;
+  --sunken: #bdbdbb;
+  --sunken-on: #0f0f0f;
+  --sunken-muted: #3d3d3b;
 
-  --tide: #9aa6f2;
-  --tide-on: #131c1b;
-  --tide-muted: #23285c;
+  --canvas: #e4e4e2;
+  --canvas-on: #0f0f0f;
+  --canvas-muted: #5b5b59;
+  --hairline: #d0d0ce;
 
-  /* Canevas — la seule chose qui suit le thème. */
-  --canvas: #e9e5da;
-  --canvas-on: #131c1b;
-  --canvas-muted: #5a6360;
-  --hairline: #d2ccbc;
-
-  --gain: #1f6b4a;
-  --loss: #a8431f;
-
-  --player-1: #3d7dd8; --player-2: #2f9e6e;
-  --player-3: #c2603f; --player-4: #7c6ac4;
-  --player-5: #2aa3a8; --player-6: #c34f62;
-  --player-7: #7e8f3a; --player-8: #6c7a85;
+  /* Motifs de tiretés, seul moyen de distinguer huit séries sans teinte. */
+  --dash-1: none;      --dash-2: 7 3;
+  --dash-3: 2 3;       --dash-4: 11 3;
+  --dash-5: 7 3 2 3;   --dash-6: 1 3;
+  --dash-7: 13 3 2 3;  --dash-8: 4 2 1 2;
 
   --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI',
           Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -397,13 +397,22 @@ qu'on met à distance.
 }
 
 :root[data-theme='dark'] {
-  --canvas: #0c2a28;
-  --canvas-on: #f5f3ec;
-  --canvas-muted: #8fa8a4;
-  --hairline: #1b403d;
+  --accent: #fafafa;
+  --accent-on: #0f0f0f;
+  --accent-muted: #575757;
 
-  --gain: #7be0a8;
-  --loss: #f0a07a;
+  --card: #1e1e1e;
+  --card-on: #fafafa;
+  --card-muted: #9a9a9a;
+
+  --sunken: #323232;
+  --sunken-on: #fafafa;
+  --sunken-muted: #b4b4b4;
+
+  --canvas: #131313;
+  --canvas-on: #fafafa;
+  --canvas-muted: #9e9e9e;
+  --hairline: #2c2c2c;
 }
 
 @media (prefers-reduced-motion: reduce) {

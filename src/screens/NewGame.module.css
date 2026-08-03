@@ -14,7 +14,7 @@
 .error {
   font-size: 12px;
   font-weight: 600;
-  color: var(--surface-loss, var(--loss));
+  color: var(--surface-on);
 }
 
 /* L'ordre à table : une liste de pastilles, nom entier et flèches. */
@@ -25,29 +25,23 @@
 }
 
 .seat {
-  --surface: var(--foam);
-  --surface-gain: var(--gain-dark);
-  --surface-loss: var(--loss-dark);
-  --surface-on: var(--foam-on);
-  --surface-muted: var(--foam-muted);
+  --surface: var(--card);
+  --surface-on: var(--card-on);
+  --surface-muted: var(--card-muted);
   display: flex;
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
   min-height: var(--tap-min);
-  background: var(--foam);
-  color: var(--foam-on);
+  background: var(--card);
+  color: var(--card-on);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-pill);
   min-width: 0;
 }
 
-:root[data-theme='dark'] .seat {
-  border-color: transparent;
-}
-
 .grip {
-  color: var(--foam-muted);
+  color: var(--card-muted);
   cursor: grab;
   flex: none;
   display: grid;
@@ -72,7 +66,7 @@
   display: grid;
   place-items: center;
   border-radius: var(--radius-pill);
-  color: var(--foam-muted);
+  color: var(--card-muted);
 }
 
 .move:disabled {
@@ -80,8 +74,8 @@
 }
 
 .move:not(:disabled):active {
-  background: var(--foam-on);
-  color: var(--foam);
+  background: var(--card-on);
+  color: var(--card);
 }
 
 .disclosure {
@@ -96,21 +90,15 @@
 }
 
 .optionPanel {
-  --surface: var(--foam);
-  --surface-gain: var(--gain-dark);
-  --surface-loss: var(--loss-dark);
-  --surface-on: var(--foam-on);
-  --surface-muted: var(--foam-muted);
-  background: var(--foam);
-  color: var(--foam-on);
+  --surface: var(--card);
+  --surface-on: var(--card-on);
+  --surface-muted: var(--card-muted);
+  background: var(--card);
+  color: var(--card-on);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-widget);
   padding: var(--space-4);
   min-width: 0;
-}
-
-:root[data-theme='dark'] .optionPanel {
-  border-color: transparent;
 }
 
 .optionLabel {
@@ -121,5 +109,5 @@
 .optionHelp {
   font-size: 12px;
   line-height: 1.4;
-  color: var(--foam-muted);
+  color: var(--card-muted);
 }

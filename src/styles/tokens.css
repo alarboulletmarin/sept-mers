@@ -1,60 +1,45 @@
 /*
  * Voir docs/design-system.md.
  *
- * La palette est construite sur la clarté, pas sur la teinte : la mosaïque
- * reste lisible en vision dichromate comme en noir et blanc. Aucune
- * information n'est jamais portée par la seule couleur.
+ * Monochrome : noir, blanc, gris. Aucune information ne peut donc dépendre
+ * d'une teinte — la question ne se pose plus. Tout se dit par la valeur, le
+ * remplissage et la forme.
+ *
+ * Les surfaces portent un rôle, pas une valeur, et s'inversent avec le thème :
+ * `accent` est le bloc de contraste maximal, noir de jour et blanc de nuit.
+ * Une surface figée aurait donné, en thème sombre, du noir sur du noir.
  */
 :root {
-  /* Surfaces de widget — identiques dans les deux thèmes. */
-  --ink: #131c1b;
-  --ink-on: #f5f3ec;
-  --ink-muted: #93a9a5;
+  /* Contraste maximal : ce qui est actif, en cours, choisi, principal. */
+  --accent: #0f0f0f;
+  --accent-on: #fafafa;
+  --accent-muted: #a0a0a0;
 
-  --foam: #f5f3ec;
-  --foam-on: #131c1b;
-  --foam-muted: #5c6b68;
+  /* La surface courante, la plus fréquente. */
+  --card: #ffffff;
+  --card-on: #0f0f0f;
+  --card-muted: #6a6a6a;
 
-  --sand: #dcee6b;
-  --sand-on: #131c1b;
-  --sand-muted: #46521c;
+  /* Second plan, information de contexte. */
+  --sunken: #bdbdbb;
+  --sunken-on: #0f0f0f;
+  --sunken-muted: #3d3d3b;
 
-  --tide: #9aa6f2;
-  --tide-on: #131c1b;
-  --tide-muted: #23285c;
+  /* Fond de page, derrière la mosaïque. */
+  --canvas: #e4e4e2;
+  --canvas-on: #0f0f0f;
+  --canvas-muted: #5b5b59;
+  --hairline: #d0d0ce;
 
-  /* Canevas — la seule chose qui suit le thème. */
-  --canvas: #e9e5da;
-  --canvas-on: #131c1b;
-  --canvas-muted: #5a6360;
-  --hairline: #d2ccbc;
-
-  /*
-   * Renforts, jamais seuls : toujours avec un signe ou un mot.
-   *
-   * Trois profondeurs, parce qu'une teinte se choisit pour la surface qui la
-   * porte, pas pour le thème : un panneau écume reste clair en thème sombre.
-   */
-  --gain-light: #7be0a8;
-  --loss-light: #f0a07a;
-  --gain-dark: #1f6b4a;
-  --loss-dark: #a8431f;
-  --gain-deep: #12482f;
-  --loss-deep: #6e2a10;
-
-  /* Sur le canevas, où la teinte suit bien le thème. */
-  --gain: var(--gain-dark);
-  --loss: var(--loss-dark);
-
-  /* Réservées aux graphiques. Jamais dans l'interface. */
-  --player-1: #3d7dd8;
-  --player-2: #2f9e6e;
-  --player-3: #c2603f;
-  --player-4: #7c6ac4;
-  --player-5: #2aa3a8;
-  --player-6: #c34f62;
-  --player-7: #7e8f3a;
-  --player-8: #6c7a85;
+  /* Motifs de tiretés : seul moyen de distinguer huit séries sans teinte. */
+  --dash-1: none;
+  --dash-2: 7 3;
+  --dash-3: 2 3;
+  --dash-4: 11 3;
+  --dash-5: 7 3 2 3;
+  --dash-6: 1 3;
+  --dash-7: 13 3 2 4;
+  --dash-8: 4 2 1 2;
 
   --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
@@ -89,13 +74,22 @@
 }
 
 :root[data-theme='dark'] {
-  --canvas: #0c2a28;
-  --canvas-on: #f5f3ec;
-  --canvas-muted: #8fa8a4;
-  --hairline: #1b403d;
+  --accent: #fafafa;
+  --accent-on: #0f0f0f;
+  --accent-muted: #575757;
 
-  --gain: var(--gain-light);
-  --loss: var(--loss-light);
+  --card: #1e1e1e;
+  --card-on: #fafafa;
+  --card-muted: #9a9a9a;
+
+  --sunken: #323232;
+  --sunken-on: #fafafa;
+  --sunken-muted: #b4b4b4;
+
+  --canvas: #131313;
+  --canvas-on: #fafafa;
+  --canvas-muted: #9e9e9e;
+  --hairline: #2c2c2c;
 }
 
 @media (prefers-reduced-motion: reduce) {

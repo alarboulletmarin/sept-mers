@@ -8,8 +8,8 @@
 .frame {
   border-radius: var(--radius-control);
   overflow: hidden;
-  background: var(--surface, var(--foam));
-  color: var(--surface-on, var(--foam-on));
+  background: var(--surface, var(--card));
+  color: var(--surface-on, var(--card-on));
 }
 
 .table {
@@ -62,7 +62,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: var(--surface-muted, var(--foam-muted));
+  color: var(--surface-muted, var(--card-muted));
 }
 
 .roundCol {
@@ -85,7 +85,7 @@
 
 .roundCards {
   font-size: 10px;
-  color: var(--surface-muted, var(--foam-muted));
+  color: var(--surface-muted, var(--card-muted));
 }
 
 /* Une manche jouée sur deux prend un fond très léger : le zébrage remplace
@@ -95,17 +95,14 @@
   background: color-mix(in srgb, var(--surface-on, #000) 5%, transparent);
 }
 
-/* La manche en cours porte le sable sur toute sa ligne. */
+/* La manche en cours est pleine sur toute sa ligne. */
 .current th,
 .current td {
-  background: var(--sand);
-  color: var(--sand-on);
+  background: var(--accent);
+  color: var(--accent-on);
 }
 
-.current .roundCards {
-  color: var(--sand-muted);
-}
-
+.current .roundCards,
 .cell {
   display: flex;
   flex-direction: column;
@@ -123,15 +120,11 @@
 .running {
   font-size: 11px;
   line-height: 1.3;
-  color: var(--surface-muted, var(--foam-muted));
-}
-
-.current .running {
-  color: var(--sand-muted);
+  color: var(--surface-muted, var(--card-muted));
 }
 
 .pending {
-  color: var(--surface-muted, var(--foam-muted));
+  color: var(--surface-muted, var(--card-muted));
   padding-right: var(--space-2);
   display: block;
   text-align: right;

@@ -48,7 +48,7 @@
   gap: var(--space-2);
   min-width: 0;
   padding: var(--space-1) 0;
-  border-top: 1px solid rgb(19 28 27 / 0.15);
+  border-top: 1px solid rgb(255 255 255 / 0.14);
 }
 
 .resumeName {

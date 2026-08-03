@@ -56,13 +56,13 @@ export function Home({ go }: { go: (route: Route) => void }) {
           {/* Les compteurs de la mosaïque : ce que l'app sait de toi. */}
           {!isFirstLaunch && (
             <>
-              <Widget surface="ink" span="sm">
+              <Widget surface="accent" span="sm">
                 <Tag>{t('home.stat.games')}</Tag>
                 <Figure>{number(totalGames)}</Figure>
                 <Caption>{t('home.stat.gamesCaption')}</Caption>
               </Widget>
 
-              <Widget surface="tide" span="sm">
+              <Widget surface="sunken" span="sm">
                 <Tag>{t('home.stat.players')}</Tag>
                 <Figure>{number(store.players.length)}</Figure>
                 <Caption>{t('home.stat.playersCaption')}</Caption>
@@ -76,7 +76,7 @@ export function Home({ go }: { go: (route: Route) => void }) {
             return (
               <Widget
                 key={game.id}
-                surface="foam"
+                surface="card"
                 span="sm"
                 onClick={() => go({ name: 'summary', gameId: game.id })}
               >
@@ -117,7 +117,7 @@ export function Home({ go }: { go: (route: Route) => void }) {
   )
 }
 
-/** La reprise passe avant tout le reste : widget sable, pleine largeur. */
+/** La reprise passe avant tout le reste : widget plein, pleine largeur. */
 function ResumeWidget({ go }: { go: (route: Route) => void }) {
   const { store } = useStore()
   const { t, number } = useT()
@@ -130,7 +130,7 @@ function ResumeWidget({ go }: { go: (route: Route) => void }) {
   const ordered = [...game.playerIds].sort((a, b) => scores[b] - scores[a])
 
   return (
-    <Widget surface="sand" span="md" onClick={() => go({ name: 'game' })}>
+    <Widget surface="accent" span="md" onClick={() => go({ name: 'game' })}>
       <Tag>{t('home.resume.title')}</Tag>
       <div className={styles.resumeFigure}>
         <span className={styles.resumeNumber}>{roundIndex}</span>

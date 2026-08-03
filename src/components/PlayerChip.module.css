@@ -5,8 +5,8 @@
   min-height: var(--tap-min);
   padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
-  background: var(--foam);
-  color: var(--foam-on);
+  background: var(--card);
+  color: var(--card-on);
   border: 1px solid var(--hairline);
   font-size: 14px;
   font-weight: 600;
@@ -18,10 +18,11 @@
   transform: scale(0.96);
 }
 
+/* Choisie : pleine. C'est le remplissage qui le dit, pas une teinte. */
 .selected {
-  background: var(--sand);
-  color: var(--sand-on);
-  border-color: var(--sand);
+  background: var(--accent);
+  color: var(--accent-on);
+  border-color: var(--accent);
 }
 
 .name {

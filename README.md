@@ -27,8 +27,8 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 - **Français et anglais**, thème clair, sombre ou système, changeables à chaud.
 - **Export / import** du fichier de données.
 - **Aucun scroll latéral**, à aucune largeur : tout se plie à l'écran.
-- **Design en mosaïque** : des widgets colorés, un chiffre en héros par widget.
-  Voir [le design system](docs/design-system.md).
+- **Design en mosaïque, monochrome** : des widgets noir, blanc ou gris, un
+  chiffre en héros par widget. Voir [le design system](docs/design-system.md).
 - **Noms entiers partout**, jamais une initiale ni une pastille de couleur. Dans
   le tableau des scores, les huit noms sont écrits en diagonale pour tenir dans
   la largeur d'un téléphone. La couleur ne porte jamais seule une information.
@@ -113,11 +113,11 @@ version de schéma soit une addition et pas une réécriture.
 
 ## Tests
 
-133 tests unitaires couvrent le moteur de score — dont les huit cas de référence
+146 tests unitaires couvrent le moteur de score — dont les huit cas de référence
 du cahier des charges —, la validation de saisie, le plafonnement du paquet, les
 statistiques, le réducteur, la complétion automatique du dernier joueur,
 l'aller-retour export/import, la lecture défensive du stockage, les pluriels et
-la géométrie des graphiques. Le parcours navigateur
+la géométrie des graphiques et les jetons de la palette. Le parcours navigateur
 complète le tout sur l'app réellement construite.
 
 ```bash
@@ -154,11 +154,17 @@ fonctionnalité.
 Le design system vit dans [`docs/design-system.md`](docs/design-system.md) :
 palette, typographie, anatomie du widget, composants, règles d'accessibilité.
 
-Deux règles y priment sur toute considération esthétique, et les scripts de
-vérification les tiennent : **jamais d'initiale seule pour désigner un joueur**,
-et **jamais de couleur seule pour porter une information**. La palette est
-construite sur la clarté plutôt que sur la teinte, de sorte que la mosaïque
-reste lisible en vision dichromate comme en noir et blanc.
+L'app est **monochrome** : noir, blanc, gris. Aucune information ne peut donc
+dépendre d'une teinte — un score se lit à son signe, un état à son remplissage,
+une série à son motif de tiretés. C'est aussi ce qui la rend lisible en vision
+dichromate comme en noir et blanc.
+
+Les surfaces portent un rôle et **s'inversent avec le thème** : `accent` est le
+bloc de contraste maximal, noir de jour et blanc de nuit. Une surface figée
+donnerait, en thème sombre, du noir sur du noir.
+
+`src/styles/tokens.test.ts` interdit toute couleur saturée dans les jetons et
+vérifie le contraste de chaque couple texte/surface dans les deux thèmes.
 
 ## Mentions légales
 

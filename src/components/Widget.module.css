@@ -18,40 +18,31 @@
   border: 1px solid transparent;
 }
 
-.ink {
-  --surface: var(--ink);
-  --surface-on: var(--ink-on);
-  --surface-muted: var(--ink-muted);
-  --surface-gain: var(--gain-light);
-  --surface-loss: var(--loss-light);
+/* L'accent : ce qui est actif, en cours, choisi. */
+.accent {
+  --surface: var(--accent);
+  --surface-on: var(--accent-on);
+  --surface-muted: var(--accent-muted);
 }
 
-.foam {
-  --surface: var(--foam);
-  --surface-on: var(--foam-on);
-  --surface-muted: var(--foam-muted);
-  --surface-gain: var(--gain-dark);
-  --surface-loss: var(--loss-dark);
+.card {
+  --surface: var(--card);
+  --surface-on: var(--card-on);
+  --surface-muted: var(--card-muted);
 }
 
-.sand {
-  --surface: var(--sand);
-  --surface-on: var(--sand-on);
-  --surface-muted: var(--sand-muted);
-  --surface-gain: var(--gain-dark);
-  --surface-loss: var(--loss-dark);
+.sunken {
+  --surface: var(--sunken);
+  --surface-on: var(--sunken-on);
+  --surface-muted: var(--sunken-muted);
 }
 
-.tide {
-  --surface: var(--tide);
-  --surface-on: var(--tide-on);
-  --surface-muted: var(--tide-muted);
-  --surface-gain: var(--gain-deep);
-  --surface-loss: var(--loss-deep);
-}
-
-/* L'écume sur canevas clair se dissoudrait : c'est la seule à porter un filet. */
-:root:not([data-theme='dark']) .foam {
+/*
+ * Règle du filet : une surface dont l'écart au canevas tombe sous 1.4 se
+ * dissoudrait. C'est le cas de `card` dans les deux thèmes (1.27 et 1.11).
+ * Aucune autre bordure n'existe dans l'app.
+ */
+.card {
   border-color: var(--hairline);
 }
 
@@ -84,6 +75,7 @@
   min-width: 0;
 }
 
+/* L'étiquette inverse toujours sa surface. */
 .tag {
   display: inline-flex;
   align-items: center;
@@ -136,7 +128,6 @@
   min-width: 0;
 }
 
-/* Bouton rond dans un coin de widget, comme la flèche de la référence. */
 .corner {
   position: absolute;
   top: var(--space-3);
@@ -155,7 +146,6 @@
   opacity: 0.75;
 }
 
-/* Widget cliquable en entier. */
 .pressable {
   text-align: left;
   width: 100%;

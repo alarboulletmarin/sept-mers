@@ -335,7 +335,7 @@ function PlayerTile(props: PlayerTileProps) {
 
   return (
     <Widget
-      surface={value === null ? 'foam' : 'sand'}
+      surface={value === null ? 'card' : 'accent'}
       span="sm"
       tight
       marker="player-tile"

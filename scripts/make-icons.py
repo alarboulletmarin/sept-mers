@@ -29,9 +29,9 @@ STROKE_WIDTH = 3.0
 VIEWBOX = 48.0
 CORNER_RADIUS = 11.0
 
-CANVAS = (0xE9, 0xE5, 0xDA)
-INK = (0x13, 0x1C, 0x1B)
-SAND = (0xDC, 0xEE, 0x6B)
+CANVAS = (0xE4, 0xE4, 0xE2)
+INK = (0x0F, 0x0F, 0x0F)
+PAPER = (0xFF, 0xFF, 0xFF)
 
 SAMPLES = 4  # suréchantillonnage par axe
 
@@ -135,7 +135,7 @@ def main() -> None:
         ('icon-512.png', 512, CANVAS, INK, True, 1.0),
         ('icon-180.png', 180, CANVAS, INK, True, 1.0),
         # Maskable : le dessin tient dans les 80 % centraux, fond plein bord.
-        ('icon-maskable-512.png', 512, INK, SAND, False, 0.68),
+        ('icon-maskable-512.png', 512, INK, PAPER, False, 0.68),
     ]
 
     for name, size, background, foreground, rounded, scale in targets:

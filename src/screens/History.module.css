@@ -1,23 +1,17 @@
 /* Chaque partie terminée est un widget de la mosaïque. */
 .item {
-  --surface: var(--foam);
-  --surface-gain: var(--gain-dark);
-  --surface-loss: var(--loss-dark);
-  --surface-on: var(--foam-on);
-  --surface-muted: var(--foam-muted);
+  --surface: var(--card);
+  --surface-on: var(--card-on);
+  --surface-muted: var(--card-muted);
   grid-column: span 1;
   position: relative;
   display: flex;
   min-width: 0;
-  background: var(--foam);
-  color: var(--foam-on);
+  background: var(--card);
+  color: var(--card-on);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-widget);
   overflow: hidden;
-}
-
-:root[data-theme='dark'] .item {
-  border-color: transparent;
 }
 
 .link {
@@ -42,8 +36,8 @@
   align-self: flex-start;
   padding: 4px 9px;
   border-radius: var(--radius-pill);
-  background: var(--foam-on);
-  color: var(--foam);
+  background: var(--card-on);
+  color: var(--card);
   font-size: 10px;
   line-height: 1;
   font-weight: 700;
@@ -72,7 +66,7 @@
 
 .names {
   font-size: 11px;
-  color: var(--foam-muted);
+  color: var(--card-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -89,10 +83,10 @@
   display: grid;
   place-items: center;
   border-radius: var(--radius-pill);
-  color: var(--foam-muted);
+  color: var(--card-muted);
 }
 
 .remove:active {
-  background: var(--foam-on);
-  color: var(--foam);
+  background: var(--card-on);
+  color: var(--card);
 }

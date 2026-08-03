@@ -3,24 +3,20 @@ import { bonusTotals } from '../domain/stats.ts'
 import { BONUS_KEYS, type Game } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import { shorten } from './labels.ts'
+import { Patterns, fillProps, swatchStyle } from './Patterns.tsx'
 import { plotArea, scale } from './primitives.ts'
 import styles from './chart.module.css'
 
 const BOX = { width: 320, height: 190, top: 10, right: 8, bottom: 26, left: 24 }
 
-/** Un ton par type de bonus, du plus courant au plus rare. */
-const TONES = [
-  'var(--player-2)',
-  'var(--player-1)',
-  'var(--player-5)',
-  'var(--player-4)',
-  'var(--player-3)',
-]
+/** Un remplissage par type de bonus, du plus courant au plus rare. */
+const FILLS = ['solid', 'hatch', 'backhatch', 'grid', 'dots'] as const
 
 /** Barres groupées par joueur, une série par type de bonus. */
 export function BonusBars({ game }: { game: Game }) {
   const { t } = useT()
   const titleId = useId()
+  const patternId = useId()
   const rows = bonusTotals(game)
 
   const highest = Math.max(
@@ -48,6 +44,8 @@ export function BonusBars({ game }: { game: Game }) {
         aria-labelledby={titleId}
       >
         <title id={titleId}>{t('chart.bonus.title')}</title>
+
+        <Patterns id={patternId} />
 
         {[0, Math.ceil(highest / 2), highest].map((tick) => (
           <g key={tick}>
@@ -78,7 +76,7 @@ export function BonusBars({ game }: { game: Game }) {
                     width={Math.max(1, barWidth - 1)}
                     height={Math.max(0, y(0) - y(value))}
                     rx={2}
-                    fill={TONES[position]}
+                    {...fillProps(patternId, FILLS[position])}
                   />
                 )
               })}
@@ -98,8 +96,8 @@ export function BonusBars({ game }: { game: Game }) {
       <div className={styles.legend}>
         {BONUS_KEYS.map((key, position) => (
           <span key={key} className={styles.legendItem}>
-            <span className={styles.swatch} style={{ background: TONES[position] }} />
-            {t(`bonus.${key}`)}
+            <span className={styles.swatch} style={swatchStyle(FILLS[position])} />
+            <span>{t(`bonus.${key}`)}</span>
           </span>
         ))}
       </div>

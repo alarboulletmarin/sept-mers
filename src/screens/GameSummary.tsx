@@ -64,7 +64,7 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
     >
       <div className="mosaic">
         {/* Le vainqueur en héros : c'est la seule chose qu'on regarde d'abord. */}
-        <Widget surface="sand" span="md">
+        <Widget surface="accent" span="md">
           <Tag>
             {readOnly
               ? t('summary.readOnly', { date: date(game.endedAt ?? game.startedAt) })
@@ -83,7 +83,7 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
 
         {/* Le reste du classement, une tuile par joueur. */}
         {table.slice(1).map((row) => (
-          <Widget key={row.playerId} surface="foam" span="sm" tight>
+          <Widget key={row.playerId} surface="card" span="sm" tight>
             <Tag>{t('summary.rank', { rank: row.rank })}</Tag>
             <span className={styles.rankName}>{game.nameSnapshot[row.playerId]}</span>
             <Figure>{number(row.total)}</Figure>
@@ -93,22 +93,22 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
           </Widget>
         ))}
 
-        <Widget surface="ink" span="md">
+        <Widget surface="accent" span="md">
           <Tag>{t('chart.scores.title')}</Tag>
           <ScoreLines game={game} />
         </Widget>
 
-        <Widget surface="tide" span="md">
+        <Widget surface="sunken" span="md">
           <Tag>{t('chart.accuracy.title')}</Tag>
           <AccuracyBars game={game} />
         </Widget>
 
-        <Widget surface="foam" span="md">
+        <Widget surface="card" span="md">
           <Tag>{t('chart.bonus.title')}</Tag>
           <BonusBars game={game} />
         </Widget>
 
-        <Widget surface="foam" span="lg">
+        <Widget surface="card" span="lg">
           <Tag>{t('summary.rounds')}</Tag>
           <ScoreTable game={game} />
         </Widget>

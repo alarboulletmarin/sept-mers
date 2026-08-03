@@ -11,7 +11,7 @@ interface EmptyStateProps {
 /** Un widget, un titre, une phrase qui dit quoi faire, un bouton. */
 export function EmptyState({ tag, title, body, action }: EmptyStateProps) {
   return (
-    <Widget surface="tide" span="md">
+    <Widget surface="sunken" span="md">
       {tag && <Tag>{tag}</Tag>}
       <WidgetTitle>{title}</WidgetTitle>
       <Caption>{body}</Caption>

@@ -100,7 +100,7 @@ await p2.emulateMedia({ colorScheme: 'light' })
 await p2.waitForTimeout(200)
 check('et revient en clair', (await p2.evaluate(() => document.documentElement.dataset.theme)) === 'light')
 const meta = await p2.evaluate(() => document.querySelector('meta[name=theme-color]').content)
-check('la couleur de barre suit le thème', meta === '#E9E5DA')
+check('la couleur de barre suit le thème', meta === '#E4E4E2')
 
 await browser.close(); server.close()
 console.log('')

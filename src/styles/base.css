@@ -75,7 +75,7 @@ table {
 }
 
 :focus-visible {
-  outline: 2px solid var(--sand);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--radius-control);
 }
@@ -297,20 +297,20 @@ table {
 .input {
   min-height: var(--tap-min);
   padding: 0 var(--space-4);
-  background: var(--foam);
+  background: var(--card);
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
-  color: var(--foam-on);
+  color: var(--card-on);
   width: 100%;
   font-size: 15px;
 }
 
 .input::placeholder {
-  color: var(--foam-muted);
+  color: var(--card-muted);
 }
 
 .input:focus-visible {
-  outline: 2px solid var(--sand);
+  outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
@@ -327,16 +327,16 @@ table {
   min-height: var(--tap-min);
   padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
-  background: var(--foam);
-  color: var(--foam-on);
+  background: var(--card);
+  color: var(--card-on);
   font-size: 13px;
   font-weight: 600;
   border: 1px solid transparent;
 }
 
 .segmented-option[aria-checked='true'] {
-  background: var(--sand);
-  color: var(--sand-on);
+  background: var(--accent);
+  color: var(--accent-on);
 }
 
 /* Bascule à deux états. */
@@ -364,7 +364,7 @@ table {
 }
 
 .switch[aria-checked='true'] .switch-track {
-  background: var(--sand);
+  background: var(--accent);
   opacity: 1;
 }
 
@@ -381,5 +381,5 @@ table {
 
 .switch[aria-checked='true'] .switch-knob {
   transform: translateX(20px);
-  background: var(--sand-on);
+  background: var(--accent-on);
 }

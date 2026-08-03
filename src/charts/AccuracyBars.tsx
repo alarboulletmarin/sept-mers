@@ -3,16 +3,17 @@ import { accuracy } from '../domain/stats.ts'
 import type { Game } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import { shorten } from './labels.ts'
+import { Patterns, fillProps, swatchStyle } from './Patterns.tsx'
 import { plotArea, scale } from './primitives.ts'
 import styles from './chart.module.css'
 
 const BOX = { width: 320, height: 190, top: 10, right: 8, bottom: 26, left: 24 }
 
-/** Le remplissage distingue les trois séries sans dépendre de la seule couleur. */
+/** Sans teinte, c'est le remplissage seul qui distingue les trois séries. */
 const SERIES = [
-  { key: 'exact', label: 'chart.accuracy.exact', fill: 'var(--player-2)', pattern: null },
-  { key: 'over', label: 'chart.accuracy.over', fill: 'var(--player-3)', pattern: null },
-  { key: 'under', label: 'chart.accuracy.under', fill: 'currentColor', pattern: 'hatch' },
+  { key: 'exact', label: 'chart.accuracy.exact', fill: 'solid' },
+  { key: 'over', label: 'chart.accuracy.over', fill: 'hatch' },
+  { key: 'under', label: 'chart.accuracy.under', fill: 'outline' },
 ] as const
 
 /** Barres empilées par joueur : mises tenues, sur-mises, sous-mises. */
@@ -42,18 +43,7 @@ export function AccuracyBars({ game }: { game: Game }) {
       >
         <title id={titleId}>{t('chart.accuracy.title')}</title>
 
-        <defs>
-          <pattern
-            id={patternId}
-            width="4"
-            height="4"
-            patternUnits="userSpaceOnUse"
-            patternTransform="rotate(45)"
-          >
-            <rect width="4" height="4" fill="transparent" />
-            <line x1="0" y1="0" x2="0" y2="4" stroke="currentColor" strokeWidth="2" />
-          </pattern>
-        </defs>
+        <Patterns id={patternId} />
 
         {[0, Math.ceil(rounds / 2), rounds].map((tick) => (
           <g key={tick}>
@@ -86,7 +76,7 @@ export function AccuracyBars({ game }: { game: Game }) {
                     width={barWidth}
                     height={Math.max(0, y(base) - y(top))}
                     rx={2}
-                    fill={series.pattern ? `url(#${patternId})` : series.fill}
+                    {...fillProps(patternId, series.fill)}
                   />
                 )
                 base = top
@@ -108,18 +98,8 @@ export function AccuracyBars({ game }: { game: Game }) {
       <div className={styles.legend}>
         {SERIES.map((series) => (
           <span key={series.key} className={styles.legendItem}>
-            <span
-              className={styles.swatch}
-              style={
-                series.pattern
-                  ? {
-                      background:
-                        'repeating-linear-gradient(45deg, currentColor 0 2px, transparent 2px 4px)',
-                    }
-                  : { background: series.fill }
-              }
-            />
-            {t(series.label)}
+            <span className={styles.swatch} style={swatchStyle(series.fill)} />
+            <span>{t(series.label)}</span>
           </span>
         ))}
       </div>

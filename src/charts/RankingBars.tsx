@@ -104,7 +104,7 @@ export function RankingBars({ rows, names }: RankingBarsProps) {
                 y={centre - 7}
                 width={Math.max(1, width)}
                 height={14}
-                fill="var(--sand)"
+                fill="currentColor"
                 rx={2}
               />
               <text

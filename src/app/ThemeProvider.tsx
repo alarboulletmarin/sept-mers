@@ -5,7 +5,7 @@ import { useStore } from './StoreProvider.tsx'
 const DARK_QUERY = '(prefers-color-scheme: dark)'
 
 /** Couleur de la barre du navigateur, alignée sur le thème actif. */
-const THEME_COLOR = { light: '#E9E5DA', dark: '#0C2A28' }
+const THEME_COLOR = { light: '#E4E4E2', dark: '#131313' }
 
 /**
  * Applique le thème et la langue à `<html>`. En mode système, un `matchMedia`

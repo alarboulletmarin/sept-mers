@@ -6,8 +6,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#E9E5DA",
-  "theme_color": "#E9E5DA",
+  "background_color": "#E4E4E2",
+  "theme_color": "#E4E4E2",
   "lang": "fr",
   "categories": ["utilities", "games"],
   "icons": [

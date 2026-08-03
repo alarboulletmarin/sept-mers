@@ -98,7 +98,7 @@ function PlayerList({ go }: { go: (route: Route) => void }) {
       {table.length > 0 && (
         <section className="stack-tight">
           <h2 className="section-title">{t('chart.ranking.title')}</h2>
-          <Widget surface="ink" span="md">
+          <Widget surface="accent" span="md">
             <RankingBars rows={table} names={names} />
           </Widget>
         </section>
@@ -207,7 +207,7 @@ function PlayerDetail({ playerId, go }: { playerId: string; go: (route: Route) =
       {stats.gamesPlayed > 0 && (
         <section className="stack-tight">
           <h2 className="section-title">{t('chart.ranking.title')}</h2>
-          <Widget surface="ink" span="md">
+          <Widget surface="accent" span="md">
             <RankingBars
               rows={ranking(store.players, store.games)}
               names={Object.fromEntries(store.players.map((entry) => [entry.id, entry.name]))}

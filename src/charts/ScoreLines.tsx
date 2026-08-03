@@ -1,9 +1,9 @@
 import { useId } from 'react'
-import { playerColor } from '../components/PlayerChip.tsx'
 import { cumulativeSeries } from '../domain/stats.ts'
 import type { Game } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import { shorten } from './labels.ts'
+import { dashFor, opacityFor } from './series.ts'
 import { extent, niceTicks, plotArea, polyline, scale } from './primitives.ts'
 import styles from './chart.module.css'
 
@@ -68,17 +68,18 @@ export function ScoreLines({ game }: { game: Game }) {
           const points = line.points.map((value, index) => ({ x: x(index + 1), y: y(value) }))
           const last = points[points.length - 1]
           return (
-            <g key={line.playerId}>
-              <path className={styles.line} d={polyline(points)} stroke={playerColor(seat)} />
-              {last && <circle cx={last.x} cy={last.y} r={3} fill={playerColor(seat)} />}
-              {/* La couleur seule ne suffit jamais : le nom est en bout de ligne. */}
+            <g key={line.playerId} opacity={opacityFor(seat)}>
+              {/* Sans teinte, c'est le motif de tiretés qui sépare les séries,
+                  et le nom en bout de tracé qui les nomme. */}
+              <path
+                className={styles.line}
+                d={polyline(points)}
+                stroke="currentColor"
+                strokeDasharray={dashFor(seat)}
+              />
+              {last && <circle cx={last.x} cy={last.y} r={3.5} fill="currentColor" />}
               {last && (
-                <text
-                  className={styles.seriesLabel}
-                  x={last.x + 6}
-                  y={last.y + 3}
-                  fill="currentColor"
-                >
+                <text className={styles.seriesLabel} x={last.x + 6} y={last.y + 3} fill="currentColor">
                   {shorten(game.nameSnapshot[line.playerId] ?? '')}
                 </text>
               )}
