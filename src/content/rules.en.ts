@@ -37,15 +37,15 @@ export const rulesEn: RuleSection[] = [
     id: 'material',
     title: 'The deck',
     blocks: [
-      { kind: 'p', text: 'Seventy cards, laid out like this.' },
+      { kind: 'p', text: '70 cards, laid out like this.' },
       {
         kind: 'ul',
         items: [
-          'Four suits numbered 1 to 14: green, yellow, purple, and black which trumps.',
-          'Five Escapes, which lose on purpose.',
-          'Five pirates.',
+          '4 suits numbered 1 to 14: green, yellow, purple, and black which trumps.',
+          '5 Escapes, which lose on purpose.',
+          '5 pirates.',
           'The Tigress, played either as a pirate or as an Escape.',
-          'Two mermaids.',
+          '2 mermaids.',
           'The Skull King.',
         ],
       },
@@ -61,11 +61,11 @@ export const rulesEn: RuleSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: 'A game runs ten rounds. In the first, everyone gets one card, in the second two, and so on up to ten. The number of tricks to win in a round is exactly the number of cards in hand.',
+        text: 'A game runs 10 rounds. You get 1 card in round 1, 2 in round 2, and so on up to 10. The number of tricks to win in a round is exactly the number of cards in hand.',
       },
       {
         kind: 'p',
-        text: 'Once the cards are dealt, everyone announces at the same time how many tricks they expect to take. Zero is allowed. That number is locked for the whole round.',
+        text: 'Once the cards are dealt, everyone announces at the same time how many tricks they expect to take. 0 is allowed. That number is locked for the whole round.',
       },
       {
         kind: 'p',
@@ -77,7 +77,7 @@ export const rulesEn: RuleSection[] = [
       },
       {
         kind: 'p',
-        text: 'With eight players the deck runs short for the last two rounds: they are dealt eight cards each. The app applies that cap on its own.',
+        text: 'With 8 players the deck runs short for the last 2 rounds: they are dealt 8 cards each. The app applies that cap on its own.',
       },
     ],
   },
@@ -105,19 +105,19 @@ export const rulesEn: RuleSection[] = [
     id: 'scoring',
     title: 'Scoring',
     blocks: [
-      { kind: 'p', text: 'Two cases, depending on whether the announcement was zero.' },
+      { kind: 'p', text: '2 cases, depending on whether the announcement was 0.' },
       {
         kind: 'ul',
         items: [
-          'Announcement of one or more, met exactly: twenty points per trick announced.',
-          'Announcement of one or more, missed: ten points off per trick of difference, either way. Tricks won earn nothing.',
-          'Announcement of zero, met: ten points per card dealt in the round.',
-          'Announcement of zero, missed: ten points off per card dealt in the round.',
+          'Announcement of 1 or more, met exactly: 20 points per trick announced.',
+          'Announcement of 1 or more, missed: 10 points off per trick of difference, either way. Tricks won earn nothing.',
+          'Announcement of 0, met: 10 points per card dealt in the round.',
+          'Announcement of 0, missed: 10 points off per card dealt in the round.',
         ],
       },
       {
         kind: 'p',
-        text: 'A zero announcement therefore grows more expensive as the game goes on, in both directions. In round ten it earns a hundred points or costs a hundred.',
+        text: 'A 0 announcement therefore grows more expensive as the game goes on, in both directions. In round 10 it earns 100 points, or costs 100.',
       },
     ],
   },
@@ -128,11 +128,11 @@ export const rulesEn: RuleSection[] = [
       {
         kind: 'ul',
         items: [
-          'Ten points per standard suit 14 held at the end of the round: green, yellow, purple.',
-          'Twenty points for the black 14 held at the end of the round.',
-          'Twenty points per mermaid captured in a trick won by a pirate.',
-          'Thirty points per pirate captured in a trick won by the Skull King. The Tigress played as a pirate counts.',
-          'Forty points for the Skull King captured in a trick won by a mermaid.',
+          '10 points per standard suit 14 held at the end of the round: green, yellow, purple.',
+          '20 points for the black 14 held at the end of the round.',
+          '20 points per mermaid captured in a trick won by a pirate.',
+          '30 points per pirate captured in a trick won by the Skull King. The Tigress played as a pirate counts.',
+          '40 points for the Skull King captured in a trick won by a mermaid.',
         ],
       },
       {
@@ -151,7 +151,7 @@ export const rulesEn: RuleSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: 'A mermaid and the Skull King in the same trick, no pirate. The mermaid takes the trick, and whoever played it earns forty bonus points.',
+        text: 'A mermaid and the Skull King in the same trick, no pirate. The mermaid takes the trick, and whoever played it earns 40 bonus points.',
       },
       {
         kind: 'p',
@@ -159,7 +159,7 @@ export const rulesEn: RuleSection[] = [
       },
       {
         kind: 'p',
-        text: 'Two pirates in the same trick. The one played first takes it, so the seating order decides.',
+        text: '2 pirates in the same trick. The one played first takes it, so the seating order decides.',
       },
       {
         kind: 'p',

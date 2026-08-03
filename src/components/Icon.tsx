@@ -1,5 +1,5 @@
 /**
- * Jeu maison, dix icônes, aucune dépendance.
+ * Jeu maison, douze icônes, aucune dépendance.
  * Trait de 1.75, extrémités arrondies, `currentColor`.
  */
 export type IconName =
@@ -37,10 +37,14 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="M18 6L6 18" />
     </>
   ),
+  /* Un livre ouvert, deux plats et une reliure. La forme d'avant — un plat
+     unique avec un second décalé derrière — se lisait comme un carnet fermé,
+     ou comme rien du tout à 17 px. */
   book: (
     <>
-      <path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z" />
-      <path d="M17 7h2v13H8" />
+      <path d="M12 7.25v12" />
+      <path d="M12 7.25C10.4 5.9 8.3 5.25 5.5 5.25H3v12h2.5c2.8 0 4.9.65 6.5 2" />
+      <path d="M12 7.25c1.6-1.35 3.7-2 6.5-2H21v12h-2.5c-2.8 0-4.9.65-6.5 2" />
     </>
   ),
   chart: (

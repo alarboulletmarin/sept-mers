@@ -37,15 +37,15 @@ export const rulesFr: RuleSection[] = [
     id: 'material',
     title: 'Le paquet',
     blocks: [
-      { kind: 'p', text: 'Soixante-dix cartes, réparties ainsi.' },
+      { kind: 'p', text: '70 cartes, réparties ainsi.' },
       {
         kind: 'ul',
         items: [
-          'Quatre couleurs numérotées de 1 à 14 : vert, jaune, violet, et le noir qui coupe.',
-          'Cinq Fuites, qui perdent volontairement.',
-          'Cinq pirates.',
+          '4 couleurs numérotées de 1 à 14 : vert, jaune, violet, et le noir qui coupe.',
+          '5 Fuites, qui perdent volontairement.',
+          '5 pirates.',
           'La Tigresse, qui se joue au choix en pirate ou en Fuite.',
-          'Deux sirènes.',
+          '2 sirènes.',
           'Le Skull King.',
         ],
       },
@@ -61,11 +61,11 @@ export const rulesFr: RuleSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: "La partie compte dix manches. À la première, chacun reçoit une carte, à la deuxième deux, et ainsi de suite jusqu'à dix. Le nombre de plis à remporter dans la manche est exactement le nombre de cartes en main.",
+        text: "La partie compte 10 manches. On reçoit 1 carte à la manche 1, 2 à la manche 2, et ainsi de suite jusqu'à 10. Le nombre de plis à remporter dans la manche est exactement le nombre de cartes en main.",
       },
       {
         kind: 'p',
-        text: "Une fois les cartes distribuées, tout le monde annonce en même temps combien de plis il compte remporter. On peut annoncer zéro. Ce chiffre est ferme pour toute la manche.",
+        text: "Une fois les cartes distribuées, tout le monde annonce en même temps combien de plis il compte remporter. On peut annoncer 0. Ce chiffre est ferme pour toute la manche.",
       },
       {
         kind: 'p',
@@ -77,7 +77,7 @@ export const rulesFr: RuleSection[] = [
       },
       {
         kind: 'p',
-        text: "À huit joueurs, le paquet ne suffit plus pour les deux dernières manches : elles se jouent à huit cartes chacune. L'app applique ce plafond toute seule.",
+        text: "À 8 joueurs, le paquet ne suffit plus pour les 2 dernières manches : elles se jouent à 8 cartes chacune. L'app applique ce plafond toute seule.",
       },
     ],
   },
@@ -105,19 +105,19 @@ export const rulesFr: RuleSection[] = [
     id: 'scoring',
     title: 'Compter les points',
     blocks: [
-      { kind: 'p', text: 'Deux cas, selon que l’annonce était zéro ou non.' },
+      { kind: 'p', text: '2 cas, selon que l’annonce était 0 ou non.' },
       {
         kind: 'ul',
         items: [
-          'Annonce à un ou plus, tenue exactement : vingt points par pli annoncé.',
-          "Annonce à un ou plus, ratée : dix points de moins par pli d'écart, dans un sens comme dans l'autre. Les plis remportés ne rapportent rien.",
-          'Annonce à zéro, tenue : dix points par carte distribuée dans la manche.',
-          'Annonce à zéro, ratée : dix points de moins par carte distribuée dans la manche.',
+          'Annonce à 1 ou plus, tenue exactement : 20 points par pli annoncé.',
+          "Annonce à 1 ou plus, ratée : 10 points de moins par pli d'écart, dans un sens comme dans l'autre. Les plis remportés ne rapportent rien.",
+          'Annonce à 0, tenue : 10 points par carte distribuée dans la manche.',
+          'Annonce à 0, ratée : 10 points de moins par carte distribuée dans la manche.',
         ],
       },
       {
         kind: 'p',
-        text: "Une annonce à zéro vaut donc de plus en plus cher au fil de la partie, dans les deux sens. En manche dix elle rapporte cent points ou en coûte cent.",
+        text: "Une annonce à 0 vaut donc de plus en plus cher au fil de la partie, dans les deux sens. En manche 10 elle rapporte 100 points, ou en coûte 100.",
       },
     ],
   },
@@ -128,11 +128,11 @@ export const rulesFr: RuleSection[] = [
       {
         kind: 'ul',
         items: [
-          'Dix points par 14 de couleur classique gardé en fin de manche : le vert, le jaune, le violet.',
-          'Vingt points pour le 14 noir gardé en fin de manche.',
-          'Vingt points par sirène capturée dans un pli remporté par un pirate.',
-          'Trente points par pirate capturé dans un pli remporté par le Skull King. La Tigresse jouée en pirate compte.',
-          'Quarante points pour le Skull King capturé dans un pli remporté par une sirène.',
+          '10 points par 14 de couleur classique gardé en fin de manche : le vert, le jaune, le violet.',
+          '20 points pour le 14 noir gardé en fin de manche.',
+          '20 points par sirène capturée dans un pli remporté par un pirate.',
+          '30 points par pirate capturé dans un pli remporté par le Skull King. La Tigresse jouée en pirate compte.',
+          '40 points pour le Skull King capturé dans un pli remporté par une sirène.',
         ],
       },
       {
@@ -151,7 +151,7 @@ export const rulesFr: RuleSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: "La sirène et le Skull King sont dans le même pli, sans pirate. La sirène remporte le pli, et celui qui l'a jouée gagne quarante points de prime.",
+        text: "La sirène et le Skull King sont dans le même pli, sans pirate. La sirène remporte le pli, et celui qui l'a jouée gagne 40 points de prime.",
       },
       {
         kind: 'p',
@@ -159,7 +159,7 @@ export const rulesFr: RuleSection[] = [
       },
       {
         kind: 'p',
-        text: "Deux pirates dans le même pli. Celui posé en premier remporte le pli, l'ordre autour de la table tranche.",
+        text: "2 pirates dans le même pli. Celui posé en premier remporte le pli, l'ordre autour de la table tranche.",
       },
       {
         kind: 'p',

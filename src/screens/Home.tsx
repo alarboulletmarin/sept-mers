@@ -128,8 +128,8 @@ function HowItWorks({ go }: { go: (route: Route) => void }) {
         ))}
       </ol>
       <button type="button" className={styles.howLink} onClick={() => go({ name: 'rules' })}>
+        <Icon name="book" size={16} />
         {t('home.how.rules')}
-        <Icon name="chevron" size={14} />
       </button>
     </>
   )
