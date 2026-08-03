@@ -1,0 +1,51 @@
+.base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-control);
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.base:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.base:not(:disabled):active {
+  opacity: 0.78;
+}
+
+.full {
+  width: 100%;
+}
+
+/* Une seule par écran, ancrée en bas. */
+.primary {
+  height: 52px;
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.secondary {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.quiet {
+  color: var(--ink-muted);
+  padding: 0 var(--space-2);
+  font-size: 14px;
+}
+
+.destructive {
+  color: var(--missed);
+  padding: 0 var(--space-2);
+}

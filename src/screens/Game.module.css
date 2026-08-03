@@ -1,0 +1,183 @@
+/* En-tête collant : manche, cartes, et les totaux dans l'ordre à table. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  padding: calc(env(safe-area-inset-top) + var(--space-3)) var(--space-4) var(--space-2);
+}
+
+.headerInner {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+}
+
+.headerTitle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.headerButton {
+  flex: none;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--ink-muted);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--radius-control);
+}
+
+/* Totaux courants, triés par ordre à table pour retrouver les gens
+   là où ils sont assis. */
+.totals {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: var(--space-1);
+}
+
+.totals::-webkit-scrollbar {
+  display: none;
+}
+
+.totalItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+.totalValue {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------- ligne joueur */
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.row {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+}
+
+.rowInvalid {
+  border-color: var(--missed);
+}
+
+.rowHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  min-height: 32px;
+}
+
+.rowName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowBid {
+  flex: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rowTotal {
+  flex: none;
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 52px;
+  text-align: right;
+}
+
+.rowFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  min-height: var(--tap-min);
+}
+
+.bonusToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  color: var(--ink-muted);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--radius-control);
+}
+
+.bonusActive {
+  color: var(--brass);
+}
+
+.rowIssue {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: var(--missed);
+}
+
+.autofilled {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+/* ------------------------------------------------------------------ pieds */
+
+.counter {
+  text-align: center;
+}
+
+.counterWarn {
+  color: var(--missed);
+}
+
+.editingBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--brass-soft);
+  border: 1px solid var(--brass);
+  border-radius: var(--radius-control);
+}

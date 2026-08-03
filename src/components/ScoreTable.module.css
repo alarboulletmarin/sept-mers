@@ -1,0 +1,136 @@
+/*
+ * Un registre plutôt qu'une grille : la manche en cours porte un filet de
+ * laiton pleine hauteur, et chaque résultat porte un signe explicite.
+ */
+.scroller {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+}
+
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* En-tête collant, et colonne des manches figée à gauche. */
+.head th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--sunken);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
+
+.roundCol {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface);
+  text-align: left;
+  border-right: 1px solid var(--line);
+  min-width: 76px;
+}
+
+.head .roundCol {
+  z-index: 3;
+  background: var(--sunken);
+}
+
+.playerHead {
+  min-width: 84px;
+}
+
+.playerName {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.roundLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Le filet de laiton, pleine hauteur de ligne. */
+.current .roundCol {
+  box-shadow: inset 3px 0 0 var(--brass);
+}
+
+.current td {
+  background: var(--brass-soft);
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.delta {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.running {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-muted);
+}
+
+.pending {
+  color: var(--ink-muted);
+}
+
+.totalRow td {
+  background: var(--sunken);
+  border-top: 1px solid var(--line);
+  border-bottom: 0;
+}
+
+.totalRow .roundCol {
+  background: var(--sunken);
+}
+
+.total {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.editable {
+  cursor: pointer;
+}
+
+.editable:active .roundCol {
+  background: var(--sunken);
+}

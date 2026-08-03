@@ -65,7 +65,10 @@ export interface Standing {
   playerId: Id
   total: number
   rank: number
-  /** Écart avec le joueur juste au-dessus. 0 pour le premier et en cas d'égalité. */
+  /**
+   * Avance sur le joueur classé juste derrière. 0 pour le dernier et en cas
+   * d'égalité — c'est bien une avance, pas un retard.
+   */
   gapToNext: number
 }
 
@@ -81,11 +84,12 @@ export function standings(game: Game): Standing[] {
   sorted.forEach((playerId, position) => {
     const total = scores[playerId]
     if (previous === null || total !== previous) rank = position + 1
+    const next = sorted[position + 1]
     result.push({
       playerId,
       total,
       rank,
-      gapToNext: previous === null ? 0 : previous - total,
+      gapToNext: next === undefined ? 0 : total - scores[next],
     })
     previous = total
   })

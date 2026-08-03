@@ -1,0 +1,72 @@
+:root {
+  --paper: #f2f4f3;
+  --surface: #ffffff;
+  --sunken: #e8eceb;
+  --line: #d5dbda;
+  --ink: #0d1b1e;
+  --ink-muted: #5a6a6d;
+  --brass: #8a6320;
+  --brass-soft: #f0e4cc;
+  --kept: #1d6f4f;
+  --missed: #a33227;
+
+  --player-1: #3d7dd8;
+  --player-2: #3f9e6e;
+  --player-3: #c2603f;
+  --player-4: #7c6ac4;
+  --player-5: #2aa3a8;
+  --player-6: #c34f62;
+  --player-7: #7e8f3a;
+  --player-8: #6c7a85;
+
+  --font-ui: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 56px;
+
+  --radius-control: 6px;
+  --radius-card: 10px;
+  --radius-pill: 999px;
+
+  --shadow-sheet: 0 -8px 32px rgb(0 0 0 / 0.16);
+  --shadow-toast: 0 4px 16px rgb(0 0 0 / 0.2);
+
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-sheet: 240ms;
+
+  --actionbar-h: env(safe-area-inset-bottom);
+
+  --tap-min: 44px;
+  --tap-picker: 48px;
+}
+
+:root[data-theme='dark'] {
+  --paper: #0c1416;
+  --surface: #121c1f;
+  --sunken: #0a1113;
+  --line: #223034;
+  --ink: #e8eeec;
+  --ink-muted: #93a5a7;
+  --brass: #d9ae62;
+  --brass-soft: #2a2216;
+  --kept: #4fb183;
+  --missed: #e2796b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-sheet: 0ms;
+  }
+}

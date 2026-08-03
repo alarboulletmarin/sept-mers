@@ -1,0 +1,59 @@
+/*
+ * Le bandeau remplace toute boîte de confirmation : on agit d'abord,
+ * on peut revenir en arrière.
+ */
+.wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--actionbar-h);
+  z-index: 50;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-toast);
+  animation: rise var(--dur-base) var(--ease);
+}
+
+.message {
+  flex: 1;
+  min-width: 0;
+}
+
+.action {
+  flex: none;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  color: var(--ink-muted);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--radius-control);
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

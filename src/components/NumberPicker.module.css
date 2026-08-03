@@ -1,0 +1,53 @@
+/*
+ * Le contrôle central : deux fois par manche, une fois par joueur.
+ * Une rangée de pastilles, défilable. Jamais de clavier, jamais de stepper :
+ * atteindre 7 doit coûter un tap, pas sept.
+ */
+.row {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* Le débord permet aux pastilles de bord de respirer sans rogner le focus. */
+  padding: 2px;
+  margin: -2px;
+  scroll-padding: var(--space-2);
+  -webkit-overflow-scrolling: touch;
+}
+
+.row::-webkit-scrollbar {
+  display: none;
+}
+
+.pill {
+  flex: none;
+  min-width: var(--tap-picker);
+  height: var(--tap-picker);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--sunken);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  display: grid;
+  place-items: center;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.pill:active {
+  background: var(--line);
+}
+
+.selected {
+  background: var(--brass-soft);
+  border: 2px solid var(--brass);
+  color: var(--ink);
+}
+
+.compact .pill {
+  min-width: var(--tap-min);
+  height: var(--tap-min);
+  font-size: 15px;
+}

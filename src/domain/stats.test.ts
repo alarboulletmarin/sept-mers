@@ -76,9 +76,13 @@ describe('cumul par manche', () => {
 describe('classement', () => {
   it('trie par score décroissant et donne l écart', () => {
     expect(standings(simple)).toEqual([
-      { playerId: 'a', total: 40, rank: 1, gapToNext: 0 },
-      { playerId: 'b', total: 20, rank: 2, gapToNext: 20 },
+      { playerId: 'a', total: 40, rank: 1, gapToNext: 20 },
+      { playerId: 'b', total: 20, rank: 2, gapToNext: 0 },
     ])
+  })
+
+  it('ne donne aucune avance au dernier', () => {
+    expect(standings(simple).at(-1)?.gapToNext).toBe(0)
   })
 
   it('partage le rang en cas d égalité', () => {

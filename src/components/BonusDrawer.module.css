@@ -1,0 +1,68 @@
+/* Tiroir replié par défaut : la plupart des manches n'ont aucun bonus. */
+.drawer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  margin-top: var(--space-3);
+  background: var(--sunken);
+  border-radius: var(--radius-control);
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.step {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.step:disabled {
+  opacity: 0.35;
+}
+
+.step:not(:disabled):active {
+  background: var(--line);
+}
+
+/* Le moins est dessiné plutôt qu'importé : une icône de moins dans le jeu. */
+.minus {
+  display: block;
+  width: 14px;
+  height: 1.75px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.value {
+  min-width: 24px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+}
