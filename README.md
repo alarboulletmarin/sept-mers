@@ -110,6 +110,9 @@ docs/           design-system.md
 ```
 
 **React 19 + TypeScript + Vite, et rien d'autre en dépendance d'exécution.**
+En développement s'ajoutent Vitest, Playwright pour les parcours navigateur, et
+`@vercel/routing-utils` — le paquet dont Vercel tire lui-même son schéma — pour
+valider `vercel.json` avant qu'un déploiement ne le refuse.
 Pas de routeur, pas de librairie d'état, pas de Tailwind, pas de librairie de
 graphiques, pas de pack d'icônes. Les deux fichiers de police vivent dans `src/`
 pour que Vite leur pose un hash de contenu et que le service worker les
@@ -130,11 +133,12 @@ version de schéma soit une addition et pas une réécriture.
 
 ## Tests
 
-158 tests unitaires couvrent le moteur de score — dont les huit cas de référence
+162 tests unitaires couvrent le moteur de score — dont les huit cas de référence
 du cahier des charges —, la validation de saisie, le plafonnement du paquet, les
 statistiques, le réducteur, la complétion automatique du dernier joueur,
 l'aller-retour export/import, la lecture défensive du stockage, les pluriels, la
-géométrie des graphiques, les jetons de la palette et le système typographique —
+géométrie des graphiques, la configuration de déploiement, les jetons de la
+palette et le système typographique —
 familles, échelle, fichiers de fonte embarqués, et l'absence de toute famille
 écrite en dur hors des jetons. Le parcours navigateur complète le tout sur l'app
 réellement construite.
@@ -158,13 +162,23 @@ hébergeur de fichiers suffit. `vercel.json` est fourni pour Vercel — prérég
 Vite, aucune variable d'environnement, aucune fonction serveur.
 
 `engines.node` vaut `22.x` et non une plage : Vercel n'accepte dans ce champ que
-la forme majeure, et une plage comme `>=22.12` fait échouer le déploiement à la
-validation, avant même le premier `npm install`.
+la forme majeure.
 
-Deux détails y comptent vraiment. `sw.js` et `sw-version.js` sont servis sans
-cache : ce sont eux qui portent la liste des fichiers à précacher, et un service
-worker périmé empêcherait toute mise à jour d'arriver. Les fichiers de `assets/`
-portent un hash de contenu et sont donc mis en cache pour un an.
+**`vercel.json` ne porte aucun commentaire**, et c'est délibéré. JSON n'en a pas,
+et Vercel valide le fichier contre un schéma qui interdit toute propriété
+supplémentaire : trois clés `"//"` glissées dans `headers` suffisaient à faire
+refuser le déploiement à la validation, avant même le clonage, avec un
+« Deployment failed » sans journal. `src/deploy.test.ts` valide désormais le
+fichier contre le schéma que Vercel utilise lui-même — c'est la seule façon
+d'attraper la faute ici plutôt qu'en production. Les explications, elles, vivent
+ci-dessous.
+
+| Fichier | Cache | Pourquoi |
+|---|---|---|
+| `sw.js`, `sw-version.js` | aucun | Ce sont eux qui portent la liste des fichiers à précacher. Un service worker périmé empêche toute mise à jour d'arriver, définitivement. |
+| `manifest.webmanifest` | aucun | Il change avec le thème et les icônes. |
+| `assets/*` | un an, immuable | Ces fichiers portent un hash de contenu : leur nom change à chaque build. |
+| `icons/*` | un jour | Ils n'ont pas de hash, et on doit pouvoir les corriger. |
 
 L'app vivant sur le hash, il n'y a aucune route serveur à réécrire : la
 redirection déclarée ne sert qu'à rattraper une adresse tapée à la main.
