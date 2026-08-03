@@ -118,6 +118,20 @@ npm run verify \
   && node scripts/nooverflow.mjs
 ```
 
+## Déploiement
+
+L'app est un site statique : `npm run build` produit `dist/`, et n'importe quel
+hébergeur de fichiers suffit. `vercel.json` est fourni pour Vercel — préréglage
+Vite, aucune variable d'environnement, aucune fonction serveur.
+
+Deux détails y comptent vraiment. `sw.js` et `sw-version.js` sont servis sans
+cache : ce sont eux qui portent la liste des fichiers à précacher, et un service
+worker périmé empêcherait toute mise à jour d'arriver. Les fichiers de `assets/`
+portent un hash de contenu et sont donc mis en cache pour un an.
+
+L'app vivant sur le hash, il n'y a aucune route serveur à réécrire : la
+redirection déclarée ne sert qu'à rattraper une adresse tapée à la main.
+
 ## Vie privée
 
 Aucun compte, aucun serveur, aucune requête réseau après le premier chargement,
