@@ -1,21 +1,27 @@
+/* Pastille de sélection : nom entier, jamais une initiale. */
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
   min-height: var(--tap-min);
   padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
-  background: var(--sunken);
-  border: 1px solid var(--line);
-  color: var(--ink);
-  font-size: 15px;
+  background: var(--foam);
+  color: var(--foam-on);
+  border: 1px solid var(--hairline);
+  font-size: 14px;
   font-weight: 600;
   max-width: 100%;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.chip:active {
+  transform: scale(0.96);
 }
 
 .selected {
-  background: var(--brass-soft);
-  border: 2px solid var(--brass);
+  background: var(--sand);
+  color: var(--sand-on);
+  border-color: var(--sand);
 }
 
 .name {

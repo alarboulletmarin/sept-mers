@@ -44,11 +44,11 @@ export function RulesBody({ quickFirst = false }: { quickFirst?: boolean }) {
                 aria-expanded={expanded}
                 onClick={() => toggle(section.id)}
               >
-                <span className="t-section">{section.title}</span>
+                <span>{section.title}</span>
                 <Icon
                   name="chevron"
                   rotate={expanded ? 'up' : 'down'}
-                  className="linkrow-chevron"
+                  size={18}
                 />
               </button>
             </h3>
@@ -57,7 +57,7 @@ export function RulesBody({ quickFirst = false }: { quickFirst?: boolean }) {
                 {section.blocks.map((block, index) => {
                   if (block.kind === 'p') {
                     return (
-                      <p key={index} className="t-body">
+                      <p key={index}>
                         {block.text}
                       </p>
                     )
@@ -66,7 +66,7 @@ export function RulesBody({ quickFirst = false }: { quickFirst?: boolean }) {
                   return block.kind === 'ol' ? (
                     <ol key={index} className={styles.ordered}>
                       {items.map((item, position) => (
-                        <li key={position} className="t-body">
+                        <li key={position}>
                           {item}
                         </li>
                       ))}
@@ -74,7 +74,7 @@ export function RulesBody({ quickFirst = false }: { quickFirst?: boolean }) {
                   ) : (
                     <ul key={index} className={styles.unordered}>
                       {items.map((item, position) => (
-                        <li key={position} className="t-body">
+                        <li key={position}>
                           {item}
                         </li>
                       ))}

@@ -87,12 +87,12 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
       footer={
         <>
           {!canStart && (
-            <p className="t-caption muted" role="status">
+            <p className={styles.footNote} role="status">
               {t('newGame.needMore', { count: MIN_PLAYERS })}
             </p>
           )}
           {hasRunning && canStart && (
-            <p className="t-caption muted" role="status">
+            <p className={styles.footNote} role="status">
               {t('newGame.replaceRunning')}
             </p>
           )}
@@ -105,10 +105,10 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
       <section className="stack-tight">
         <h2 className="section-title">{t('newGame.pickPlayers')}</h2>
         {store.players.length === 0 ? (
-          <p className="t-body muted">{t('newGame.noPlayersBody')}</p>
+          <p className={styles.hint}>{t('newGame.noPlayersBody')}</p>
         ) : (
           <>
-            <p className="t-caption muted">{t('newGame.pickHint')}</p>
+            <p className={styles.hint}>{t('newGame.pickHint')}</p>
             <ChipGrid>
               {store.players.map((player) => (
                 <PlayerChip
@@ -121,7 +121,7 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
             </ChipGrid>
           </>
         )}
-        {full && <p className="t-caption muted">{t('newGame.full')}</p>}
+        {full && <p className={styles.hint}>{t('newGame.full')}</p>}
       </section>
 
       <section className="field">
@@ -153,7 +153,7 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
           </Button>
         </div>
         {nameError && (
-          <p className="t-caption missed" role="alert">
+          <p className={styles.error} role="alert">
             {nameError}
           </p>
         )}
@@ -162,7 +162,7 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
       {seated.length > 0 && (
         <section className="stack-tight">
           <h2 className="section-title">{t('newGame.atTable')}</h2>
-          <p className="t-caption muted">{t('newGame.atTableHint')}</p>
+          <p className={styles.hint}>{t('newGame.atTableHint')}</p>
           <ol className={styles.order}>
             {seated.map((id, index) => {
               const player = byId[id]
@@ -229,10 +229,10 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
           onClick={() => setOptionsOpen((open) => !open)}
         >
           <span className="section-title">{t('newGame.options')}</span>
-          <Icon name="chevron" rotate={optionsOpen ? 'up' : 'down'} className="linkrow-chevron" />
+          <Icon name="chevron" rotate={optionsOpen ? 'up' : 'down'} size={16} />
         </button>
         {optionsOpen && (
-          <div className="card">
+          <div className={styles.optionPanel}>
             <button
               type="button"
               role="switch"
@@ -241,8 +241,8 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
               onClick={() => setBonusIfBidMissed((value) => !value)}
             >
               <span className="stack-tight" style={{ gap: 2 }}>
-                <span className="t-label">{t('newGame.bonusIfBidMissed')}</span>
-                <span className="t-caption muted">
+                <span className={styles.optionLabel}>{t('newGame.bonusIfBidMissed')}</span>
+                <span className={styles.optionHelp}>
                   {bonusIfBidMissed
                     ? t('newGame.bonusIfBidMissed.on')
                     : t('newGame.bonusIfBidMissed.off')}

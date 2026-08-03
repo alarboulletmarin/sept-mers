@@ -8,6 +8,7 @@ import { Sheet } from '../components/Sheet.tsx'
 import { useToast } from '../components/Toast.tsx'
 import type { Locale, Store, Theme } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
+import styles from './Settings.module.css'
 import {
   ImportError,
   emptyStore,
@@ -109,7 +110,7 @@ export function Settings({ go }: { go: (route: Route) => void }) {
 
       <section className="stack-tight">
         <h2 className="section-title">{t('settings.defaults')}</h2>
-        <div className="card">
+        <div className={styles.panel}>
           <button
             type="button"
             role="switch"
@@ -125,8 +126,8 @@ export function Settings({ go }: { go: (route: Route) => void }) {
             }
           >
             <span className="stack-tight" style={{ gap: 2 }}>
-              <span className="t-label">{t('newGame.bonusIfBidMissed')}</span>
-              <span className="t-caption muted">
+              <span className={styles.switchLabel}>{t('newGame.bonusIfBidMissed')}</span>
+              <span className={styles.help}>
                 {store.settings.lastOptions.bonusIfBidMissed
                   ? t('newGame.bonusIfBidMissed.on')
                   : t('newGame.bonusIfBidMissed.off')}
@@ -141,19 +142,19 @@ export function Settings({ go }: { go: (route: Route) => void }) {
 
       <section className="stack-tight">
         <h2 className="section-title">{t('settings.data')}</h2>
-        <div className="card stack">
+        <div className={styles.panel}>
           <div className="stack-tight">
             <Button onClick={exportData}>{t('settings.export')}</Button>
-            <p className="t-caption muted">{t('settings.export.help')}</p>
+            <p className={styles.help}>{t('settings.export.help')}</p>
           </div>
 
-          <hr className="divider" />
+          <hr className={styles.divider} />
 
           <div className="stack-tight">
             <Button onClick={() => fileInput.current?.click()}>{t('settings.import')}</Button>
-            <p className="t-caption muted">{t('settings.import.help')}</p>
+            <p className={styles.help}>{t('settings.import.help')}</p>
             {error && (
-              <p className="t-caption missed" role="alert">
+              <p className={styles.error} role="alert">
                 {error}
               </p>
             )}
@@ -170,7 +171,7 @@ export function Settings({ go }: { go: (route: Route) => void }) {
             />
           </div>
 
-          <hr className="divider" />
+          <hr className={styles.divider} />
 
           <div className="stack-tight">
             {confirmClear ? (
@@ -178,20 +179,20 @@ export function Settings({ go }: { go: (route: Route) => void }) {
                 <Button full onClick={() => setConfirmClear(false)}>
                   {t('action.cancel')}
                 </Button>
-                <Button variant="destructive" full onClick={clearAll}>
+                <Button variant="danger" full onClick={clearAll}>
                   {t('settings.clear')}
                 </Button>
               </div>
             ) : (
-              <Button variant="destructive" onClick={() => setConfirmClear(true)}>
+              <Button variant="danger" onClick={() => setConfirmClear(true)}>
                 <Icon name="trash" />
                 {t('settings.clear')}
               </Button>
             )}
-            <p className="t-caption muted">{t('settings.clear.help')}</p>
+            <p className={styles.help}>{t('settings.clear.help')}</p>
           </div>
         </div>
-        <p className="t-caption muted">{t('settings.storage')}</p>
+        <p className={styles.note}>{t('settings.storage')}</p>
       </section>
 
       <section className="stack-tight">
@@ -212,7 +213,7 @@ export function Settings({ go }: { go: (route: Route) => void }) {
                 finished: pending.summary.finishedGames,
               })}
             </p>
-            <p className="t-caption muted">{t('settings.import.help')}</p>
+            <p className={styles.help}>{t('settings.import.help')}</p>
             <Button variant="primary" onClick={applyImport}>
               {t('settings.import.replace')}
             </Button>
@@ -227,10 +228,10 @@ export function Settings({ go }: { go: (route: Route) => void }) {
         <div className="stack">
           <p className="t-body">{t('about.what')}</p>
           <p className="t-body">{t('about.offline')}</p>
-          <hr className="divider" />
-          <p className="t-caption muted">{t('about.trademark')}</p>
-          <p className="t-caption muted">{t('about.rulesRewritten')}</p>
-          <p className="t-caption muted">{t('about.version', { version: APP_VERSION })}</p>
+          <hr className={styles.divider} />
+          <p className={styles.help}>{t('about.trademark')}</p>
+          <p className={styles.help}>{t('about.rulesRewritten')}</p>
+          <p className={styles.help}>{t('about.version', { version: APP_VERSION })}</p>
         </div>
       </Sheet>
     </Screen>

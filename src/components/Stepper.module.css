@@ -1,8 +1,9 @@
 /*
- * Le contrôle de saisie : moins un, la valeur, plus un.
+ * Le contrôle central : moins, la valeur, plus.
  *
- * Il tient dans une tuile de bento, ce que la rangée de pastilles ne faisait
- * pas. Appui maintenu pour défiler : atteindre 8 ne coûte pas huit taps.
+ * Les boutons prennent la couleur du texte de la surface qui les porte : sur
+ * une tuile sable ils sont encre, sur une tuile écume ils sont encre aussi,
+ * et le contraste tient tout seul quelle que soit la surface.
  */
 .stepper {
   display: grid;
@@ -17,49 +18,48 @@
   height: var(--tap-min);
   display: grid;
   place-items: center;
-  border-radius: var(--radius-control);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--ink);
-  transition: background var(--dur-fast) var(--ease);
+  border-radius: var(--radius-pill);
+  background: var(--surface-on);
+  color: var(--surface);
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
   touch-action: manipulation;
 }
 
 .button:disabled {
-  opacity: 0.3;
+  opacity: 0.25;
 }
 
 .button:not(:disabled):active {
-  background: var(--brass-soft);
-  border-color: var(--brass);
+  transform: scale(0.92);
 }
 
 /* Le moins est dessiné : une icône de moins dans le jeu. */
 .minus {
   display: block;
-  width: 15px;
-  height: 2px;
-  border-radius: 1px;
+  width: 16px;
+  height: 2.5px;
+  border-radius: 2px;
   background: currentColor;
 }
 
-/* La valeur est l'illustration : c'est elle qu'on lit à bout de bras. */
+/* La valeur est l'objet du widget : c'est elle qu'on lit à bout de bras. */
 .value {
   min-width: 0;
   text-align: center;
-  font-size: 30px;
+  font-size: 34px;
   line-height: 1;
-  font-weight: 700;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  color: var(--ink);
+  letter-spacing: -0.03em;
+  color: var(--surface-on);
 }
 
+/* Un tiret de la taille d'un chiffre lisait comme un filet de séparation :
+   la valeur absente se dit plus petit et plus discret. */
 .unset {
-  color: var(--ink-muted);
-  font-weight: 500;
-}
-
-.compact .value {
-  font-size: 24px;
+  font-size: 20px;
+  opacity: 0.4;
+  font-weight: 600;
 }

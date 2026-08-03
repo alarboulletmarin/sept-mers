@@ -1,17 +1,54 @@
+/*
+ * Voir docs/design-system.md.
+ *
+ * La palette est construite sur la clarté, pas sur la teinte : la mosaïque
+ * reste lisible en vision dichromate comme en noir et blanc. Aucune
+ * information n'est jamais portée par la seule couleur.
+ */
 :root {
-  --paper: #f2f4f3;
-  --surface: #ffffff;
-  --sunken: #e8eceb;
-  --line: #d5dbda;
-  --ink: #0d1b1e;
-  --ink-muted: #5a6a6d;
-  --brass: #8a6320;
-  --brass-soft: #f0e4cc;
-  --kept: #1d6f4f;
-  --missed: #a33227;
+  /* Surfaces de widget — identiques dans les deux thèmes. */
+  --ink: #131c1b;
+  --ink-on: #f5f3ec;
+  --ink-muted: #93a9a5;
 
+  --foam: #f5f3ec;
+  --foam-on: #131c1b;
+  --foam-muted: #5c6b68;
+
+  --sand: #dcee6b;
+  --sand-on: #131c1b;
+  --sand-muted: #46521c;
+
+  --tide: #9aa6f2;
+  --tide-on: #131c1b;
+  --tide-muted: #23285c;
+
+  /* Canevas — la seule chose qui suit le thème. */
+  --canvas: #e9e5da;
+  --canvas-on: #131c1b;
+  --canvas-muted: #5a6360;
+  --hairline: #d2ccbc;
+
+  /*
+   * Renforts, jamais seuls : toujours avec un signe ou un mot.
+   *
+   * Trois profondeurs, parce qu'une teinte se choisit pour la surface qui la
+   * porte, pas pour le thème : un panneau écume reste clair en thème sombre.
+   */
+  --gain-light: #7be0a8;
+  --loss-light: #f0a07a;
+  --gain-dark: #1f6b4a;
+  --loss-dark: #a8431f;
+  --gain-deep: #12482f;
+  --loss-deep: #6e2a10;
+
+  /* Sur le canevas, où la teinte suit bien le thème. */
+  --gain: var(--gain-dark);
+  --loss: var(--loss-dark);
+
+  /* Réservées aux graphiques. Jamais dans l'interface. */
   --player-1: #3d7dd8;
-  --player-2: #3f9e6e;
+  --player-2: #2f9e6e;
   --player-3: #c2603f;
   --player-4: #7c6ac4;
   --player-5: #2aa3a8;
@@ -19,7 +56,7 @@
   --player-7: #7e8f3a;
   --player-8: #6c7a85;
 
-  --font-ui: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+  --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
 
   --space-1: 4px;
@@ -32,35 +69,33 @@
   --space-8: 40px;
   --space-9: 56px;
 
-  --radius-control: 6px;
-  --radius-card: 10px;
+  --radius-control: 10px;
+  --radius-widget: 20px;
   --radius-pill: 999px;
 
-  --shadow-sheet: 0 -8px 32px rgb(0 0 0 / 0.16);
-  --shadow-toast: 0 4px 16px rgb(0 0 0 / 0.2);
+  --shadow-sheet: 0 -12px 40px rgb(0 0 0 / 0.28);
+  --shadow-toast: 0 6px 20px rgb(0 0 0 / 0.24);
 
   --ease: cubic-bezier(0.2, 0, 0, 1);
   --dur-fast: 120ms;
   --dur-base: 180ms;
-  --dur-sheet: 240ms;
-
-  --actionbar-h: env(safe-area-inset-bottom);
+  --dur-sheet: 260ms;
 
   --tap-min: 44px;
-  --tap-picker: 48px;
+  --tap-step: 48px;
+
+  /* Publiée par la barre d'action, pour que le bandeau se pose au-dessus. */
+  --actionbar-h: env(safe-area-inset-bottom);
 }
 
 :root[data-theme='dark'] {
-  --paper: #0c1416;
-  --surface: #121c1f;
-  --sunken: #0a1113;
-  --line: #223034;
-  --ink: #e8eeec;
-  --ink-muted: #93a5a7;
-  --brass: #d9ae62;
-  --brass-soft: #2a2216;
-  --kept: #4fb183;
-  --missed: #e2796b;
+  --canvas: #0c2a28;
+  --canvas-on: #f5f3ec;
+  --canvas-muted: #8fa8a4;
+  --hairline: #1b403d;
+
+  --gain: var(--gain-light);
+  --loss: var(--loss-light);
 }
 
 @media (prefers-reduced-motion: reduce) {

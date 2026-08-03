@@ -2,37 +2,38 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  min-width: 0;
 }
 
 .svg {
   display: block;
   width: 100%;
   height: auto;
-  /* Un nom de série un peu long dépassait du viewBox et poussait la page. */
+  /* Un nom de série un peu long déborderait du viewBox et pousserait la page. */
   overflow: hidden;
 }
 
 .grid {
-  stroke: var(--line);
+  stroke: currentColor;
   stroke-width: 1;
+  opacity: 0.18;
 }
 
 .axisLabel {
-  fill: var(--ink-muted);
+  fill: var(--surface-muted, var(--canvas-muted));
   font-size: 9px;
-  font-weight: 500;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .seriesLabel {
-  fill: var(--ink);
   font-size: 9px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .line {
   fill: none;
-  stroke-width: 2;
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -40,23 +41,17 @@
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
+  gap: var(--space-2) var(--space-3);
   min-width: 0;
-}
-
-/* La table de données en lecture d'écran seule ne doit jamais peser sur la
-   largeur rendue : `.sr-only` la sort déjà du flux, on le garde strict. */
-.frame figcaption {
-  max-width: 100%;
 }
 
 .legendItem {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--surface-muted, var(--canvas-muted));
   min-width: 0;
 }
 
@@ -68,11 +63,15 @@
 .swatch {
   width: 12px;
   height: 12px;
-  border-radius: 2px;
+  border-radius: 3px;
   flex: none;
 }
 
 .empty {
-  color: var(--ink-muted);
-  font-size: 14px;
+  color: var(--surface-muted, var(--canvas-muted));
+  font-size: 13px;
+}
+
+.frame figcaption {
+  max-width: 100%;
 }

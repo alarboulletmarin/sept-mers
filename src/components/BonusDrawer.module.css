@@ -1,12 +1,8 @@
-/* Tiroir replié par défaut : la plupart des manches n'ont aucun bonus. */
-.drawer {
+/* Cinq compteurs, chacun avec son libellé complet et sa valeur en points. */
+.list {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-3);
-  margin-top: var(--space-3);
-  background: var(--sunken);
-  border-radius: var(--radius-control);
 }
 
 .counter {
@@ -15,14 +11,29 @@
   justify-content: space-between;
   gap: var(--space-3);
   min-height: var(--tap-min);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--canvas);
+  color: var(--canvas-on);
 }
 
 .text {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
   flex: 1;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.help {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--canvas-muted);
 }
 
 .stepper {
@@ -37,32 +48,32 @@
   height: var(--tap-min);
   display: grid;
   place-items: center;
-  border-radius: var(--radius-control);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--ink);
+  border-radius: var(--radius-pill);
+  background: var(--canvas-on);
+  color: var(--canvas);
+  transition: transform var(--dur-fast) var(--ease);
 }
 
 .step:disabled {
-  opacity: 0.35;
+  opacity: 0.25;
 }
 
 .step:not(:disabled):active {
-  background: var(--line);
+  transform: scale(0.92);
 }
 
-/* Le moins est dessiné plutôt qu'importé : une icône de moins dans le jeu. */
 .minus {
   display: block;
-  width: 14px;
-  height: 1.75px;
-  border-radius: 1px;
+  width: 15px;
+  height: 2.5px;
+  border-radius: 2px;
   background: currentColor;
 }
 
 .value {
-  min-width: 24px;
+  min-width: 26px;
   text-align: center;
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }

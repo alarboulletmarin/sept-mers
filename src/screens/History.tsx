@@ -31,7 +31,7 @@ export function History({ go }: { go: (route: Route) => void }) {
           }
         />
       ) : (
-        <ul className="stack-tight">
+        <ul className="mosaic">
           {games.map((game) => {
             const table = standings(game)
             const winners = winnerIds(game)
@@ -53,21 +53,17 @@ export function History({ go }: { go: (route: Route) => void }) {
                   }}
                 >
                   <span className={styles.text}>
-                    <span className="t-label">
+                    <span className={styles.tag}>
+                      {date(game.endedAt ?? game.startedAt)}
+                    </span>
+                    <span className={styles.winner}>
                       {winners.length > 1
                         ? t('history.tie', { score: number(top.total) })
-                        : t('history.winner', {
-                            name: game.nameSnapshot[top.playerId] ?? '',
-                            score: number(top.total),
-                          })}
+                        : (game.nameSnapshot[top.playerId] ?? '')}
                     </span>
-                    <span className="t-caption muted">
-                      {date(game.endedAt ?? game.startedAt)} ·{' '}
-                      {t('history.players', { count: game.playerIds.length })}
-                    </span>
-                    <span className="t-caption muted">{names}</span>
+                    <span className={styles.score}>{number(top.total)}</span>
+                    <span className={styles.names}>{names}</span>
                   </span>
-                  <Icon name="chevron" className="linkrow-chevron" />
                 </a>
 
                 {/* Pas de boîte de confirmation : on agit, on peut revenir. */}

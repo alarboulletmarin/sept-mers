@@ -77,7 +77,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
           onPointerCancel={endDrag}
         />
         <div className={styles.header}>
-          <h2 id={titleId} className={`${styles.title} t-section`}>
+          <h2 id={titleId} className={styles.title}>
             {title}
           </h2>
           <button type="button" className={styles.close} onClick={onClose} aria-label={t('nav.close')}>

@@ -1,0 +1,52 @@
+.panel {
+  --surface: var(--foam);
+  --surface-gain: var(--gain-dark);
+  --surface-loss: var(--loss-dark);
+  --surface-on: var(--foam-on);
+  --surface-muted: var(--foam-muted);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background: var(--foam);
+  color: var(--foam-on);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-widget);
+  padding: var(--space-4);
+  min-width: 0;
+}
+
+:root[data-theme='dark'] .panel {
+  border-color: transparent;
+}
+
+.divider {
+  height: 1px;
+  border: 0;
+  background: var(--foam-muted);
+  opacity: 0.2;
+}
+
+.switchLabel {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.help {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--foam-muted);
+}
+
+.note {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--canvas-muted);
+  padding: 0 var(--space-1);
+}
+
+/* Le mot dit ce qui ne va pas ; la couleur ne fait que l'accompagner. */
+.error {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--surface-loss, var(--loss));
+}

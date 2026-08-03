@@ -149,7 +149,7 @@ for (const width of WIDTHS) {
   await audit('fin de partie, graphiques compris')
 
   await page.getByRole('button', { name: 'Terminer' }).click()
-  await page.waitForSelector('text=Dernières parties')
+  await page.waitForSelector('text=Parties')
   await audit('accueil avec historique')
 
   for (const [route, marker, label] of [

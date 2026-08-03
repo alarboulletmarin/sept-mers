@@ -173,8 +173,8 @@ await shot('fin-de-partie')
 // -------------------------------------------------- reprise après fermeture
 
 await page.getByRole('button', { name: 'Terminer' }).click()
-await page.waitForSelector('text=Dernières parties')
-check('la partie rejoint l historique', await page.getByText('Dernières parties').isVisible())
+await page.waitForSelector('text=Parties')
+check('la partie rejoint l historique', await page.getByText('terminées et enregistrées').isVisible())
 
 await page.getByRole('button', { name: 'Nouvelle partie' }).click()
 await page.getByRole('checkbox', { name: /Ana/ }).click()

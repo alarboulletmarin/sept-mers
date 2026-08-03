@@ -1,6 +1,7 @@
 /*
- * Le bandeau remplace toute boîte de confirmation : on agit d'abord,
- * on peut revenir en arrière.
+ * Le bandeau remplace toute boîte de confirmation : on agit d'abord, on peut
+ * revenir en arrière. Il se pose au-dessus de la barre d'action, jamais
+ * par-dessus, sinon il intercepte le tap suivant.
  */
 .wrap {
   position: fixed;
@@ -15,17 +16,20 @@
 }
 
 .toast {
+  --surface: var(--ink);
+  --surface-on: var(--ink-on);
+  --surface-muted: var(--ink-muted);
   pointer-events: auto;
   width: 100%;
-  max-width: 720px;
+  max-width: 560px;
   display: flex;
   align-items: center;
   gap: var(--space-3);
   min-height: var(--tap-min);
-  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-5);
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
+  color: var(--surface-on);
+  border-radius: var(--radius-pill);
   box-shadow: var(--shadow-toast);
   animation: rise var(--dur-base) var(--ease);
 }
@@ -33,16 +37,22 @@
 .message {
   flex: 1;
   min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .action {
   flex: none;
-  min-height: var(--tap-min);
-  padding: 0 var(--space-3);
-  color: var(--ink-muted);
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: var(--radius-control);
+  min-height: 36px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--sand);
+  color: var(--sand-on);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 @keyframes rise {

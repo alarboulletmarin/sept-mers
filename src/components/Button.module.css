@@ -4,48 +4,61 @@
   justify-content: center;
   gap: var(--space-2);
   min-height: var(--tap-min);
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-control);
-  font-size: 16px;
-  font-weight: 500;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  font-weight: 600;
   text-align: center;
-  transition: opacity var(--dur-fast) var(--ease);
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
 }
 
 .base:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: default;
 }
 
 .base:not(:disabled):active {
-  opacity: 0.78;
+  transform: scale(0.985);
+  opacity: 0.85;
 }
 
 .full {
   width: 100%;
 }
 
-/* Une seule par écran, ancrée en bas. */
+/* Une seule par écran, ancrée en bas. C'est la seule zone sable de l'écran. */
 .primary {
-  height: 52px;
-  background: var(--ink);
-  color: var(--paper);
-  font-weight: 600;
+  height: 56px;
+  background: var(--sand);
+  color: var(--sand-on);
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .secondary {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--ink);
+  min-height: 56px;
+  background: var(--canvas-on);
+  color: var(--canvas);
+}
+
+.ghost {
+  background: transparent;
+  border: 1px solid var(--hairline);
+  color: var(--surface-on, var(--canvas-on));
 }
 
 .quiet {
-  color: var(--ink-muted);
-  padding: 0 var(--space-2);
-  font-size: 14px;
+  background: transparent;
+  color: var(--surface-muted, var(--canvas-muted));
+  padding: 0 var(--space-3);
+  font-size: 13px;
 }
 
-.destructive {
-  color: var(--missed);
-  padding: 0 var(--space-2);
+/* Le mot porte l'avertissement, la couleur ne fait que l'accompagner. */
+.danger {
+  background: transparent;
+  border: 1px solid var(--surface-loss, var(--loss));
+  color: var(--surface-loss, var(--loss));
 }

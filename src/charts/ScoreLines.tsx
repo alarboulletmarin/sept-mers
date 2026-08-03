@@ -77,7 +77,7 @@ export function ScoreLines({ game }: { game: Game }) {
                   className={styles.seriesLabel}
                   x={last.x + 6}
                   y={last.y + 3}
-                  fill={playerColor(seat)}
+                  fill="currentColor"
                 >
                   {shorten(game.nameSnapshot[line.playerId] ?? '')}
                 </text>

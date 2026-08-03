@@ -77,6 +77,7 @@ export function BonusBars({ game }: { game: Game }) {
                     y={y(value)}
                     width={Math.max(1, barWidth - 1)}
                     height={Math.max(0, y(0) - y(value))}
+                    rx={2}
                     fill={TONES[position]}
                   />
                 )

@@ -1,128 +1,124 @@
 import { Button } from '../components/Button.tsx'
 import { EmptyState } from '../components/EmptyState.tsx'
 import { Icon, Logo } from '../components/Icon.tsx'
+import {
+  Caption,
+  Figure,
+  Tag,
+  Widget,
+  WidgetTitle,
+} from '../components/Widget.tsx'
 import { standings, totals } from '../domain/stats.ts'
 import { TOTAL_ROUNDS } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
-import { draftFor, nextRoundIndex, runningGame } from '../store/reducer.ts'
+import { draftFor, runningGame } from '../store/reducer.ts'
 import { useStore } from '../app/StoreProvider.tsx'
-import { hrefFor, type Route } from '../app/Router.tsx'
+import type { Route } from '../app/Router.tsx'
 import styles from './Home.module.css'
-
-const SECONDARY: { route: Route; key: string; icon: 'book' | 'chart' | 'gear' | 'chevron' }[] = [
-  { route: { name: 'history' }, key: 'nav.history', icon: 'chart' },
-  { route: { name: 'players' }, key: 'nav.players', icon: 'chevron' },
-  { route: { name: 'rules' }, key: 'nav.rules', icon: 'book' },
-  { route: { name: 'settings' }, key: 'nav.settings', icon: 'gear' },
-]
 
 export function Home({ go }: { go: (route: Route) => void }) {
   const { store } = useStore()
   const { t, number, date } = useT()
+
   const running = runningGame(store)
   const finished = store.games
     .filter((game) => game.endedAt)
     .sort((a, b) => (b.endedAt ?? '').localeCompare(a.endedAt ?? ''))
 
   const isFirstLaunch = store.games.length === 0 && store.players.length === 0
+  const totalGames = finished.length
 
   return (
     <div className="screen">
       <header className="topbar">
         <div className="topbar-inner">
-          <Logo size={30} />
+          <Logo size={30} className={styles.logo} />
           <div className="topbar-title">
-            <h1 className="t-display">{t('app.name')}</h1>
-            <p className="t-caption muted">{t('app.tagline')}</p>
+            <h1 className="t-title">{t('app.name')}</h1>
           </div>
         </div>
       </header>
 
-      <main className="screen-body" style={{ paddingTop: 'var(--space-5)' }}>
-        {running && <ResumeCard go={go} />}
+      <main className="screen-body">
+        <p className={styles.tagline}>{t('app.tagline')}</p>
 
-        {isFirstLaunch && (
-          <EmptyState
-            title={t('home.empty.title')}
-            body={t('home.empty.body')}
-            action={
-              <Button variant="primary" onClick={() => go({ name: 'new' })}>
-                {t('home.newGame')}
-              </Button>
-            }
-          />
-        )}
+        <div className="mosaic">
+          {running && <ResumeWidget go={go} />}
 
-        {!isFirstLaunch && !running && (
-          <Button variant="primary" onClick={() => go({ name: 'new' })}>
-            {t('home.newGame')}
-          </Button>
-        )}
+          {isFirstLaunch && (
+            <EmptyState
+              tag={t('home.empty.tag')}
+              title={t('home.empty.title')}
+              body={t('home.empty.body')}
+            />
+          )}
 
-        {finished.length > 0 && (
-          <section className="stack-tight">
-            <h2 className="section-title">{t('home.lastGames')}</h2>
-            <ul className="linklist">
-              {finished.slice(0, 3).map((game) => {
-                const table = standings(game)
-                const top = table[0]
-                return (
-                  <li key={game.id}>
-                    <a
-                      className="linkrow"
-                      href={hrefFor({ name: 'summary', gameId: game.id })}
-                      onClick={(event) => {
-                        event.preventDefault()
-                        go({ name: 'summary', gameId: game.id })
-                      }}
-                    >
-                      <span className="linkrow-label">
-                        <span className="t-label">
-                          {game.nameSnapshot[top.playerId]} · {number(top.total)}
-                        </span>
-                        <br />
-                        <span className="t-caption muted">
-                          {date(game.endedAt ?? game.startedAt)} ·{' '}
-                          {t('history.players', { count: game.playerIds.length })}
-                        </span>
-                      </span>
-                      <Icon name="chevron" className="linkrow-chevron" />
-                    </a>
-                  </li>
-                )
-              })}
-            </ul>
-            {finished.length > 3 && (
-              <Button variant="quiet" onClick={() => go({ name: 'history' })}>
-                {t('home.seeAll')}
-              </Button>
-            )}
-          </section>
-        )}
+          {/* Les compteurs de la mosaïque : ce que l'app sait de toi. */}
+          {!isFirstLaunch && (
+            <>
+              <Widget surface="ink" span="sm">
+                <Tag>{t('home.stat.games')}</Tag>
+                <Figure>{number(totalGames)}</Figure>
+                <Caption>{t('home.stat.gamesCaption')}</Caption>
+              </Widget>
 
-        <nav className="linklist" aria-label={t('nav.home')}>
-          {SECONDARY.map((item) => (
-            <a
-              key={item.key}
-              className="linkrow"
-              href={hrefFor(item.route)}
-              onClick={(event) => {
-                event.preventDefault()
-                go(item.route)
-              }}
-            >
-              <span className="linkrow-label t-label">{t(item.key)}</span>
-              <Icon name="chevron" className="linkrow-chevron" />
-            </a>
+              <Widget surface="tide" span="sm">
+                <Tag>{t('home.stat.players')}</Tag>
+                <Figure>{number(store.players.length)}</Figure>
+                <Caption>{t('home.stat.playersCaption')}</Caption>
+              </Widget>
+            </>
+          )}
+
+          {finished.slice(0, 2).map((game) => {
+            const table = standings(game)
+            const top = table[0]
+            return (
+              <Widget
+                key={game.id}
+                surface="foam"
+                span="sm"
+                onClick={() => go({ name: 'summary', gameId: game.id })}
+              >
+                <Tag>{date(game.endedAt ?? game.startedAt)}</Tag>
+                <WidgetTitle>{game.nameSnapshot[top.playerId]}</WidgetTitle>
+                <Figure>{number(top.total)}</Figure>
+                <Caption>{t('history.players', { count: game.playerIds.length })}</Caption>
+              </Widget>
+            )
+          })}
+        </div>
+
+        <nav className={styles.nav} aria-label={t('nav.home')}>
+          {(
+            [
+              [{ name: 'history' } as Route, 'nav.history'],
+              [{ name: 'players' } as Route, 'nav.players'],
+              [{ name: 'rules' } as Route, 'nav.rules'],
+              [{ name: 'settings' } as Route, 'nav.settings'],
+            ] as const
+          ).map(([route, key]) => (
+            <button key={key} type="button" className={styles.navItem} onClick={() => go(route)}>
+              <span>{t(key)}</span>
+              <Icon name="chevron" size={16} />
+            </button>
           ))}
         </nav>
       </main>
+
+      <div className="actionbar">
+        <div className="actionbar-inner">
+          <Button variant="primary" onClick={() => go({ name: 'new' })}>
+            {t('home.newGame')}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
 
-/** Carte de reprise, en première position quand une partie est en cours. */
-function ResumeCard({ go }: { go: (route: Route) => void }) {
+/** La reprise passe avant tout le reste : widget sable, pleine largeur. */
+function ResumeWidget({ go }: { go: (route: Route) => void }) {
   const { store } = useStore()
   const { t, number } = useT()
   const game = runningGame(store)
@@ -134,33 +130,26 @@ function ResumeCard({ go }: { go: (route: Route) => void }) {
   const ordered = [...game.playerIds].sort((a, b) => scores[b] - scores[a])
 
   return (
-    <button type="button" className={styles.resume} onClick={() => go({ name: 'game' })}>
-      <span className={styles.resumeHead}>
-        <span className="stack-tight" style={{ gap: 2, alignItems: 'flex-start' }}>
-          <span className="t-section">{t('home.resume.title')}</span>
-          <span className="t-caption muted">
-            {t('home.resume.detail', { round: roundIndex, total: TOTAL_ROUNDS })} ·{' '}
-            {draft.phase === 'bids' ? t('game.phase.bids') : t('game.phase.results')}
-          </span>
-        </span>
-        <Icon name="chevron" className="linkrow-chevron" />
-      </span>
+    <Widget surface="sand" span="md" onClick={() => go({ name: 'game' })}>
+      <Tag>{t('home.resume.title')}</Tag>
+      <div className={styles.resumeFigure}>
+        <span className={styles.resumeNumber}>{roundIndex}</span>
+        <span className={styles.resumeTotal}>/ {TOTAL_ROUNDS}</span>
+      </div>
+      <Caption>
+        {t('game.roundLabel')} · {draft.phase === 'bids' ? t('game.phase.bids') : t('game.phase.results')}
+      </Caption>
 
       {game.rounds.length > 0 && (
-        <span className={styles.resumeScores}>
+        <div className={styles.resumeScores}>
           {ordered.map((playerId) => (
             <span key={playerId} className={styles.resumeScore}>
               <span className={styles.resumeName}>{game.nameSnapshot[playerId]}</span>
               <span className={styles.resumeValue}>{number(scores[playerId])}</span>
             </span>
           ))}
-        </span>
+        </div>
       )}
-    </button>
+    </Widget>
   )
-}
-
-export function resumeLabel(store: ReturnType<typeof useStore>['store']): number {
-  const game = runningGame(store)
-  return game ? nextRoundIndex(game) : 1
 }

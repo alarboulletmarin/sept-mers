@@ -27,6 +27,8 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 - **Français et anglais**, thème clair, sombre ou système, changeables à chaud.
 - **Export / import** du fichier de données.
 - **Aucun scroll latéral**, à aucune largeur : tout se plie à l'écran.
+- **Design en mosaïque** : des widgets colorés, un chiffre en héros par widget.
+  Voir [le design system](docs/design-system.md).
 - **Noms entiers partout**, jamais une initiale ni une pastille de couleur. Dans
   le tableau des scores, les huit noms sont écrits en diagonale pour tenir dans
   la largeur d'un téléphone. La couleur ne porte jamais seule une information.
@@ -52,6 +54,7 @@ Node 22.12 ou plus récent.
 | `node scripts/smoke.mjs` | Parcours complet dans un vrai navigateur, sur `dist/` |
 | `node scripts/offline.mjs` | Mode avion et suivi du thème système, sur `dist/` |
 | `node scripts/nooverflow.mjs` | Absence de scroll latéral, à cinq largeurs |
+| `node scripts/contrast.mjs` | Absence de texte illisible, dans les deux thèmes |
 | `python3 scripts/make-icons.py` | Regénère les icônes PNG depuis le logotype |
 
 `scripts/smoke.mjs` joue une partie entière à quatre, vérifie la reprise après
@@ -64,8 +67,13 @@ relance l'app, valide une manche et ouvre les règles hors ligne. Il vérifie au
 que le thème système bascule en direct, sans rechargement.
 
 `scripts/nooverflow.mjs` parcourt les treize écrans à 320, 360, 390, 430 et
-820 px, avec huit joueurs et le sélecteur le plus long, et échoue dès qu'un
+820 px, avec huit joueurs et la valeur la plus haute, et échoue dès qu'un
 élément dépasse la largeur ou qu'un composant défile horizontalement.
+
+`scripts/contrast.mjs` mesure le contraste réel de chaque texte contre son fond
+effectif, dans les deux thèmes. Il attrape la classe de défaut qui ne casse
+rien par ailleurs : un bloc qui pose une surface sans publier ses couleurs de
+texte, et dont le contenu devient blanc sur blanc.
 
 ## Architecture
 
@@ -74,8 +82,8 @@ src/
   main.tsx
   app/          App, Router, Layout, StoreProvider, ThemeProvider, useWakeLock
   screens/      Home, NewGame, Game, GameSummary, History, Players, Rules, Settings
-  components/   Button, Stepper, PlayerChip, ScoreTable, Sheet, Toast,
-                Icon, EmptyState, BonusDrawer
+  components/   Widget, Button, Stepper, PlayerChip, ScoreTable, Sheet,
+                Toast, Icon, EmptyState, BonusDrawer
   domain/       scoring, deck, validation, stats, types
   store/        storage, reducer, migrations
   charts/       ScoreLines, AccuracyBars, BonusBars, RankingBars, primitives
@@ -83,6 +91,7 @@ src/
   content/      rules.fr, rules.en, RulesBody
   styles/       tokens.css, base.css
 public/         manifest.webmanifest, sw.js, icons/
+docs/           design-system.md
 ```
 
 **React 19 + TypeScript + Vite, et rien d'autre en dépendance d'exécution.**
@@ -115,7 +124,8 @@ complète le tout sur l'app réellement construite.
 npm run verify \
   && node scripts/smoke.mjs \
   && node scripts/offline.mjs \
-  && node scripts/nooverflow.mjs
+  && node scripts/nooverflow.mjs \
+  && node scripts/contrast.mjs
 ```
 
 ## Déploiement
@@ -138,6 +148,17 @@ Aucun compte, aucun serveur, aucune requête réseau après le premier chargemen
 aucun analytics. Les données vivent dans le navigateur et n'en sortent que par un
 export déclenché à la main. Le mode avion n'empêche ni le lancement ni aucune
 fonctionnalité.
+
+## Design
+
+Le design system vit dans [`docs/design-system.md`](docs/design-system.md) :
+palette, typographie, anatomie du widget, composants, règles d'accessibilité.
+
+Deux règles y priment sur toute considération esthétique, et les scripts de
+vérification les tiennent : **jamais d'initiale seule pour désigner un joueur**,
+et **jamais de couleur seule pour porter une information**. La palette est
+construite sur la clarté plutôt que sur la teinte, de sorte que la mosaïque
+reste lisible en vision dichromate comme en noir et blanc.
 
 ## Mentions légales
 

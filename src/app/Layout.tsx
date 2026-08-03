@@ -27,15 +27,15 @@ export function Screen({ title, onBack, actions, children, footer, header }: Scr
           {onBack && (
             <button
               type="button"
+              className="round-button"
               onClick={onBack}
               aria-label={t('nav.back')}
-              style={{ display: 'grid', placeItems: 'center', width: 32, height: 32, marginLeft: -6 }}
             >
-              <Icon name="chevron" rotate="left" size={24} />
+              <Icon name="chevron" rotate="left" size={20} />
             </button>
           )}
           {header ?? (
-            <h1 className="topbar-title t-display">{title}</h1>
+            <h1 className="topbar-title t-title">{title}</h1>
           )}
           {actions}
         </div>

@@ -1,50 +1,13 @@
-.podium {
-  display: flex;
-  flex-direction: column;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  overflow: hidden;
-}
-
-.rank + .rank {
-  border-top: 1px solid var(--line);
-}
-
-.rank {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  min-height: var(--tap-min);
-}
-
-.rank:first-child {
-  background: var(--brass-soft);
-  box-shadow: inset 4px 0 0 var(--brass);
-}
-
-.rankNumber {
-  flex: none;
-  min-width: 28px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-muted);
-  font-variant-numeric: tabular-nums;
-}
-
 .rankName {
-  flex: 1;
-  min-width: 0;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
+  line-height: 1.2;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.rankScore {
-  flex: none;
+.actions {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
+  gap: var(--space-2);
 }

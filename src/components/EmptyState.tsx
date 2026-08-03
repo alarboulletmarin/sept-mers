@@ -1,18 +1,21 @@
 import type { ReactNode } from 'react'
+import { Caption, Tag, Widget, WidgetTitle } from './Widget.tsx'
 
 interface EmptyStateProps {
+  tag?: string
   title: string
   body: string
   action?: ReactNode
 }
 
-/** Un titre, une phrase qui dit quoi faire, un bouton. Rien d'autre. */
-export function EmptyState({ title, body, action }: EmptyStateProps) {
+/** Un widget, un titre, une phrase qui dit quoi faire, un bouton. */
+export function EmptyState({ tag, title, body, action }: EmptyStateProps) {
   return (
-    <div className="card stack">
-      <h2 className="t-section">{title}</h2>
-      <p className="t-body muted">{body}</p>
+    <Widget surface="tide" span="md">
+      {tag && <Tag>{tag}</Tag>}
+      <WidgetTitle>{title}</WidgetTitle>
+      <Caption>{body}</Caption>
       {action}
-    </div>
+    </Widget>
   )
 }

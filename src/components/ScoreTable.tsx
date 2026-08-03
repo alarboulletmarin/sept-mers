@@ -60,7 +60,7 @@ export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps)
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className={styles.body}>
           {rows.map((row) => {
             const isCurrent = row.roundIndex === currentRound
             const clickable = Boolean(onEditRound) && row.played
@@ -87,9 +87,8 @@ export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps)
                       </span>
                     ) : (
                       <span className={styles.cell}>
-                        <span className={`${styles.delta} ${cell.delta < 0 ? 'missed' : 'kept'}`}>
-                          {signed(cell.delta)}
-                        </span>
+                        {/* Le signe porte l'information, jamais la couleur. */}
+                        <span className={styles.delta}>{signed(cell.delta)}</span>
                         <span className={styles.running}>{number(cell.running ?? 0)}</span>
                       </span>
                     )}
@@ -100,7 +99,7 @@ export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps)
           })}
           <tr className={styles.totalRow}>
             <th scope="row" className={styles.roundCol}>
-              <span className="t-column muted">{t('table.total')}</span>
+              <span className={styles.totalLabel}>{t('table.total')}</span>
             </th>
             {game.playerIds.map((playerId) => (
               <td key={playerId}>

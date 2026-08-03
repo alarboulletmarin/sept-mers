@@ -6,6 +6,7 @@ import { BonusBars } from '../charts/BonusBars.tsx'
 import { ScoreLines } from '../charts/ScoreLines.tsx'
 import { Button } from '../components/Button.tsx'
 import { ScoreTable } from '../components/ScoreTable.tsx'
+import { Caption, Figure, Tag, Widget, WidgetTitle } from '../components/Widget.tsx'
 import { standings, winnerIds } from '../domain/stats.ts'
 import { useT } from '../i18n/index.ts'
 import { gameById, runningGame } from '../store/reducer.ts'
@@ -22,7 +23,7 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
   if (!game) {
     return (
       <Screen title={t('summary.title')} onBack={() => go({ name: 'home' })}>
-        <p className="t-body muted">{t('history.empty.body')}</p>
+        <p className="t-body">{t('history.empty.body')}</p>
       </Screen>
     )
   }
@@ -51,8 +52,8 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
       title={t('summary.title')}
       onBack={() => go({ name: readOnly ? 'history' : 'home' })}
       footer={
-        <div className="row" style={{ gap: 'var(--space-2)' }}>
-          <Button full onClick={rematch}>
+        <div className={styles.actions}>
+          <Button variant="secondary" full onClick={rematch}>
             {t('summary.rematch')}
           </Button>
           <Button variant="primary" onClick={finish}>
@@ -61,65 +62,57 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
         </div>
       }
     >
-      <p className="t-caption muted">
-        {readOnly
-          ? t('summary.readOnly', { date: date(game.endedAt ?? game.startedAt) })
-          : date(game.startedAt)}
-      </p>
+      <div className="mosaic">
+        {/* Le vainqueur en héros : c'est la seule chose qu'on regarde d'abord. */}
+        <Widget surface="sand" span="md">
+          <Tag>
+            {readOnly
+              ? t('summary.readOnly', { date: date(game.endedAt ?? game.startedAt) })
+              : date(game.startedAt)}
+          </Tag>
+          <WidgetTitle>
+            {winners.length > 1
+              ? t('summary.winners', { names: winnerNames })
+              : t('summary.winner', { name: winnerNames })}
+          </WidgetTitle>
+          <Figure hero>{number(table[0].total)}</Figure>
+          {table[0].gapToNext > 0 && (
+            <Caption>{t('summary.gap', { gap: number(table[0].gapToNext) })}</Caption>
+          )}
+        </Widget>
 
-      <h2 className="t-display">
-        {winners.length > 1
-          ? t('summary.winners', { names: winnerNames })
-          : t('summary.winner', { name: winnerNames })}
-      </h2>
-
-      <ol className={styles.podium}>
-        {table.map((row, index) => (
-          <li key={row.playerId} className={styles.rank}>
-            <span className={styles.rankNumber}>
-              {row.rank === 1 ? t('summary.rankFirst') : t('summary.rank', { rank: row.rank })}
-            </span>
+        {/* Le reste du classement, une tuile par joueur. */}
+        {table.slice(1).map((row) => (
+          <Widget key={row.playerId} surface="foam" span="sm" tight>
+            <Tag>{t('summary.rank', { rank: row.rank })}</Tag>
             <span className={styles.rankName}>{game.nameSnapshot[row.playerId]}</span>
-            <span className={styles.rankScore}>
-              <span className={index === 0 ? 't-score-xl' : 't-score'}>
-                {number(row.total)}
-              </span>
-              {/* L'écart avec le suivant, la question qu'on pose tout de suite. */}
-              {row.gapToNext > 0 && (
-                <span className="t-caption muted num">
-                  {t('summary.gap', { gap: number(row.gapToNext) })}
-                </span>
-              )}
-            </span>
-          </li>
+            <Figure>{number(row.total)}</Figure>
+            {row.gapToNext > 0 && (
+              <Caption>{t('summary.gap', { gap: number(row.gapToNext) })}</Caption>
+            )}
+          </Widget>
         ))}
-      </ol>
 
-      <section className="stack-tight">
-        <h3 className="section-title">{t('chart.scores.title')}</h3>
-        <div className="card">
+        <Widget surface="ink" span="md">
+          <Tag>{t('chart.scores.title')}</Tag>
           <ScoreLines game={game} />
-        </div>
-      </section>
+        </Widget>
 
-      <section className="stack-tight">
-        <h3 className="section-title">{t('chart.accuracy.title')}</h3>
-        <div className="card">
+        <Widget surface="tide" span="md">
+          <Tag>{t('chart.accuracy.title')}</Tag>
           <AccuracyBars game={game} />
-        </div>
-      </section>
+        </Widget>
 
-      <section className="stack-tight">
-        <h3 className="section-title">{t('chart.bonus.title')}</h3>
-        <div className="card">
+        <Widget surface="foam" span="md">
+          <Tag>{t('chart.bonus.title')}</Tag>
           <BonusBars game={game} />
-        </div>
-      </section>
+        </Widget>
 
-      <section className="stack-tight">
-        <h3 className="section-title">{t('summary.rounds')}</h3>
-        <ScoreTable game={game} />
-      </section>
+        <Widget surface="foam" span="lg">
+          <Tag>{t('summary.rounds')}</Tag>
+          <ScoreTable game={game} />
+        </Widget>
+      </div>
     </Screen>
   )
 }

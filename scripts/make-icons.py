@@ -27,12 +27,11 @@ STROKES = [
 ]
 STROKE_WIDTH = 3.0
 VIEWBOX = 48.0
-CORNER_RADIUS = 10.0
+CORNER_RADIUS = 11.0
 
-PAPER = (0xF2, 0xF4, 0xF3)
-INK = (0x0D, 0x1B, 0x1E)
-DARK_PAPER = (0x0C, 0x14, 0x16)
-BRASS = (0xD9, 0xAE, 0x62)
+CANVAS = (0xE9, 0xE5, 0xDA)
+INK = (0x13, 0x1C, 0x1B)
+SAND = (0xDC, 0xEE, 0x6B)
 
 SAMPLES = 4  # suréchantillonnage par axe
 
@@ -132,11 +131,11 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     targets = [
-        ('icon-192.png', 192, PAPER, INK, True, 1.0),
-        ('icon-512.png', 512, PAPER, INK, True, 1.0),
-        ('icon-180.png', 180, PAPER, INK, True, 1.0),
+        ('icon-192.png', 192, CANVAS, INK, True, 1.0),
+        ('icon-512.png', 512, CANVAS, INK, True, 1.0),
+        ('icon-180.png', 180, CANVAS, INK, True, 1.0),
         # Maskable : le dessin tient dans les 80 % centraux, fond plein bord.
-        ('icon-maskable-512.png', 512, DARK_PAPER, BRASS, False, 0.68),
+        ('icon-maskable-512.png', 512, INK, SAND, False, 0.68),
     ]
 
     for name, size, background, foreground, rounded, scale in targets:

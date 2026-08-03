@@ -1,51 +1,98 @@
+/* Chaque partie terminée est un widget de la mosaïque. */
 .item {
+  --surface: var(--foam);
+  --surface-gain: var(--gain-dark);
+  --surface-loss: var(--loss-dark);
+  --surface-on: var(--foam-on);
+  --surface-muted: var(--foam-muted);
+  grid-column: span 1;
+  position: relative;
   display: flex;
-  align-items: stretch;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
+  min-width: 0;
+  background: var(--foam);
+  color: var(--foam-on);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-widget);
   overflow: hidden;
+}
+
+:root[data-theme='dark'] .item {
+  border-color: transparent;
 }
 
 .link {
   flex: 1;
   min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
-  text-decoration: none;
-  color: var(--ink);
+  padding: var(--space-3);
+  transition: transform var(--dur-fast) var(--ease);
 }
 
 .link:active {
-  background: var(--sunken);
+  transform: scale(0.985);
 }
 
 .text {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
-.text > * {
+.tag {
+  align-self: flex-start;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--foam-on);
+  color: var(--foam);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.winner {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.score {
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.names {
+  font-size: 11px;
+  color: var(--foam-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Pas de boîte de confirmation : on agit, on peut revenir. */
 .remove {
-  flex: none;
-  width: var(--tap-min);
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
-  color: var(--ink-muted);
-  border-left: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--foam-muted);
 }
 
 .remove:active {
-  background: var(--sunken);
-  color: var(--missed);
+  background: var(--foam-on);
+  color: var(--foam);
 }

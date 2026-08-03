@@ -31,7 +31,7 @@ export function BonusDrawer({
   const bonus = bonuses[playerId]
 
   return (
-    <div className={styles.drawer}>
+    <div className={styles.list}>
       {BONUS_KEYS.map((key) => {
         const value = bonus[key]
         const ceiling = bonusCeiling(key, playerId, bonuses, tricks, playerIds)
@@ -41,10 +41,10 @@ export function BonusDrawer({
         return (
           <div key={key} className={styles.counter}>
             <div className={styles.text}>
-              <span className="t-label">{label}</span>
-              <span className="t-caption muted">{t(`bonus.${key}.help`)}</span>
+              <span className={styles.name}>{label}</span>
+              <span className={styles.help}>{t(`bonus.${key}.help`)}</span>
               {atCeiling && (
-                <span className="t-caption muted">
+                <span className={styles.help}>
                   {t(`issue.ceiling.${ceiling.reason ?? 'null'}`)}
                 </span>
               )}
@@ -60,7 +60,7 @@ export function BonusDrawer({
               >
                 <span className={styles.minus} aria-hidden="true" />
               </button>
-              <span className={`${styles.value} num`} aria-live="off">
+              <span className={styles.value} aria-live="off">
                 {value}
               </span>
               <button

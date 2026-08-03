@@ -223,5 +223,10 @@
   "game.scores": "Scores",
   "a11y.decrease": "Retirer un pli à {name}",
   "a11y.increase": "Ajouter un pli à {name}",
-  "game.roundLabel": "Manche"
+  "game.roundLabel": "Manche",
+  "home.empty.tag": "Premier lancement",
+  "home.stat.games": "Parties",
+  "home.stat.gamesCaption": "terminées et enregistrées",
+  "home.stat.players": "Joueurs",
+  "home.stat.playersCaption": "récurrents à la table"
 }

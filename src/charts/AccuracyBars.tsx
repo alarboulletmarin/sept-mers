@@ -10,9 +10,9 @@ const BOX = { width: 320, height: 190, top: 10, right: 8, bottom: 26, left: 24 }
 
 /** Le remplissage distingue les trois séries sans dépendre de la seule couleur. */
 const SERIES = [
-  { key: 'exact', label: 'chart.accuracy.exact', fill: 'var(--kept)', pattern: null },
-  { key: 'over', label: 'chart.accuracy.over', fill: 'var(--missed)', pattern: null },
-  { key: 'under', label: 'chart.accuracy.under', fill: 'var(--ink-muted)', pattern: 'hatch' },
+  { key: 'exact', label: 'chart.accuracy.exact', fill: 'var(--player-2)', pattern: null },
+  { key: 'over', label: 'chart.accuracy.over', fill: 'var(--player-3)', pattern: null },
+  { key: 'under', label: 'chart.accuracy.under', fill: 'currentColor', pattern: 'hatch' },
 ] as const
 
 /** Barres empilées par joueur : mises tenues, sur-mises, sous-mises. */
@@ -50,8 +50,8 @@ export function AccuracyBars({ game }: { game: Game }) {
             patternUnits="userSpaceOnUse"
             patternTransform="rotate(45)"
           >
-            <rect width="4" height="4" fill="var(--sunken)" />
-            <line x1="0" y1="0" x2="0" y2="4" stroke="var(--ink-muted)" strokeWidth="2" />
+            <rect width="4" height="4" fill="transparent" />
+            <line x1="0" y1="0" x2="0" y2="4" stroke="currentColor" strokeWidth="2" />
           </pattern>
         </defs>
 
@@ -85,6 +85,7 @@ export function AccuracyBars({ game }: { game: Game }) {
                     y={y(top)}
                     width={barWidth}
                     height={Math.max(0, y(base) - y(top))}
+                    rx={2}
                     fill={series.pattern ? `url(#${patternId})` : series.fill}
                   />
                 )
@@ -113,7 +114,7 @@ export function AccuracyBars({ game }: { game: Game }) {
                 series.pattern
                   ? {
                       background:
-                        'repeating-linear-gradient(45deg, var(--ink-muted) 0 2px, var(--sunken) 2px 4px)',
+                        'repeating-linear-gradient(45deg, currentColor 0 2px, transparent 2px 4px)',
                     }
                   : { background: series.fill }
               }

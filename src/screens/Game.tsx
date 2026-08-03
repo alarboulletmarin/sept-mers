@@ -5,10 +5,11 @@ import { useActionBarHeight } from '../app/useActionBar.ts'
 import { useWakeLock } from '../app/useWakeLock.ts'
 import { Button } from '../components/Button.tsx'
 import { BonusDrawer } from '../components/BonusDrawer.tsx'
-import { Icon, Logo } from '../components/Icon.tsx'
+import { Icon } from '../components/Icon.tsx'
 import { ScoreTable } from '../components/ScoreTable.tsx'
 import { Sheet } from '../components/Sheet.tsx'
 import { Stepper } from '../components/Stepper.tsx'
+import { Tag, Widget } from '../components/Widget.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { cardsForRound, isCapped } from '../domain/deck.ts'
 import { scoreRound } from '../domain/scoring.ts'
@@ -100,89 +101,89 @@ export function Game({ go }: { go: (route: Route) => void }) {
     <div className="screen">
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <div className={styles.headerTop}>
-            <h1 className={styles.headerTitle} data-round={draft.roundIndex}>
-              <Logo size={20} className={styles.mark} />
-              <span className={styles.roundLabel}>{t('game.roundLabel')}</span>
-              <span className={styles.roundNumber}>{draft.roundIndex}</span>
-              <span className={styles.roundTotal}>/ {TOTAL_ROUNDS}</span>
-            </h1>
-            <button
-              type="button"
-              className={styles.headerAction}
-              onClick={() => setTableOpen(true)}
-            >
-              <Icon name="chart" size={16} />
-              {t('game.scores')}
-            </button>
-            <button
-              type="button"
-              className={styles.headerAction}
-              onClick={() => setRulesOpen(true)}
-            >
-              <Icon name="book" size={16} />
-              {t('game.rulesShortcut')}
-            </button>
-          </div>
-
-          <p className={styles.phaseLine}>
-            {t('game.cards', { count: cards })} ·{' '}
-            {isBids ? t('game.phase.bids') : t('game.phase.results')}
-          </p>
-
-          {game.rounds.length > 0 && (
-            <div className={styles.totals}>
-              {game.playerIds.map((playerId) => (
-                <span key={playerId} className={styles.totalItem}>
-                  <span className={styles.totalName}>{game.nameSnapshot[playerId]}</span>
-                  <span className={styles.totalValue}>{number(running[playerId] ?? 0)}</span>
-                </span>
-              ))}
+          <div className={styles.roundWidget}>
+            <div className={styles.roundTop}>
+              <div className={styles.roundLeft}>
+                <Tag>{t('game.roundLabel')}</Tag>
+                <h1 className={styles.roundFigure} data-round={draft.roundIndex}>
+                  <span className={styles.roundNumber}>{draft.roundIndex}</span>
+                  <span className={styles.roundTotal}>/ {TOTAL_ROUNDS}</span>
+                </h1>
+                <p className={styles.roundCaption}>
+                  {t('game.cards', { count: cards })} ·{' '}
+                  {isBids ? t('game.phase.bids') : t('game.phase.results')}
+                </p>
+              </div>
+              <div className={styles.roundActions}>
+                <button
+                  type="button"
+                  className={styles.action}
+                  aria-label={t('game.scoreTable')}
+                  onClick={() => setTableOpen(true)}
+                >
+                  <Icon name="chart" size={18} />
+                </button>
+                <button
+                  type="button"
+                  className={styles.action}
+                  aria-label={t('rules.title')}
+                  onClick={() => setRulesOpen(true)}
+                >
+                  <Icon name="book" size={18} />
+                </button>
+              </div>
             </div>
-          )}
+
+            {game.rounds.length > 0 && (
+              <div className={styles.totals}>
+                {game.playerIds.map((playerId) => (
+                  <span key={playerId} className={styles.totalItem}>
+                    <span className={styles.totalName}>{game.nameSnapshot[playerId]}</span>
+                    <span className={styles.totalValue}>{number(running[playerId] ?? 0)}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       <main className="screen-body" style={{ paddingTop: 'var(--space-4)' }}>
-        {capped && <p className={styles.capped}>{t('game.capped', { count: cards })}</p>}
+        {capped && <p className={styles.notice}>{t('game.capped', { count: cards })}</p>}
 
         {isEditing && (
-          <div className={styles.editingBanner}>
-            <span className="t-label">{t('game.editing', { round: draft.roundIndex })}</span>
-          </div>
+          <p className={styles.notice}>{t('game.editing', { round: draft.roundIndex })}</p>
         )}
 
-        <p className="t-caption muted">
+        <p className={styles.hint}>
           {isBids ? t('game.bids.hint') : t('game.results.hint')}
         </p>
 
-        <div className={styles.board}>
-          <div className={styles.grid}>
-            {game.playerIds.map((playerId) => (
-              <PlayerTile
-                key={playerId}
-                name={game.nameSnapshot[playerId] ?? ''}
-                phase={draft.phase}
-                cards={cards}
-                bid={draft.bids[playerId] ?? null}
-                tricks={draft.tricks[playerId] ?? null}
-                bonus={draft.bonus[playerId]}
-                issues={
-                  touched
-                    ? issuesFor(isBids ? bidIssues : [...trickIssues, ...bonusIssues], playerId)
-                    : []
-                }
-                onBid={(value) => dispatch({ type: 'game/setBid', playerId, bid: value })}
-                onTricks={(value) =>
-                  dispatch({ type: 'game/setTricks', playerId, tricks: value })
-                }
-                onOpenBonus={() => setOpenBonus(playerId)}
-                options={game.options}
-                signed={signed}
-                t={t}
-              />
-            ))}
-          </div>
+        <div className="mosaic">
+          {game.playerIds.map((playerId) => (
+            <PlayerTile
+              key={playerId}
+              name={game.nameSnapshot[playerId] ?? ''}
+              phase={draft.phase}
+              cards={cards}
+              bid={draft.bids[playerId] ?? null}
+              tricks={draft.tricks[playerId] ?? null}
+              bonus={draft.bonus[playerId]}
+              issues={
+                touched
+                  ? issuesFor(isBids ? bidIssues : [...trickIssues, ...bonusIssues], playerId)
+                  : []
+              }
+              onBid={(value) => dispatch({ type: 'game/setBid', playerId, bid: value })}
+              onTricks={(value) =>
+                dispatch({ type: 'game/setTricks', playerId, tricks: value })
+              }
+              onOpenBonus={() => setOpenBonus(playerId)}
+              options={game.options}
+              signed={signed}
+              t={t}
+            />
+          ))}
         </div>
 
         {touched && bonusIssues.filter((issue) => !issue.playerId).length > 0 && (
@@ -333,11 +334,11 @@ function PlayerTile(props: PlayerTileProps) {
   const bonusCount = Object.values(bonus).reduce((total, count) => total + count, 0)
 
   return (
-    <section
-      data-player-tile
-      className={`${styles.tile} ${value !== null ? styles.tileDone : ''} ${
-        issues.length > 0 ? styles.tileInvalid : ''
-      }`}
+    <Widget
+      surface={value === null ? 'foam' : 'sand'}
+      span="sm"
+      tight
+      marker="player-tile"
     >
       {/* Le nom entier : deux joueurs en « D » doivent rester distinguables,
           et la couleur ne doit jamais porter seule l'information. */}
@@ -357,11 +358,7 @@ function PlayerTile(props: PlayerTileProps) {
           <span className={styles.bidRecall}>
             {bid !== null ? t('game.bid', { bid }) : ''}
           </span>
-          {score && (
-            <span className={`${styles.tileScore} ${score.total < 0 ? 'missed' : 'kept'}`}>
-              {signed(score.total)}
-            </span>
-          )}
+          {score && <span className={styles.tileScore}>{signed(score.total)}</span>}
         </div>
       )}
 
@@ -373,7 +370,7 @@ function PlayerTile(props: PlayerTileProps) {
         >
           {bonusIsEmpty(bonus) ? (
             <>
-              <Icon name="plus" size={14} />
+              <Icon name="plus" size={13} />
               {t('game.bonus')}
             </>
           ) : (
@@ -387,6 +384,6 @@ function PlayerTile(props: PlayerTileProps) {
           {t(`issue.${issue.code}`, issue.data)}
         </p>
       ))}
-    </section>
+    </Widget>
   )
 }

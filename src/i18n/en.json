@@ -223,5 +223,10 @@
   "game.scores": "Scores",
   "a11y.decrease": "One less trick for {name}",
   "a11y.increase": "One more trick for {name}",
-  "game.roundLabel": "Round"
+  "game.roundLabel": "Round",
+  "home.empty.tag": "First launch",
+  "home.stat.games": "Games",
+  "home.stat.gamesCaption": "finished and recorded",
+  "home.stat.players": "Players",
+  "home.stat.playersCaption": "regulars at the table"
 }

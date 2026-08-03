@@ -7,6 +7,7 @@ import { Button } from '../components/Button.tsx'
 import { EmptyState } from '../components/EmptyState.tsx'
 import { Icon } from '../components/Icon.tsx'
 import { useToast } from '../components/Toast.tsx'
+import { Widget } from '../components/Widget.tsx'
 import { playerStats, ranking } from '../domain/stats.ts'
 import { useT } from '../i18n/index.ts'
 import { newId } from '../store/storage.ts'
@@ -67,27 +68,26 @@ function PlayerList({ go }: { go: (route: Route) => void }) {
       ) : (
         <section className="stack-tight">
           <h2 className="section-title">{t('players.title')}</h2>
-          <ul className="linklist">
+          <ul className={styles.list}>
             {store.players.map((player) => (
               <li key={player.id}>
                 <a
-                  className="linkrow"
+                  className={styles.row}
                   href={hrefFor({ name: 'players', playerId: player.id })}
                   onClick={(event) => {
                     event.preventDefault()
                     go({ name: 'players', playerId: player.id })
                   }}
                 >
-                  <span className="linkrow-label">
-                    <span className="t-label">{player.name}</span>
-                    <br />
-                    <span className="t-caption muted">
+                  <span className={styles.rowText}>
+                    <span className={styles.rowName}>{player.name}</span>
+                    <span className={styles.rowMeta}>
                       {countFor(player.id) === 0
                         ? t('players.noGame')
                         : t('players.games', { count: countFor(player.id) })}
                     </span>
                   </span>
-                  <Icon name="chevron" className="linkrow-chevron" />
+                  <Icon name="chevron" size={16} />
                 </a>
               </li>
             ))}
@@ -98,9 +98,9 @@ function PlayerList({ go }: { go: (route: Route) => void }) {
       {table.length > 0 && (
         <section className="stack-tight">
           <h2 className="section-title">{t('chart.ranking.title')}</h2>
-          <div className="card">
+          <Widget surface="ink" span="md">
             <RankingBars rows={table} names={names} />
-          </div>
+          </Widget>
         </section>
       )}
     </Screen>
@@ -118,7 +118,7 @@ function PlayerDetail({ playerId, go }: { playerId: string; go: (route: Route) =
   if (!player) {
     return (
       <Screen title={t('players.title')} onBack={() => go({ name: 'players' })}>
-        <p className="t-body muted">{t('players.empty.body')}</p>
+        <p className="t-body">{t('players.empty.body')}</p>
       </Screen>
     )
   }
@@ -191,13 +191,13 @@ function PlayerDetail({ playerId, go }: { playerId: string; go: (route: Route) =
       <section className="stack-tight">
         <h2 className="section-title">{t('players.stats')}</h2>
         {stats.gamesPlayed === 0 ? (
-          <p className="t-body muted">{t('players.noGame')}</p>
+          <p className="t-body">{t('players.noGame')}</p>
         ) : (
           <dl className={styles.stats}>
             {rows.map((row) => (
               <div key={row.label} className={styles.stat}>
-                <dt className="t-caption muted">{row.label}</dt>
-                <dd className={`${styles.statValue} num`}>{row.value}</dd>
+                <dt className={styles.statLabel}>{row.label}</dt>
+                <dd className={styles.statValue}>{row.value}</dd>
               </div>
             ))}
           </dl>
@@ -207,21 +207,21 @@ function PlayerDetail({ playerId, go }: { playerId: string; go: (route: Route) =
       {stats.gamesPlayed > 0 && (
         <section className="stack-tight">
           <h2 className="section-title">{t('chart.ranking.title')}</h2>
-          <div className="card">
+          <Widget surface="ink" span="md">
             <RankingBars
               rows={ranking(store.players, store.games)}
               names={Object.fromEntries(store.players.map((entry) => [entry.id, entry.name]))}
             />
-          </div>
+          </Widget>
         </section>
       )}
 
       <div className="stack-tight">
-        <Button variant="destructive" onClick={remove}>
+        <Button variant="danger" onClick={remove}>
           <Icon name="trash" />
           {t('action.delete')}
         </Button>
-        <p className="t-caption muted">{t('players.deleteHint')}</p>
+        <p className={styles.hint}>{t('players.deleteHint')}</p>
       </div>
     </Screen>
   )

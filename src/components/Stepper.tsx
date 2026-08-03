@@ -26,7 +26,6 @@ interface StepperProps {
   label: string
   decreaseLabel: string
   increaseLabel: string
-  compact?: boolean
 }
 
 export function Stepper({
@@ -37,7 +36,6 @@ export function Stepper({
   label,
   decreaseLabel,
   increaseLabel,
-  compact = false,
 }: StepperProps) {
   const timers = useRef<{ delay?: ReturnType<typeof setTimeout>; repeat?: ReturnType<typeof setInterval> }>({})
 
@@ -84,7 +82,7 @@ export function Stepper({
 
   return (
     <div
-      className={`${styles.stepper} ${compact ? styles.compact : ''}`}
+      className={styles.stepper}
       role="spinbutton"
       aria-label={label}
       aria-valuemin={min}
