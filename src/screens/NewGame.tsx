@@ -4,23 +4,13 @@ import { useStore } from '../app/StoreProvider.tsx'
 import type { Route } from '../app/Router.tsx'
 import { Button } from '../components/Button.tsx'
 import { Icon } from '../components/Icon.tsx'
-import { OptionSwitch } from '../components/OptionSwitch.tsx'
+import { OPTIONS, OptionSwitch } from '../components/OptionSwitch.tsx'
 import { ChipGrid, PlayerChip } from '../components/PlayerChip.tsx'
 import { MAX_PLAYERS, MIN_PLAYERS, type GameOptions, type Id } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import { runningGame } from '../store/reducer.ts'
 import { newId } from '../store/storage.ts'
 import styles from './NewGame.module.css'
-
-/**
- * Les règles qui se choisissent avant de distribuer. Les variantes sont dans
- * les règles de l'app, chapitre « Les variantes ».
- */
-export const OPTIONS: { key: keyof GameOptions }[] = [
-  { key: 'bonusIfBidMissed' },
-  { key: 'seaMonsters' },
-  { key: 'advancedPirates' },
-]
 
 export function NewGame({ go }: { go: (route: Route) => void }) {
   const { store, dispatch } = useStore()

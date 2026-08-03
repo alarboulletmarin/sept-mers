@@ -1,4 +1,16 @@
+import type { GameOptions } from '../domain/types.ts'
 import styles from './OptionSwitch.module.css'
+
+/**
+ * Les règles qui se choisissent avant de distribuer, dans l'ordre où on les
+ * lit. Les libellés vivent sous `newGame.<clé>` et `newGame.<clé>.on|off`, et
+ * les variantes sont expliquées au chapitre « Les variantes » des règles.
+ */
+export const OPTIONS: { key: keyof GameOptions }[] = [
+  { key: 'bonusIfBidMissed' },
+  { key: 'seaMonsters' },
+  { key: 'advancedPirates' },
+]
 
 interface OptionSwitchProps {
   label: string

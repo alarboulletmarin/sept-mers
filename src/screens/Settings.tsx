@@ -4,12 +4,11 @@ import type { Route } from '../app/Router.tsx'
 import { useStore } from '../app/StoreProvider.tsx'
 import { Button } from '../components/Button.tsx'
 import { Icon } from '../components/Icon.tsx'
-import { OptionSwitch } from '../components/OptionSwitch.tsx'
+import { OPTIONS, OptionSwitch } from '../components/OptionSwitch.tsx'
 import { Sheet } from '../components/Sheet.tsx'
 import { useToast } from '../components/Toast.tsx'
 import type { Locale, Store, Theme } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
-import { OPTIONS } from './NewGame.tsx'
 import styles from './Settings.module.css'
 import {
   ImportError,

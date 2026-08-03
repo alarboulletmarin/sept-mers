@@ -179,7 +179,7 @@ export const rulesEn: RuleSection[] = [
           'Rosie D’Laney names who leads the next trick.',
           'Bendt the Bandit draws 2 cards from the stock, then discards 2.',
           'Juanita Jade lets you look through the undealt cards and swap one for a card in your hand.',
-          'Rascal Jack wagers 0, 10 or 20 points on taking this trick. Wager met, you score it; wager lost, you pay it.',
+          'Rascal Jack wagers 0, 10 or 20 points on taking this trick. Wager met, you score it. Wager lost, you pay it.',
         ],
       },
       {

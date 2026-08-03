@@ -179,7 +179,7 @@ export const rulesFr: RuleSection[] = [
           'Rosie D’Laney désigne qui entame le pli suivant.',
           'Bendt le Bandit pioche 2 cartes dans le talon, puis en défausse 2.',
           "Juanita Jade permet de regarder les cartes non distribuées et d'en échanger une contre une carte de sa main.",
-          "Rascal Jack parie 0, 10 ou 20 points sur le fait de remporter ce pli. Pari tenu, on marque la somme ; pari perdu, on la perd.",
+          "Rascal Jack parie 0, 10 ou 20 points sur le fait de remporter ce pli. Pari tenu, on marque la somme. Pari perdu, on la perd.",
         ],
       },
       {
