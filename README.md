@@ -20,7 +20,7 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 - **Plafond du paquet** appliqué automatiquement : à 8 joueurs, les manches 9 et
   10 se jouent à 8 cartes.
 - **Reprise exacte** de la manche et de la phase après fermeture de l'app.
-- **Quatre graphiques** en SVG écrit à la main, historique, joueurs récurrents et
+- **Trois graphiques** en SVG écrit à la main, historique, joueurs récurrents et
   statistiques par joueur.
 - **Règles réécrites**, consultables depuis l'accueil ou en feuille modale sans
   quitter la manche en cours.
@@ -103,7 +103,7 @@ src/
                 Toast, Icon, EmptyState, BonusDrawer
   domain/       scoring, deck, validation, stats, types
   store/        storage, reducer, migrations
-  charts/       ScoreLines, AccuracyBars, BonusBars, RankingBars, primitives
+  charts/       ScoreLines, AccuracyBars, RankingBars, primitives
   i18n/         fr.json, en.json, index
   content/      rules.fr, rules.en, RulesBody
   styles/       tokens.css, fonts.css, base.css, fonts/*.woff2

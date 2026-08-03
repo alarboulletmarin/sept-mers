@@ -2,7 +2,6 @@ import { Screen } from '../app/Layout.tsx'
 import type { Route } from '../app/Router.tsx'
 import { useStore } from '../app/StoreProvider.tsx'
 import { AccuracyBars } from '../charts/AccuracyBars.tsx'
-import { BonusBars } from '../charts/BonusBars.tsx'
 import { ScoreLines } from '../charts/ScoreLines.tsx'
 import { Button } from '../components/Button.tsx'
 import { ScoreTable } from '../components/ScoreTable.tsx'
@@ -102,11 +101,6 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
         <Widget surface="sunken" span="md">
           <Tag>{t('chart.accuracy.title')}</Tag>
           <AccuracyBars game={game} />
-        </Widget>
-
-        <Widget surface="card" span="md">
-          <Tag>{t('chart.bonus.title')}</Tag>
-          <BonusBars game={game} />
         </Widget>
 
         <Widget surface="card" span="lg">

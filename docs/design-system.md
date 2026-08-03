@@ -104,11 +104,17 @@ Il n'existe aucun jeton `gain` ni `loss`. La question ne se pose plus.
 
 Huit séries à distinguer sans une seule couleur. Trois signaux, dans cet ordre.
 
-1. **Le nom**, écrit en bout de tracé ou sous la barre. C'est le seul signal qui
-   se lit sans apprentissage.
+1. **Le nom**, écrit en légende ou sous la barre. C'est le seul signal qui se lit
+   sans apprentissage.
 2. **Le tracé** : huit motifs de tiretés distincts, du plein au pointillé serré.
 3. **Le remplissage**, pour les barres : plein, hachures montantes, hachures
    descendantes, quadrillage, pointillé, contour seul.
+
+**La légende vient avant le dessin**, jamais après : elle donne la convention, et
+une convention se lit d'abord. Sa pastille reproduit le signal exact de la série
+— le motif de tiretés pour une courbe, le remplissage pour une barre —, jamais un
+carré plein qui n'apprendrait rien. Le nom y est écrit **en entier** : c'est la
+place qui permet de ne pas le tronquer, contrairement à l'intérieur du `viewBox`.
 
 ```
 --dash-1: none        --dash-2: 7 3        --dash-3: 2 3        --dash-4: 11 3
@@ -443,7 +449,7 @@ Elles priment sur toute considération esthétique.
 
 ## 9. Graphiques
 
-Quatre composants SVG maison, sans librairie.
+Trois composants SVG maison, sans librairie.
 
 - `viewBox` fixe, largeur 100 %, hauteur par le ratio. Toute la géométrie se
   calcule dans le `viewBox`, jamais en pixels d'écran.

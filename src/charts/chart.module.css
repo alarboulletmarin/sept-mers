@@ -27,11 +27,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.seriesLabel {
-  font-size: 9px;
-  font-weight: 700;
-}
-
 .line {
   fill: none;
   stroke-width: 2.5;
@@ -66,6 +61,18 @@
   height: 12px;
   border-radius: 3px;
   flex: none;
+}
+
+/*
+ * La pastille d'une série de courbes n'est pas un carré : c'est le tracé
+ * lui-même, en réduction. Un carré plein ne dirait pas lequel des huit motifs
+ * de tiretés revient au joueur, ce qui est toute l'information.
+ */
+.dashSwatch {
+  width: 24px;
+  height: 6px;
+  flex: none;
+  overflow: visible;
 }
 
 .empty {

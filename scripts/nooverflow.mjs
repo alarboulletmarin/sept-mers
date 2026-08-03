@@ -143,7 +143,7 @@ for (const width of WIDTHS) {
   await audit('règles en feuille')
   await page.keyboard.press('Escape')
 
-  // Fin de partie : classement, trois graphiques, tableau complet.
+  // Fin de partie : classement, deux graphiques, tableau complet.
   await page.getByRole('button', { name: 'Valider la manche' }).click()
   await page.waitForSelector('text=Fin de partie')
   await audit('fin de partie, graphiques compris')

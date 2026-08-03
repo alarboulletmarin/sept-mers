@@ -2,12 +2,16 @@ import { useId } from 'react'
 import { cumulativeSeries } from '../domain/stats.ts'
 import type { Game } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
-import { shorten } from './labels.ts'
 import { dashFor, opacityFor } from './series.ts'
 import { extent, niceTicks, plotArea, polyline, scale } from './primitives.ts'
 import styles from './chart.module.css'
 
-const BOX = { width: 320, height: 190, top: 10, right: 44, bottom: 22, left: 30 }
+/*
+ * La marge de droite était de 44 : elle logeait le nom écrit en bout de tracé,
+ * tronqué à huit signes. La légende du dessus dit la même chose en entier, et
+ * elle le dit avant qu'on lise le graphique.
+ */
+const BOX = { width: 320, height: 190, top: 10, right: 8, bottom: 22, left: 30 }
 
 /** Lignes cumulées, une par joueur, axe des X sur les manches jouées. */
 export function ScoreLines({ game }: { game: Game }) {
@@ -29,6 +33,35 @@ export function ScoreLines({ game }: { game: Game }) {
 
   return (
     <figure className={styles.frame}>
+      {/* La légende en tête, un nom entier par joueur, avec le tracé qui lui
+          revient. Sans teinte, c'est le motif de tiretés qui sépare les séries :
+          il doit donc être donné avant le dessin, pas cherché dedans. */}
+      <div className={styles.legend}>
+        {series.map((line, seat) => (
+          <span key={line.playerId} className={styles.legendItem}>
+            <svg
+              className={styles.dashSwatch}
+              viewBox="0 0 24 6"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <line
+                x1={1.5}
+                y1={3}
+                x2={22.5}
+                y2={3}
+                stroke="currentColor"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeDasharray={dashFor(seat)}
+                opacity={opacityFor(seat)}
+              />
+            </svg>
+            <span>{game.nameSnapshot[line.playerId]}</span>
+          </span>
+        ))}
+      </div>
+
       <svg
         className={styles.svg}
         viewBox={`0 0 ${BOX.width} ${BOX.height}`}
@@ -69,8 +102,6 @@ export function ScoreLines({ game }: { game: Game }) {
           const last = points[points.length - 1]
           return (
             <g key={line.playerId} opacity={opacityFor(seat)}>
-              {/* Sans teinte, c'est le motif de tiretés qui sépare les séries,
-                  et le nom en bout de tracé qui les nomme. */}
               <path
                 className={styles.line}
                 d={polyline(points)}
@@ -78,11 +109,6 @@ export function ScoreLines({ game }: { game: Game }) {
                 strokeDasharray={dashFor(seat)}
               />
               {last && <circle cx={last.x} cy={last.y} r={3.5} fill="currentColor" />}
-              {last && (
-                <text className={styles.seriesLabel} x={last.x + 6} y={last.y + 3} fill="currentColor">
-                  {shorten(game.nameSnapshot[line.playerId] ?? '')}
-                </text>
-              )}
             </g>
           )
         })}
