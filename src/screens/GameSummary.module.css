@@ -1,9 +1,13 @@
+/* Le nom du vainqueur nomme : romain, et grand. C'est la seule chose qu'on
+   regarde en premier sur cet écran. */
 .rankName {
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 19px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .actions {

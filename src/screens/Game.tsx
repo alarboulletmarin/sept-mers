@@ -6,6 +6,7 @@ import { useWakeLock } from '../app/useWakeLock.ts'
 import { Button } from '../components/Button.tsx'
 import { BonusDrawer } from '../components/BonusDrawer.tsx'
 import { Icon } from '../components/Icon.tsx'
+import { PhaseRail, RoundRail } from '../components/Rail.tsx'
 import { ScoreTable } from '../components/ScoreTable.tsx'
 import { Sheet } from '../components/Sheet.tsx'
 import { Stepper } from '../components/Stepper.tsx'
@@ -68,6 +69,14 @@ export function Game({ go }: { go: (route: Route) => void }) {
   const bidTotal = sumBids(draft.bids, game.playerIds)
   const left = remainingTricks(draft.tricks, cards, game.playerIds)
 
+  const isBids = draft.phase === 'bids'
+
+  // Combien de joueurs restent à renseigner : c'est la seule chose qui bloque
+  // la validation tant qu'il en manque, autant le dire avant de désactiver.
+  const missing = game.playerIds.filter(
+    (playerId) => (isBids ? draft.bids[playerId] : draft.tricks[playerId]) == null,
+  ).length
+
   const commit = () => {
     if (!resultsReady) {
       setTouched(true)
@@ -92,7 +101,6 @@ export function Game({ go }: { go: (route: Route) => void }) {
     dispatch({ type: 'game/phase', phase: 'results' })
   }
 
-  const isBids = draft.phase === 'bids'
   const openPlayer = openBonus
     ? { id: openBonus, name: game.nameSnapshot[openBonus] ?? '' }
     : null
@@ -102,17 +110,20 @@ export function Game({ go }: { go: (route: Route) => void }) {
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <div className={styles.roundWidget}>
+            {/*
+              La houle : dix traits pour dix manches. On voit où on en est sans
+              lire, ce qui compte quand le téléphone passe de main en main.
+            */}
+            <RoundRail
+              total={TOTAL_ROUNDS}
+              current={draft.roundIndex}
+              label={t('game.round', { round: draft.roundIndex, total: TOTAL_ROUNDS })}
+            />
+
             <div className={styles.roundTop}>
-              <div className={styles.roundLeft}>
+              <div className={styles.tags}>
                 <Tag>{t('game.roundLabel')}</Tag>
-                <h1 className={styles.roundFigure} data-round={draft.roundIndex}>
-                  <span className={styles.roundNumber}>{draft.roundIndex}</span>
-                  <span className={styles.roundTotal}>/ {TOTAL_ROUNDS}</span>
-                </h1>
-                <p className={styles.roundCaption}>
-                  {t('game.cards', { count: cards })} ·{' '}
-                  {isBids ? t('game.phase.bids') : t('game.phase.results')}
-                </p>
+                <Tag>{t('game.cards', { count: cards })}</Tag>
               </div>
               <div className={styles.roundActions}>
                 <button
@@ -121,7 +132,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
                   aria-label={t('game.scoreTable')}
                   onClick={() => setTableOpen(true)}
                 >
-                  <Icon name="chart" size={18} />
+                  <Icon name="chart" size={17} />
                 </button>
                 <button
                   type="button"
@@ -129,10 +140,32 @@ export function Game({ go }: { go: (route: Route) => void }) {
                   aria-label={t('rules.title')}
                   onClick={() => setRulesOpen(true)}
                 >
-                  <Icon name="book" size={18} />
+                  <Icon name="book" size={17} />
                 </button>
               </div>
             </div>
+
+            <h1 className={styles.roundFigure} data-round={draft.roundIndex}>
+              <span className={styles.roundNumber}>{draft.roundIndex}</span>
+              <span className={styles.roundTotal}>{t('game.roundOf', { total: TOTAL_ROUNDS })}</span>
+            </h1>
+
+            {/* Les deux temps de la manche, toujours affichés : on mise, puis
+                on compte. Personne ne doit avoir à deviner lequel on lui
+                demande. */}
+            <PhaseRail
+              steps={[
+                {
+                  label: t('game.phase.bids'),
+                  current: isBids,
+                  done: !isBids,
+                  onClick: isBids
+                    ? undefined
+                    : () => dispatch({ type: 'game/phase', phase: 'bids' }),
+                },
+                { label: t('game.phase.results'), current: !isBids, done: false },
+              ]}
+            />
 
             {game.rounds.length > 0 && (
               <div className={styles.totals}>
@@ -148,14 +181,16 @@ export function Game({ go }: { go: (route: Route) => void }) {
         </div>
       </header>
 
-      <main className="screen-body" style={{ paddingTop: 'var(--space-4)' }}>
+      <main className="screen-body">
         {capped && <p className={styles.notice}>{t('game.capped', { count: cards })}</p>}
 
         {isEditing && (
           <p className={styles.notice}>{t('game.editing', { round: draft.roundIndex })}</p>
         )}
 
-        <p className={styles.hint}>
+        {/* La consigne du moment, en romain italique : c'est la voix de l'app,
+            et c'est ce qui évite de perdre quelqu'un entre deux tuiles. */}
+        <p className={`t-lede ${styles.hint}`}>
           {isBids ? t('game.bids.hint') : t('game.results.hint')}
         </p>
 
@@ -191,7 +226,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
             {bonusIssues
               .filter((issue) => !issue.playerId)
               .map((issue, index) => (
-                <p key={index} className="t-caption missed">
+                <p key={index} className={styles.alert}>
                   {t(`issue.${issue.code}`, issue.data)}
                 </p>
               ))}
@@ -201,36 +236,31 @@ export function Game({ go }: { go: (route: Route) => void }) {
 
       <div className="actionbar" ref={actionBar}>
         <div className="actionbar-inner">
-          {isBids ? (
-            <>
-              <p className={`${styles.counter} t-caption muted`} role="status">
-                {t('game.bids.sum', { count: bidTotal, bid: bidTotal, cards })}
-              </p>
-              <Button variant="primary" onClick={goToResults} disabled={!bidsReady}>
-                {t('game.bids.validate')}
-              </Button>
-            </>
-          ) : (
-            <>
-              <p
-                className={`${styles.counter} t-caption ${left === 0 ? 'muted' : styles.counterWarn}`}
-                role="status"
-              >
-                {left > 0
+          <p className={styles.counter} role="status">
+            {missing > 0
+              ? t(isBids ? 'game.bids.missing' : 'game.results.missing', { count: missing })
+              : isBids
+                ? t('game.bids.sum', { count: bidTotal, bid: bidTotal, cards })
+                : left > 0
                   ? t('game.results.remaining', { count: left })
                   : left < 0
                     ? t('game.results.over', { count: -left })
                     : t('game.results.complete', { count: cards })}
-              </p>
-              <div className={styles.footRow}>
-                <Button onClick={() => dispatch({ type: 'game/phase', phase: 'bids' })}>
-                  {t('game.bids.back')}
-                </Button>
-                <Button variant="primary" onClick={commit} disabled={!resultsReady}>
-                  {t('game.results.validate')}
-                </Button>
-              </div>
-            </>
+          </p>
+
+          {isBids ? (
+            <Button variant="primary" onClick={goToResults} disabled={!bidsReady}>
+              {t('game.bids.validate')}
+            </Button>
+          ) : (
+            <div className={styles.footRow}>
+              <Button onClick={() => dispatch({ type: 'game/phase', phase: 'bids' })}>
+                {t('game.bids.back')}
+              </Button>
+              <Button variant="primary" onClick={commit} disabled={!resultsReady}>
+                {t('game.results.validate')}
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -370,7 +400,7 @@ function PlayerTile(props: PlayerTileProps) {
         >
           {bonusIsEmpty(bonus) ? (
             <>
-              <Icon name="plus" size={13} />
+              <Icon name="plus" size={12} />
               {t('game.bonus')}
             </>
           ) : (

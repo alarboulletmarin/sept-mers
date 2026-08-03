@@ -1,0 +1,135 @@
+/*
+ * Deux repères, un pour la partie, un pour la manche. Ils héritent tous deux
+ * de la surface qui les porte : rien n'y est écrit en dur, ils passent donc de
+ * l'encre au papier sans une ligne de plus.
+ */
+
+/* ------------------------------------------------------------------ la houle */
+
+.rail {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+  height: 8px;
+}
+
+.mark {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  transition:
+    opacity var(--dur-base) var(--ease),
+    height var(--dur-base) var(--ease);
+}
+
+/* Les manches jouées : pleines, mais posées. */
+.done {
+  opacity: 0.55;
+}
+
+/* La manche en cours : plus haute et plus longue. C'est l'irrégularité du
+   logotype, et c'est ce qui la rend repérable sans compter. */
+.now {
+  flex-grow: 1.8;
+  height: 6px;
+  opacity: 1;
+}
+
+/* Ce qui reste à jouer. */
+.todo {
+  opacity: 0.22;
+}
+
+/* --------------------------------------------------------------- les temps */
+
+.steps {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  width: 100%;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+/* Le filet qui relie les deux temps : le même trait que partout ailleurs. */
+.step + .step::before {
+  content: '';
+  width: var(--space-3);
+  height: 1px;
+  flex: none;
+  background: currentColor;
+  opacity: 0.3;
+  margin-right: var(--space-2);
+}
+
+.stepBody {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  flex: 1;
+  min-height: 32px;
+  padding: 0 var(--space-3) 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  text-align: left;
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.stepIndex {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid currentColor;
+}
+
+.stepLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--size-label);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Le temps en cours est plein : c'est le seul retour dont on a besoin. */
+.stepNow {
+  background: var(--surface-on, var(--canvas-on));
+  color: var(--surface, var(--canvas));
+}
+
+.stepNow .stepIndex {
+  border-color: transparent;
+  background: var(--surface, var(--canvas));
+  color: var(--surface-on, var(--canvas-on));
+}
+
+/* Franchi : on peut y revenir, le contour le dit. */
+.stepDone {
+  border-color: currentColor;
+  opacity: 0.75;
+}
+
+.stepTodo {
+  opacity: 0.4;
+}

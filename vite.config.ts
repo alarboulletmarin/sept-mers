@@ -12,8 +12,38 @@ export default defineConfig({
       // `public/sw.js` est copié tel quel par Vite : on y injecte la version
       // au passage, pour que chaque build produise un cache distinct.
       name: 'sept-mers-sw-version',
-      transformIndexHtml(html) {
-        return html.replace(/__BUILD_VERSION__/g, BUILD_VERSION)
+      transformIndexHtml: {
+        // `post` pour que le bundle soit connu : c'est lui qui porte les noms
+        // hachés des fontes.
+        order: 'post',
+        handler(html, context) {
+          const withVersion = html.replace(/__BUILD_VERSION__/g, BUILD_VERSION)
+
+          /*
+           * Les deux voix de l'app sont en place dès le premier écran : le
+           * romain porte le nom, l'italique la phrase qui suit, le grotesque
+           * tout le reste. Sans préchargement, le premier rendu se fait dans la
+           * pile système et saute quand les fontes arrivent — un ressaut
+           * d'autant plus visible que le romain et sa doublure système n'ont ni
+           * la même chasse ni la même hauteur d'x.
+           *
+           * On ne précharge que la tranche `latin` : `latin-ext` ne descend que
+           * si un caractère l'exige, et ce serait 43 ko pour rien.
+           */
+          const faces = Object.keys(context.bundle ?? {}).filter(
+            (name) => name.endsWith('.woff2') && !name.includes('latin-ext'),
+          )
+          if (faces.length === 0) return withVersion
+
+          const links = faces
+            .sort()
+            .map(
+              (name) =>
+                `    <link rel="preload" href="./${name}" as="font" type="font/woff2" crossorigin />`,
+            )
+            .join('\n')
+          return withVersion.replace('</head>', `${links}\n  </head>`)
+        },
       },
       generateBundle(_options, bundle) {
         // Le service worker doit précacher les fichiers réellement produits :

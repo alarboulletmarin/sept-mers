@@ -7,7 +7,7 @@ import styles from './Rules.module.css'
 export function Rules({ go }: { go: (route: Route) => void }) {
   const { t } = useT()
   return (
-    <Screen title={t('rules.title')} onBack={() => go({ name: 'home' })}>
+    <Screen title={t('rules.title')} lede={t('rules.lede')} onBack={() => go({ name: 'home' })}>
       <RulesBody />
       <p className={styles.note}>{t('about.rulesRewritten')}</p>
     </Screen>

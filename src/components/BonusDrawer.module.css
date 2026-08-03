@@ -26,13 +26,14 @@
 }
 
 .name {
-  font-size: 14px;
+  font-size: var(--size-label);
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .help {
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: var(--size-caption);
+  line-height: 1.4;
   color: var(--canvas-muted);
 }
 
@@ -43,29 +44,38 @@
   flex: none;
 }
 
+/* Mêmes commandes que le stepper de tuile : au filet, pleines à l'appui. */
 .step {
   width: var(--tap-min);
   height: var(--tap-min);
   display: grid;
   place-items: center;
   border-radius: var(--radius-pill);
-  background: var(--canvas-on);
-  color: var(--canvas);
-  transition: transform var(--dur-fast) var(--ease);
+  border: 1px solid currentColor;
+  color: var(--canvas-on);
+  opacity: 0.45;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
 }
 
 .step:disabled {
-  opacity: 0.25;
+  opacity: 0.16;
 }
 
 .step:not(:disabled):active {
+  opacity: 1;
+  background: var(--canvas-on);
+  color: var(--canvas);
   transform: scale(0.92);
 }
 
 .minus {
   display: block;
   width: 15px;
-  height: 2.5px;
+  height: 2px;
   border-radius: 2px;
   background: currentColor;
 }
@@ -73,7 +83,8 @@
 .value {
   min-width: 26px;
   text-align: center;
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }

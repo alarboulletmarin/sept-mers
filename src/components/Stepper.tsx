@@ -102,8 +102,8 @@ export function Stepper({
         <span className={styles.minus} aria-hidden="true" />
       </button>
 
-      <span className={`${styles.value} ${value === null ? styles.unset : ''}`}>
-        {value === null ? '—' : value}
+      <span className={styles.value}>
+        {value === null ? <span className={styles.slot} aria-hidden="true" /> : value}
       </span>
 
       <button

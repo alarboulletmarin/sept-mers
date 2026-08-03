@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgb(0 0 0 / 0.45);
+  background: rgb(0 0 0 / 0.5);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -47,20 +47,23 @@
 
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
-  padding: 0 var(--space-4) var(--space-3);
+  padding: var(--space-1) var(--space-4) var(--space-4);
   flex: none;
 }
 
+/* Le titre nomme la feuille : il est donc en romain, comme les titres d'écran. */
 .title {
   flex: 1;
   min-width: 0;
-  font-size: 22px;
-  line-height: 1.2;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  overflow-wrap: anywhere;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: var(--size-title);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word;
+  padding-top: 2px;
 }
 
 .close {
@@ -69,9 +72,20 @@
   display: grid;
   place-items: center;
   border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  color: var(--surface-on);
+  opacity: 0.45;
+  flex: none;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.close:active {
+  opacity: 1;
   background: var(--surface-on);
   color: var(--surface);
-  flex: none;
 }
 
 .body {

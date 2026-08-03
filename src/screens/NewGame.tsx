@@ -83,6 +83,7 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
   return (
     <Screen
       title={t('newGame.title')}
+      lede={t('newGame.lede')}
       onBack={() => go({ name: 'home' })}
       footer={
         <>
@@ -102,27 +103,25 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
         </>
       }
     >
-      <section className="stack-tight">
-        <h2 className="section-title">{t('newGame.pickPlayers')}</h2>
-        {store.players.length === 0 ? (
-          <p className={styles.hint}>{t('newGame.noPlayersBody')}</p>
-        ) : (
-          <>
-            <p className={styles.hint}>{t('newGame.pickHint')}</p>
-            <ChipGrid>
-              {store.players.map((player) => (
-                <PlayerChip
-                  key={player.id}
-                  name={player.name}
-                  selected={seated.includes(player.id)}
-                  onToggle={() => toggle(player.id)}
-                />
-              ))}
-            </ChipGrid>
-          </>
-        )}
-        {full && <p className={styles.hint}>{t('newGame.full')}</p>}
-      </section>
+      {/* Sans joueur enregistré, la section « qui joue » n'aurait rien à
+          montrer : on ouvre directement sur le champ de saisie. */}
+      {store.players.length > 0 && (
+        <section className="stack-tight">
+          <h2 className="section-title">{t('newGame.pickPlayers')}</h2>
+          <p className={styles.hint}>{t('newGame.pickHint')}</p>
+          <ChipGrid>
+            {store.players.map((player) => (
+              <PlayerChip
+                key={player.id}
+                name={player.name}
+                selected={seated.includes(player.id)}
+                onToggle={() => toggle(player.id)}
+              />
+            ))}
+          </ChipGrid>
+          {full && <p className={styles.hint}>{t('newGame.full')}</p>}
+        </section>
+      )}
 
       <section className="field">
         <label className="section-title" htmlFor="new-player">

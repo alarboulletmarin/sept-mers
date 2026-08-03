@@ -37,8 +37,8 @@
 .message {
   flex: 1;
   min-width: 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--size-label);
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -51,8 +51,8 @@
   border-radius: var(--radius-pill);
   background: var(--accent-on);
   color: var(--accent);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--size-label);
+  font-weight: 600;
 }
 
 @keyframes rise {

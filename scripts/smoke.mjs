@@ -72,13 +72,13 @@ const shot = async (name) => {
 
 await page.goto(base)
 await page.waitForSelector('text=Sept Mers')
-check('l accueil s affiche', await page.getByText('Aucune partie enregistrée').isVisible())
+check('l accueil guide au premier lancement', await page.getByText('Comment ça marche').isVisible())
 await shot('accueil-vide')
 
 // -------------------------------------------------------------- nouvelle partie
 
 await page.getByRole('button', { name: 'Nouvelle partie' }).click()
-await page.waitForSelector('text=Qui joue')
+await page.waitForSelector('text=Ajouter un joueur')
 
 for (const name of ['Ana', 'Bo', 'Cy', 'Dee']) {
   await page.getByPlaceholder('Nom du joueur').fill(name)

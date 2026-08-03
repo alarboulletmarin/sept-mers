@@ -19,7 +19,7 @@ export function History({ go }: { go: (route: Route) => void }) {
     .sort((a, b) => (b.endedAt ?? '').localeCompare(a.endedAt ?? ''))
 
   return (
-    <Screen title={t('history.title')} onBack={() => go({ name: 'home' })}>
+    <Screen title={t('history.title')} lede={t('history.lede')} onBack={() => go({ name: 'home' })}>
       {games.length === 0 ? (
         <EmptyState
           title={t('history.empty.title')}
@@ -58,7 +58,7 @@ export function History({ go }: { go: (route: Route) => void }) {
                     </span>
                     <span className={styles.winner}>
                       {winners.length > 1
-                        ? t('history.tie', { score: number(top.total) })
+                        ? t('history.tie')
                         : (game.nameSnapshot[top.playerId] ?? '')}
                     </span>
                     <span className={styles.score}>{number(top.total)}</span>

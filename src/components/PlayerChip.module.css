@@ -8,8 +8,9 @@
   background: var(--card);
   color: var(--card-on);
   border: 1px solid var(--hairline);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--size-body);
+  font-weight: 500;
+  letter-spacing: -0.01em;
   max-width: 100%;
   transition: transform var(--dur-fast) var(--ease);
 }
@@ -23,6 +24,7 @@
   background: var(--accent);
   color: var(--accent-on);
   border-color: var(--accent);
+  font-weight: 600;
 }
 
 .name {

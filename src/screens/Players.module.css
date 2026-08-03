@@ -1,28 +1,31 @@
+/* La liste des joueurs : un sommaire au filet, comme la navigation d'accueil. */
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  min-width: 0;
 }
 
 .row {
-  --surface: var(--card);
-  --surface-on: var(--card-on);
-  --surface-muted: var(--card-muted);
+  --surface: var(--canvas);
+  --surface-on: var(--canvas-on);
+  --surface-muted: var(--canvas-muted);
   display: flex;
   align-items: center;
   gap: var(--space-3);
   width: 100%;
-  min-height: 56px;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-widget);
-  background: var(--card);
-  color: var(--card-on);
-  border: 1px solid var(--hairline);
-  transition: transform var(--dur-fast) var(--ease);
+  min-height: 58px;
+  padding: var(--space-2) var(--space-1);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--canvas-on);
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.list li:first-child .row {
+  border-top: 1px solid var(--hairline);
 }
 
 .row:active {
-  transform: scale(0.99);
+  opacity: 0.55;
 }
 
 .rowText {
@@ -34,16 +37,17 @@
 }
 
 .rowName {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: var(--size-subtitle);
+  font-weight: 500;
+  letter-spacing: -0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .rowMeta {
-  font-size: 12px;
-  color: var(--card-muted);
+  font-size: var(--size-caption);
+  color: var(--canvas-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -67,15 +71,16 @@
   padding: var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
   min-width: 0;
 }
 
 .statLabel {
-  font-size: 11px;
+  font-size: var(--size-tag);
   font-weight: 700;
+  font-stretch: var(--stretch-tight);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--track-tag);
   color: var(--card-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -85,13 +90,14 @@
 .statValue {
   font-size: 30px;
   line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-weight: 700;
+  letter-spacing: var(--track-figure);
   font-variant-numeric: tabular-nums;
+  margin-left: -0.02em;
 }
 
 .hint {
-  font-size: 12px;
+  font-size: var(--size-caption);
+  line-height: 1.45;
   color: var(--canvas-muted);
-  padding: 0 var(--space-1);
 }

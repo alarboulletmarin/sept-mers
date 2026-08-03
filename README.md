@@ -29,6 +29,12 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 - **Aucun scroll latéral**, à aucune largeur : tout se plie à l'écran.
 - **Design en mosaïque, monochrome** : des widgets noir, blanc ou gris, un
   chiffre en héros par widget. Voir [le design system](docs/design-system.md).
+- **Deux voix typographiques** : un romain pour ce qui nomme, un grotesque pour
+  ce qui compte. Les deux familles sont embarquées et précachées : rien à
+  télécharger, y compris en mode avion.
+- **Guidage permanent** : trois phrases au premier lancement, une consigne sous
+  chaque titre d'écran, la progression de la partie et le temps de la manche
+  affichés en continu, et un blocage qui se nomme avant de griser un bouton.
 - **Noms entiers partout**, jamais une initiale ni une pastille de couleur. Dans
   le tableau des scores, les huit noms sont écrits en diagonale pour tenir dans
   la largeur d'un téléphone. La couleur ne porte jamais seule une information.
@@ -82,21 +88,23 @@ src/
   main.tsx
   app/          App, Router, Layout, StoreProvider, ThemeProvider, useWakeLock
   screens/      Home, NewGame, Game, GameSummary, History, Players, Rules, Settings
-  components/   Widget, Button, Stepper, PlayerChip, ScoreTable, Sheet,
+  components/   Widget, Button, Stepper, Rail, PlayerChip, ScoreTable, Sheet,
                 Toast, Icon, EmptyState, BonusDrawer
   domain/       scoring, deck, validation, stats, types
   store/        storage, reducer, migrations
   charts/       ScoreLines, AccuracyBars, BonusBars, RankingBars, primitives
   i18n/         fr.json, en.json, index
   content/      rules.fr, rules.en, RulesBody
-  styles/       tokens.css, base.css
+  styles/       tokens.css, fonts.css, base.css, fonts/*.woff2
 public/         manifest.webmanifest, sw.js, icons/
 docs/           design-system.md
 ```
 
 **React 19 + TypeScript + Vite, et rien d'autre en dépendance d'exécution.**
 Pas de routeur, pas de librairie d'état, pas de Tailwind, pas de librairie de
-graphiques, pas de pack d'icônes. Le routeur tient sur le hash, l'état sur un
+graphiques, pas de pack d'icônes. Les deux fichiers de police vivent dans `src/`
+pour que Vite leur pose un hash de contenu et que le service worker les
+précache avec le bundle. Le routeur tient sur le hash, l'état sur un
 `useReducer` persisté, les styles sur des variables CSS et des modules CSS, les
 graphiques sur du SVG calculé à la main.
 
@@ -113,12 +121,14 @@ version de schéma soit une addition et pas une réécriture.
 
 ## Tests
 
-146 tests unitaires couvrent le moteur de score — dont les huit cas de référence
+156 tests unitaires couvrent le moteur de score — dont les huit cas de référence
 du cahier des charges —, la validation de saisie, le plafonnement du paquet, les
 statistiques, le réducteur, la complétion automatique du dernier joueur,
-l'aller-retour export/import, la lecture défensive du stockage, les pluriels et
-la géométrie des graphiques et les jetons de la palette. Le parcours navigateur
-complète le tout sur l'app réellement construite.
+l'aller-retour export/import, la lecture défensive du stockage, les pluriels, la
+géométrie des graphiques, les jetons de la palette et le système typographique —
+familles, échelle, fichiers de fonte embarqués, et l'absence de toute famille
+écrite en dur hors des jetons. Le parcours navigateur complète le tout sur l'app
+réellement construite.
 
 ```bash
 npm run verify \
@@ -159,6 +169,14 @@ dépendre d'une teinte — un score se lit à son signe, un état à son remplis
 une série à son motif de tiretés. C'est aussi ce qui la rend lisible en vision
 dichromate comme en noir et blanc.
 
+Sans couleur, c'est la typographie qui sépare le discours de la donnée. Deux
+familles, embarquées en `woff2` variable : **Instrument Serif** pour ce qui
+nomme — l'app, l'écran, le vainqueur, un chapitre de règle, la consigne du
+moment — et **Instrument Sans** pour ce qui se mesure, se compte ou se
+manipule. Le romain nomme, le grotesque compte, et la règle n'a pas
+d'exception : Instrument Serif n'a pas de chasses tabulaires, un chiffre ne peut
+donc jamais être de son ressort.
+
 Les surfaces portent un rôle et **s'inversent avec le thème** : `accent` est le
 bloc de contraste maximal, noir de jour et blanc de nuit. Une surface figée
 donnerait, en thème sombre, du noir sur du noir.
@@ -183,3 +201,9 @@ inégales, une houle vue de profil, sept traits pour sept mers.
 ## Licence
 
 MIT. Voir [LICENSE](LICENSE).
+
+Les deux familles typographiques embarquées — **Instrument Sans** et
+**Instrument Serif**, publiées par Instrument — sont sous SIL Open Font License
+1.1. Leur texte de licence est conservé dans
+[`src/styles/fonts/`](src/styles/fonts/), et la licence de l'app ne s'y applique
+pas.

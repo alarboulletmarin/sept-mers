@@ -50,6 +50,7 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
   return (
     <Screen
       title={t('summary.title')}
+      lede={t('summary.lede')}
       onBack={() => go({ name: readOnly ? 'history' : 'home' })}
       footer={
         <div className={styles.actions}>
@@ -84,7 +85,7 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
         {/* Le reste du classement, une tuile par joueur. */}
         {table.slice(1).map((row) => (
           <Widget key={row.playerId} surface="card" span="sm" tight>
-            <Tag>{t('summary.rank', { rank: row.rank })}</Tag>
+            <Tag>{row.rank === 1 ? t('summary.rankFirst') : t('summary.rank', { rank: row.rank })}</Tag>
             <span className={styles.rankName}>{game.nameSnapshot[row.playerId]}</span>
             <Figure>{number(row.total)}</Figure>
             {row.gapToNext > 0 && (

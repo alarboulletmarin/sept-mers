@@ -1,3 +1,7 @@
+/*
+ * Cinq variantes, une seule pleine. Le libellé décrit l'effet — « Valider la
+ * manche », jamais « Suivant » — et le message qui suit reprend le même verbe.
+ */
 .base {
   display: inline-flex;
   align-items: center;
@@ -6,8 +10,9 @@
   min-height: var(--tap-min);
   padding: 0 var(--space-5);
   border-radius: var(--radius-pill);
-  font-size: 15px;
+  font-size: var(--size-body);
   font-weight: 600;
+  letter-spacing: -0.01em;
   text-align: center;
   transition:
     opacity var(--dur-fast) var(--ease),
@@ -15,7 +20,7 @@
 }
 
 .base:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: default;
 }
 
@@ -33,8 +38,8 @@
   height: 56px;
   background: var(--accent);
   color: var(--accent-on);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--size-subtitle);
+  font-weight: 600;
 }
 
 .secondary {
@@ -54,7 +59,7 @@
   background: transparent;
   color: var(--surface-muted, var(--canvas-muted));
   padding: 0 var(--space-3);
-  font-size: 13px;
+  font-size: var(--size-label);
 }
 
 /*
