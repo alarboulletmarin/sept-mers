@@ -47,8 +47,9 @@ export function Stepper({
 
   useEffect(() => stop, [stop])
 
-  // Tant qu'aucune valeur n'est posée, le premier appui tombe sur zéro :
-  // c'est la mise la plus courante, elle ne doit pas coûter deux gestes.
+  // Une valeur vide ne se produit plus qu'à la relecture d'une saisie d'une
+  // version d'avant : le premier appui la ramène à zéro plutôt que de la
+  // laisser en l'état.
   const step = (direction: 1 | -1) => {
     if (value === null) {
       onChange(0)

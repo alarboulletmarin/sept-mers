@@ -4,6 +4,7 @@ import {
   MAX_PLAYERS,
   MIN_PLAYERS,
   TOTAL_ROUNDS,
+  type Draft,
   type Locale,
   type Store,
   type Theme,
@@ -206,41 +207,64 @@ export function normalise(input: unknown): Store {
     settings: { locale, theme, lastOptions },
   }
 
-  const draft = input.draft
-  if (isObject(draft) && typeof draft.gameId === 'string') {
-    const game = games.find((candidate) => candidate.id === draft.gameId && !candidate.endedAt)
-    if (game && isCount(draft.roundIndex)) {
-      const bids: Record<string, number | null> = {}
-      const tricks: Record<string, number | null> = {}
-      const bonus: Record<string, typeof EMPTY_BONUS> = {}
-      const readMap = (value: unknown): Record<string, unknown> =>
-        isObject(value) ? value : {}
+  /** Une saisie relue depuis le fichier, valeur par valeur. */
+  const readDraft = (source: unknown): Draft | undefined => {
+    if (!isObject(source) || typeof source.gameId !== 'string') return undefined
+    const game = games.find((candidate) => candidate.id === source.gameId && !candidate.endedAt)
+    if (!game || !isCount(source.roundIndex)) return undefined
 
-      for (const id of game.playerIds) {
-        const bidValue = readMap(draft.bids)[id]
-        bids[id] = isCount(bidValue) ? bidValue : null
-        const trickValue = readMap(draft.tricks)[id]
-        tricks[id] = isCount(trickValue) ? trickValue : null
-        const bonusSource = readMap(readMap(draft.bonus)[id])
-        const entry = { ...EMPTY_BONUS }
-        for (const key of BONUS_KEYS) {
-          const value = bonusSource[key]
-          entry[key] = isCount(value) ? value : 0
-        }
-        bonus[id] = entry
-      }
+    const bids: Record<string, number | null> = {}
+    const tricks: Record<string, number | null> = {}
+    const bonus: Record<string, typeof EMPTY_BONUS> = {}
+    const readMap = (value: unknown): Record<string, unknown> => (isObject(value) ? value : {})
 
-      const auto = draft.autoTricks
-      store.draft = {
-        gameId: game.id,
-        roundIndex: draft.roundIndex,
-        phase: draft.phase === 'results' ? 'results' : 'bids',
-        bids,
-        tricks,
-        bonus,
-        autoTricks: typeof auto === 'string' && game.playerIds.includes(auto) ? auto : null,
+    for (const id of game.playerIds) {
+      const bidValue = readMap(source.bids)[id]
+      bids[id] = isCount(bidValue) ? bidValue : null
+      const trickValue = readMap(source.tricks)[id]
+      tricks[id] = isCount(trickValue) ? trickValue : null
+      const bonusSource = readMap(readMap(source.bonus)[id])
+      const entry = { ...EMPTY_BONUS }
+      for (const key of BONUS_KEYS) {
+        const value = bonusSource[key]
+        entry[key] = isCount(value) ? value : 0
       }
+      bonus[id] = entry
     }
+
+    // On repart de la liste des joueurs, pas de celle du fichier : les
+    // doublons et les identifiants inconnus tombent d'eux-mêmes.
+    const touched = source.touchedTricks
+    const touchedTricks = Array.isArray(touched)
+      ? game.playerIds.filter((id) => touched.includes(id))
+      : []
+
+    const auto = source.autoTricks
+    return {
+      gameId: game.id,
+      roundIndex: source.roundIndex,
+      phase: source.phase === 'results' ? 'results' : 'bids',
+      bids,
+      tricks,
+      bonus,
+      touchedTricks,
+      autoTricks: typeof auto === 'string' && game.playerIds.includes(auto) ? auto : null,
+    }
+  }
+
+  store.draft = readDraft(input.draft)
+
+  // La réserve n'a de sens qu'à côté d'une correction en cours : même partie,
+  // et une autre manche que celle qu'on corrige. Le reste est un fichier
+  // bricolé, ou le reliquat d'une version d'avant.
+  const parked = readDraft(input.liveDraft)
+  if (
+    store.draft &&
+    parked &&
+    parked.gameId === store.draft.gameId &&
+    parked.roundIndex !== store.draft.roundIndex
+  ) {
+    store.liveDraft = parked
   }
 
   return store

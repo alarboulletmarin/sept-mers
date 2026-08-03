@@ -52,12 +52,66 @@
   min-width: 0;
 }
 
-.roundFigure {
+/*
+ * Le numéro de manche entre ses deux chevrons. Reculer d'une manche est le
+ * geste le plus demandé d'une partie : il se pose contre le chiffre qu'il
+ * change, pas dans un tiroir.
+ */
+.roundLine {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
   min-width: 0;
   margin-top: calc(var(--space-1) * -1);
+}
+
+.roundFigure {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.step {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  color: var(--accent-on);
+  opacity: 0.5;
+  position: relative;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+/* Le cercle reste à 36 px, la cible tactile monte à la règle des 44. */
+.step::after,
+.action::after {
+  content: '';
+  position: absolute;
+  inset: 50% 50%;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  transform: translate(-50%, -50%);
+}
+
+.step:active:not(:disabled) {
+  opacity: 1;
+  background: var(--accent-on);
+  color: var(--accent);
+  transform: scale(0.92);
+}
+
+.step:disabled {
+  opacity: 0.18;
 }
 
 .roundNumber {
@@ -98,6 +152,7 @@
   border: 1px solid currentColor;
   color: var(--accent-on);
   opacity: 0.5;
+  position: relative;
   transition:
     opacity var(--dur-fast) var(--ease),
     background var(--dur-fast) var(--ease),
@@ -254,6 +309,11 @@
  * creux et non pastille : ce n'est pas une alerte, c'est un fait à connaître.
  */
 .notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-control);
   background: var(--sunken);
@@ -261,6 +321,19 @@
   font-size: var(--size-label);
   font-weight: 500;
   min-width: 0;
+}
+
+/* La sortie de la correction, dans l'avis qui l'annonce : c'est là qu'on la
+   cherche, et nulle part ailleurs. */
+.noticeAction {
+  flex: none;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+  color: var(--sunken-on);
+  font-size: var(--size-label);
+  font-weight: 600;
 }
 
 .alert {

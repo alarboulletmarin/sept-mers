@@ -12,6 +12,7 @@ import {
   type Store,
   type Theme,
 } from '../domain/types.ts'
+import { soleUntouchedPlayer } from '../domain/validation.ts'
 import { newId } from './storage.ts'
 
 export type Action =
@@ -29,6 +30,7 @@ export type Action =
   | { type: 'game/commitRound' }
   | { type: 'game/undoRound' }
   | { type: 'game/editRound'; index: number }
+  | { type: 'game/resumeLive' }
   | { type: 'game/replaceRound'; round: Round }
   | { type: 'game/finish'; now?: string }
   | { type: 'game/abandon' }
@@ -51,11 +53,22 @@ function emptyDraft(game: Game, roundIndex: number): Draft {
   const tricks: Record<Id, number | null> = {}
   const bonus: Record<Id, RoundBonus> = {}
   for (const id of game.playerIds) {
-    bids[id] = null
-    tricks[id] = null
+    // Les compteurs partent à zéro plutôt qu'à vide : une manche où personne
+    // ne mise doit pouvoir se valider sans toucher une seule tuile.
+    bids[id] = 0
+    tricks[id] = 0
     bonus[id] = { ...EMPTY_BONUS }
   }
-  return { gameId: game.id, roundIndex, phase: 'bids', bids, tricks, bonus, autoTricks: null }
+  return {
+    gameId: game.id,
+    roundIndex,
+    phase: 'bids',
+    bids,
+    tricks,
+    bonus,
+    touchedTricks: [],
+    autoTricks: null,
+  }
 }
 
 /** Draft repeuplé à partir d'une manche déjà validée, pour la corriger. */
@@ -68,11 +81,58 @@ function draftFromRound(game: Game, round: Round): Draft {
     draft.tricks[entry.playerId] = entry.tricks
     draft.bonus[entry.playerId] = { ...entry.bonus }
   }
+  // Une manche validée a été saisie en entier : ni resemis, ni déduction.
+  // Sans ça, la rouvrir pour relire un chiffre la réécrirait.
+  draft.touchedTricks = [...game.playerIds]
   return draft
 }
 
+/**
+ * Les plis repartent de la mise de chacun : c'est la valeur la plus probable,
+ * et une manche où tout le monde tient sa mise se valide alors sans un geste.
+ * On ne touche pas à ceux qui ont déjà été posés à la main.
+ */
+function seedTricks(draft: Draft, playerIds: Id[]): Record<Id, number | null> {
+  const tricks = { ...draft.tricks }
+  for (const id of playerIds) {
+    if (draft.touchedTricks.includes(id)) continue
+    tricks[id] = draft.bids[id] ?? 0
+  }
+  return tricks
+}
+
+/**
+ * Repose la déduction du dernier joueur non repris en main. À appeler après
+ * chaque écriture dans les plis : la valeur déduite est un reste, elle périme
+ * dès qu'un autre joueur bouge.
+ */
+function withDeduction(
+  tricks: Record<Id, number | null>,
+  touchedTricks: Id[],
+  playerIds: Id[],
+  cards: number,
+): { tricks: Record<Id, number | null>; autoTricks: Id | null } {
+  const auto = soleUntouchedPlayer(touchedTricks, playerIds)
+  if (auto === null) return { tricks, autoTricks: null }
+  const assigned = playerIds.reduce(
+    (total, id) => (id === auto ? total : total + (tricks[id] ?? 0)),
+    0,
+  )
+  return {
+    tricks: { ...tricks, [auto]: Math.min(cards, Math.max(0, cards - assigned)) },
+    autoTricks: auto,
+  }
+}
+
+const marked = (list: Id[], id: Id): Id[] => (list.includes(id) ? list : [...list, id])
+
 export function nextRoundIndex(game: Game): number {
   return game.rounds.length + 1
+}
+
+/** Vrai quand le brouillon corrige une manche déjà validée. */
+export function isEditingRound(game: Game, draft: Draft): boolean {
+  return game.rounds.some((round) => round.index === draft.roundIndex)
 }
 
 export function draftFor(store: Store, game: Game): Draft {
@@ -151,6 +211,7 @@ export function reducer(store: Store, action: Action): Store {
         games: [...store.games.map((old) => (old.endedAt ? old : { ...old, endedAt: now })), game],
         settings: { ...store.settings, lastOptions: action.options },
         draft: emptyDraft(game, 1),
+        liveDraft: undefined,
       }
     }
 
@@ -165,33 +226,21 @@ export function reducer(store: Store, action: Action): Store {
       const game = runningGame(store)
       if (!game) return store
       const draft = draftFor(store, game)
-      const cards = cardsForRound(draft.roundIndex, game.playerIds.length)
 
-      const tricks: Record<Id, number | null> = {
-        ...draft.tricks,
-        [action.playerId]: action.tricks,
-      }
-
-      // Toucher soi-même la valeur déduite, c'est la reprendre en main.
-      let auto = draft.autoTricks ?? null
-      if (auto === action.playerId) auto = null
-
-      const missing = game.playerIds.filter(
-        (id) => tricks[id] === null || tricks[id] === undefined,
-      )
-      if (missing.length === 1) auto = missing[0]
+      // Poser une valeur, c'est la reprendre en main — y compris sur la tuile
+      // que la déduction remplissait jusque-là.
+      const touchedTricks = marked(draft.touchedTricks, action.playerId)
 
       // On recalcule la déduction à chaque saisie, pas seulement au moment où
       // elle apparaît : sinon un incrément de plus la laisserait périmée.
-      if (auto !== null && auto !== action.playerId) {
-        const assigned = game.playerIds.reduce(
-          (total, id) => (id === auto ? total : total + (tricks[id] ?? 0)),
-          0,
-        )
-        tricks[auto] = Math.min(cards, Math.max(0, cards - assigned))
-      }
+      const deduced = withDeduction(
+        { ...draft.tricks, [action.playerId]: action.tricks },
+        touchedTricks,
+        game.playerIds,
+        cardsForRound(draft.roundIndex, game.playerIds.length),
+      )
 
-      return { ...store, draft: { ...draft, tricks, autoTricks: auto } }
+      return { ...store, draft: { ...draft, ...deduced, touchedTricks } }
     }
 
     case 'game/setBonus': {
@@ -214,7 +263,21 @@ export function reducer(store: Store, action: Action): Store {
     case 'game/phase': {
       const game = runningGame(store)
       if (!game) return store
-      return { ...store, draft: { ...draftFor(store, game), phase: action.phase } }
+      const draft = draftFor(store, game)
+      if (action.phase === 'bids') return { ...store, draft: { ...draft, phase: 'bids' } }
+
+      // Entrée dans les résultats : les plis repartent des mises, sauf ceux
+      // qu'on a déjà posés. Un aller-retour vers les mises pour en corriger
+      // une doit donc se répercuter, et la déduction se reposer derrière —
+      // sinon le joueur déduit garderait sa mise au lieu du reste, la somme
+      // ne tomberait pas juste, et le bouton resterait mort.
+      const deduced = withDeduction(
+        seedTricks(draft, game.playerIds),
+        draft.touchedTricks,
+        game.playerIds,
+        cardsForRound(draft.roundIndex, game.playerIds.length),
+      )
+      return { ...store, draft: { ...draft, ...deduced, phase: 'results' } }
     }
 
     case 'game/commitRound': {
@@ -244,10 +307,18 @@ export function reducer(store: Store, action: Action): Store {
       const updated = gameById(next, game.id)
       if (!updated) return next
 
+      // Valider une correction rend la main à la manche en cours, avec la
+      // saisie qui l'attendait ; valider la manche en cours ouvre la suivante.
+      const parked = store.liveDraft
+      if (existing && parked && parked.gameId === game.id) {
+        return { ...next, draft: parked, liveDraft: undefined }
+      }
+
       const following = nextRoundIndex(updated)
       return {
         ...next,
         draft: following > TOTAL_ROUNDS ? undefined : emptyDraft(updated, following),
+        liveDraft: undefined,
       }
     }
 
@@ -259,8 +330,9 @@ export function reducer(store: Store, action: Action): Store {
       const next = withGame(store, game.id, (current) => ({ ...current, rounds }))
       const updated = gameById(next, game.id)
       if (!updated) return next
-      // On rouvre la manche annulée avec sa saisie, pas un écran vierge.
-      return { ...next, draft: draftFromRound(updated, last) }
+      // On rouvre la manche annulée avec sa saisie, pas un écran vierge. La
+      // réserve désignait la manche d'après, qui n'existe plus : elle part.
+      return { ...next, draft: draftFromRound(updated, last), liveDraft: undefined }
     }
 
     case 'game/editRound': {
@@ -268,7 +340,29 @@ export function reducer(store: Store, action: Action): Store {
       if (!game) return store
       const round = game.rounds.find((candidate) => candidate.index === action.index)
       if (!round) return store
-      return { ...store, draft: draftFromRound(game, round) }
+      // La saisie de la manche en cours est mise de côté, pas jetée : reculer
+      // d'une manche pour vérifier un chiffre ne doit rien coûter. Sauter
+      // ensuite d'une manche corrigée à une autre ne remplace pas la réserve.
+      const current = store.draft
+      const parked = current && !isEditingRound(game, current) ? current : store.liveDraft
+      return { ...store, draft: draftFromRound(game, round), liveDraft: parked }
+    }
+
+    case 'game/resumeLive': {
+      const game = runningGame(store)
+      if (!game) return store
+      const parked = store.liveDraft
+      if (parked && parked.gameId === game.id) {
+        return { ...store, draft: parked, liveDraft: undefined }
+      }
+      // Pas de réserve — un rechargement l'a emportée : on rouvre proprement
+      // la manche en cours plutôt que de laisser l'écran sur le passé.
+      const following = nextRoundIndex(game)
+      return {
+        ...store,
+        draft: following > TOTAL_ROUNDS ? undefined : emptyDraft(game, following),
+        liveDraft: undefined,
+      }
     }
 
     case 'game/replaceRound': {
@@ -289,6 +383,7 @@ export function reducer(store: Store, action: Action): Store {
       return {
         ...withGame(store, game.id, (current) => ({ ...current, endedAt: now })),
         draft: undefined,
+        liveDraft: undefined,
       }
     }
 
@@ -299,6 +394,7 @@ export function reducer(store: Store, action: Action): Store {
         ...store,
         games: store.games.filter((candidate) => candidate.id !== game.id),
         draft: undefined,
+        liveDraft: undefined,
       }
     }
 
@@ -321,6 +417,7 @@ export function reducer(store: Store, action: Action): Store {
         ...store,
         games: store.games.filter((game) => game.id !== action.gameId),
         draft: store.draft?.gameId === action.gameId ? undefined : store.draft,
+        liveDraft: store.liveDraft?.gameId === action.gameId ? undefined : store.liveDraft,
       }
 
     case 'history/restore': {

@@ -115,7 +115,7 @@ async function setValue(tile, target) {
 }
 
 /** Saisit une manche : mises puis plis, dont la somme vaut le nombre de cartes. */
-async function playRound(round, bids, tricks, bonus = null) {
+async function playRound(round, bids, tricks, bonus = null, watchAuto = false) {
   await page.waitForSelector(`[data-round="${round}"]`)
   const tiles = page.locator('[data-player-tile]')
 
@@ -129,6 +129,18 @@ async function playRound(round, bids, tricks, bonus = null) {
     await setValue(tiles.nth(seat), tricks[seat])
   }
 
+  if (watchAuto) {
+    const last = tricks.length - 1
+    check(
+      `la déduction remplit le dernier joueur à la manche ${round}`,
+      Number((await readValues())[last]) === tricks[last],
+    )
+    check(
+      'la tuile déduite dit qu elle est déduite',
+      await page.getByText('Complété automatiquement').isVisible(),
+    )
+  }
+
   if (bonus) {
     await tiles.nth(bonus.seat).getByRole('button', { name: /^(Bonus|\+ ?Bonus)/ }).click()
     for (let i = 0; i < bonus.count; i += 1) {
@@ -140,17 +152,36 @@ async function playRound(round, bids, tricks, bonus = null) {
   await page.getByRole('button', { name: 'Valider la manche' }).click()
 }
 
+/** Les valeurs affichées sur les quatre tuiles, dans l'ordre à table. */
+async function readValues() {
+  const steppers = page.locator('[data-player-tile] [role=spinbutton]')
+  const count = await steppers.count()
+  const values = []
+  for (let seat = 0; seat < count; seat += 1) {
+    values.push(await steppers.nth(seat).getAttribute('aria-valuenow'))
+  }
+  return values
+}
+
 check(
   'la barre de navigation reste en partie',
   await page.getByRole('navigation', { name: 'Sections' }).isVisible(),
+)
+check(
+  'les mises partent à zéro, pas à vide',
+  (await readValues()).every((value) => value === '0'),
 )
 check(
   'l onglet Accueil est celui de la partie',
   (await page.getByRole('link', { name: 'Accueil' }).getAttribute('aria-current')) === 'page',
 )
 
-// Manche 1 : une carte, un pli.
-await playRound(1, [1, 0, 0, 0], [1, 0, 0, 0])
+// Manche 1 : une carte, un pli. Une seule mise à poser — les plis partent
+// ensuite semés sur les mises, donc la manche se valide sans y toucher.
+await setValue(page.locator('[data-player-tile]').nth(0), 1)
+await page.getByRole('button', { name: 'Valider les mises' }).click()
+check('les plis partent sur la mise de chacun', (await readValues()).join() === '1,0,0,0')
+await page.getByRole('button', { name: 'Valider la manche' }).click()
 check('la manche 1 est enregistrée', await page.getByText('Manche 1 enregistrée').isVisible())
 check(
   'le bandeau porte une croix pour le chasser',
@@ -167,18 +198,34 @@ await shot('manche-2-mises')
 // Manche 2, avec un 14 noir pour Ana.
 await playRound(2, [1, 1, 0, 0], [1, 1, 0, 0], { seat: 0, label: '14 noir', count: 1 })
 
-// Le reste de la partie.
+// ------------------------------------------------ revenir à la manche d'avant
+
+await page.waitForSelector('[data-round="3"]')
+await setValue(page.locator('[data-player-tile]').nth(0), 3)
+await page.getByRole('button', { name: 'Revenir à la manche 2' }).click()
+await page.waitForSelector('[data-round="2"]')
+check(
+  'on revient à la manche précédente depuis la manche en cours',
+  await page.getByText('Correction de la manche 2').isVisible(),
+)
+await page.getByRole('button', { name: 'Reprendre la manche en cours' }).click()
+await page.waitForSelector('[data-round="3"]')
+check('la saisie en cours survit à l aller-retour', (await readValues())[0] === '3')
+
+// Le reste de la partie. La manche 5 laisse le dernier joueur à la déduction.
 const plan = [
   [3, [1, 1, 1, 0], [1, 1, 1, 0]],
   [4, [2, 1, 1, 0], [2, 1, 1, 0]],
-  [5, [2, 1, 1, 1], [2, 1, 1, 1]],
+  [5, [2, 1, 1, 1], [0, 2, 2, 1], null, true],
   [6, [2, 2, 1, 1], [2, 2, 1, 1]],
   [7, [3, 2, 1, 1], [3, 2, 1, 1]],
   [8, [3, 2, 2, 1], [3, 2, 2, 1]],
   [9, [3, 3, 2, 1], [3, 3, 2, 1]],
   [10, [4, 3, 2, 1], [4, 3, 2, 1]],
 ]
-for (const [round, bids, tricks] of plan) await playRound(round, bids, tricks)
+for (const [round, bids, tricks, bonus, watchAuto] of plan) {
+  await playRound(round, bids, tricks, bonus, watchAuto)
+}
 
 // ------------------------------------------------------------------ fin de partie
 

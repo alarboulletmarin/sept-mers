@@ -70,13 +70,16 @@ check('la saisie survit au mode avion', kept === '1')
 
 // Une manche complète, hors ligne.
 const tiles = page.locator('[data-player-tile]')
-for (let i = 1; i < 3; i += 1) await setValue(tiles.nth(i), 0)
+// Ana et Bo misent le pli, Cy non.
+await setValue(tiles.nth(1), 1)
 await page.getByRole('button', { name: 'Valider les mises' }).click()
-// Ana prend l'unique pli, Bo zéro : le dernier joueur se complète tout seul.
-await setValue(tiles.nth(0), 1)
+// C'est Cy qui l'emporte. On reprend Ana et Bo en main ; Cy, le seul qu'on
+// n'a pas touché, se complète tout seul — et sa valeur s'écarte donc du 0
+// qu'on lui avait semé depuis sa mise.
+await setValue(tiles.nth(0), 0)
 await setValue(tiles.nth(1), 0)
 const filled = await tiles.nth(2).locator('[role=spinbutton]').getAttribute('aria-valuenow')
-check('le dernier joueur est complété automatiquement, hors ligne', filled === '0')
+check('le dernier joueur est complété automatiquement, hors ligne', filled === '1')
 await page.getByRole('button', { name: 'Valider la manche' }).click()
 await page.waitForSelector('text=Les résultats', { timeout: 10000 }).catch(() => {})
 check('une manche se valide hors ligne', await page.locator('[data-round]').first().isVisible())

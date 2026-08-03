@@ -68,6 +68,12 @@ export interface Draft {
   tricks: Record<Id, number | null>
   bonus: Record<Id, RoundBonus>
   /**
+   * Joueurs dont les plis ont été posés à la main. Les autres gardent la valeur
+   * semée depuis leur mise : c'est ce qui permet à la fois de resemer après une
+   * correction de mise, et de désigner celui dont la valeur se déduit.
+   */
+  touchedTricks: Id[]
+  /**
    * Joueur dont les plis sont déduits des autres. On le retient pour pouvoir
    * recalculer sa valeur à chaque saisie : sans ça, un `+` de plus sur un autre
    * joueur laisserait une déduction périmée.
@@ -81,6 +87,11 @@ export interface Store {
   games: Game[]
   settings: Settings
   draft?: Draft
+  /**
+   * Saisie de la manche en cours, mise de côté le temps de corriger une manche
+   * passée. Revenir en arrière ne doit rien détruire.
+   */
+  liveDraft?: Draft
 }
 
 export const TOTAL_ROUNDS = 10

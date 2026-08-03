@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   bonusCeiling,
   remainingTricks,
-  soleMissingPlayer,
+  soleUntouchedPlayer,
   sumBids,
   validateBids,
   validateBonuses,
@@ -69,10 +69,14 @@ describe('plis', () => {
     expect(remainingTricks({ a: 2, b: null, c: 1 }, 5, players)).toBe(2)
   })
 
-  it('désigne le dernier joueur non renseigné', () => {
-    expect(soleMissingPlayer({ a: 2, b: null, c: 1 }, players)).toBe('b')
-    expect(soleMissingPlayer({ a: 2, b: null, c: null }, players)).toBeNull()
-    expect(soleMissingPlayer({ a: 2, b: 2, c: 1 }, players)).toBeNull()
+  it('désigne le dernier joueur non repris en main', () => {
+    expect(soleUntouchedPlayer(['a', 'c'], players)).toBe('b')
+    expect(soleUntouchedPlayer(['a'], players)).toBeNull()
+    expect(soleUntouchedPlayer(['a', 'b', 'c'], players)).toBeNull()
+  })
+
+  it('ignore un joueur inconnu dans la liste des repris en main', () => {
+    expect(soleUntouchedPlayer(['a', 'c', 'fantôme'], players)).toBe('b')
   })
 })
 

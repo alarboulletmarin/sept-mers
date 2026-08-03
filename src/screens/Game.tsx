@@ -17,6 +17,7 @@ import { scoreRound } from '../domain/scoring.ts'
 import { totals } from '../domain/stats.ts'
 import { TOTAL_ROUNDS, bonusIsEmpty, type Id, type RoundBonus } from '../domain/types.ts'
 import {
+  globalIssues,
   issuesFor,
   remainingTricks,
   sumBids,
@@ -26,7 +27,7 @@ import {
   type Issue,
 } from '../domain/validation.ts'
 import { useT } from '../i18n/index.ts'
-import { draftFor, runningGame } from '../store/reducer.ts'
+import { draftFor, isEditingRound, runningGame } from '../store/reducer.ts'
 import { RulesBody } from '../content/RulesBody.tsx'
 import styles from './Game.module.css'
 
@@ -56,7 +57,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
 
   const cards = cardsForRound(draft.roundIndex, game.playerIds.length)
   const capped = isCapped(draft.roundIndex, game.playerIds.length)
-  const isEditing = game.rounds.some((round) => round.index === draft.roundIndex)
+  const isEditing = isEditingRound(game, draft)
   const running = totals(game)
 
   const bidIssues = validateBids(draft.bids, cards, game.playerIds)
@@ -71,11 +72,12 @@ export function Game({ go }: { go: (route: Route) => void }) {
 
   const isBids = draft.phase === 'bids'
 
-  // Combien de joueurs restent à renseigner : c'est la seule chose qui bloque
-  // la validation tant qu'il en manque, autant le dire avant de désactiver.
-  const missing = game.playerIds.filter(
-    (playerId) => (isBids ? draft.bids[playerId] : draft.tricks[playerId]) == null,
-  ).length
+  // On peut reculer sur une manche déjà validée, et revenir. La manche en
+  // cours n'est pas perdue pendant ce temps : le réducteur la met de côté.
+  const previousRound = draft.roundIndex - 1
+  const canGoBack = game.rounds.some((round) => round.index === previousRound)
+  const nextRound = draft.roundIndex + 1
+  const canGoForward = isEditing
 
   const commit = () => {
     if (!resultsReady) {
@@ -145,10 +147,42 @@ export function Game({ go }: { go: (route: Route) => void }) {
               </div>
             </div>
 
-            <h1 className={styles.roundFigure} data-round={draft.roundIndex}>
-              <span className={styles.roundNumber}>{draft.roundIndex}</span>
-              <span className={styles.roundTotal}>{t('game.roundOf', { total: TOTAL_ROUNDS })}</span>
-            </h1>
+            {/* Le numéro de manche, et de quoi en changer. Reculer d'une
+                manche pour corriger un chiffre est le geste le plus demandé
+                d'une partie : il vaut mieux ici, contre le numéro qu'il
+                change, que rangé dans le tableau des scores. */}
+            <div className={styles.roundLine}>
+              <button
+                type="button"
+                className={styles.step}
+                aria-label={t('game.previousRound', { round: previousRound })}
+                disabled={!canGoBack}
+                onClick={() => dispatch({ type: 'game/editRound', index: previousRound })}
+              >
+                <Icon name="chevron" rotate="left" size={18} />
+              </button>
+
+              <h1 className={styles.roundFigure} data-round={draft.roundIndex}>
+                <span className={styles.roundNumber}>{draft.roundIndex}</span>
+                <span className={styles.roundTotal}>
+                  {t('game.roundOf', { total: TOTAL_ROUNDS })}
+                </span>
+              </h1>
+
+              <button
+                type="button"
+                className={styles.step}
+                aria-label={t('game.nextRound', { round: nextRound })}
+                disabled={!canGoForward}
+                onClick={() =>
+                  game.rounds.some((round) => round.index === nextRound)
+                    ? dispatch({ type: 'game/editRound', index: nextRound })
+                    : dispatch({ type: 'game/resumeLive' })
+                }
+              >
+                <Icon name="chevron" size={18} />
+              </button>
+            </div>
 
             {/* Les deux temps de la manche, toujours affichés : on mise, puis
                 on compte. Personne ne doit avoir à deviner lequel on lui
@@ -163,7 +197,16 @@ export function Game({ go }: { go: (route: Route) => void }) {
                     ? undefined
                     : () => dispatch({ type: 'game/phase', phase: 'bids' }),
                 },
-                { label: t('game.phase.results'), current: !isBids, done: false },
+                // Cliquer « 2 » vaut valider les mises : c'est le même geste,
+                // et la bascule d'un temps à l'autre devient libre. Le bouton
+                // de validation reste, pour qui suit l'écran plutôt que la
+                // frise.
+                {
+                  label: t('game.phase.results'),
+                  current: !isBids,
+                  done: false,
+                  onClick: isBids ? goToResults : undefined,
+                },
               ]}
             />
 
@@ -185,7 +228,16 @@ export function Game({ go }: { go: (route: Route) => void }) {
         {capped && <p className={styles.notice}>{t('game.capped', { count: cards })}</p>}
 
         {isEditing && (
-          <p className={styles.notice}>{t('game.editing', { round: draft.roundIndex })}</p>
+          <div className={styles.notice}>
+            <p>{t('game.editing', { round: draft.roundIndex })}</p>
+            <button
+              type="button"
+              className={styles.noticeAction}
+              onClick={() => dispatch({ type: 'game/resumeLive' })}
+            >
+              {t('game.backToLive')}
+            </button>
+          </div>
         )}
 
         {/* La consigne du moment, en romain italique : c'est la voix de l'app,
@@ -204,6 +256,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
               bid={draft.bids[playerId] ?? null}
               tricks={draft.tricks[playerId] ?? null}
               bonus={draft.bonus[playerId]}
+              auto={!isBids && draft.autoTricks === playerId}
               issues={
                 touched
                   ? issuesFor(isBids ? bidIssues : [...trickIssues, ...bonusIssues], playerId)
@@ -221,31 +274,32 @@ export function Game({ go }: { go: (route: Route) => void }) {
           ))}
         </div>
 
-        {touched && bonusIssues.filter((issue) => !issue.playerId).length > 0 && (
+        {/* Les anomalies qui portent sur la manche entière et non sur un
+            joueur. La somme des plis en faisait partie sans être affichée
+            nulle part : le bouton se grisait, et rien ne le disait. */}
+        {touched && globalIssues([...trickIssues, ...bonusIssues]).length > 0 && (
           <div className="stack-tight" role="alert">
-            {bonusIssues
-              .filter((issue) => !issue.playerId)
-              .map((issue, index) => (
-                <p key={index} className={styles.alert}>
-                  {t(`issue.${issue.code}`, issue.data)}
-                </p>
-              ))}
+            {globalIssues([...trickIssues, ...bonusIssues]).map((issue, index) => (
+              <p key={index} className={styles.alert}>
+                {t(`issue.${issue.code}`, issue.data)}
+              </p>
+            ))}
           </div>
         )}
       </main>
 
       <div className="actionbar" ref={actionBar}>
         <div className="actionbar-inner">
+          {/* Plus rien n'est « manquant » : tout part rempli. Le pied d'écran
+              ne dit donc plus qui reste à saisir, mais où en est la manche. */}
           <p className={styles.counter} role="status">
-            {missing > 0
-              ? t(isBids ? 'game.bids.missing' : 'game.results.missing', { count: missing })
-              : isBids
-                ? t('game.bids.sum', { count: bidTotal, bid: bidTotal, cards })
-                : left > 0
-                  ? t('game.results.remaining', { count: left })
-                  : left < 0
-                    ? t('game.results.over', { count: -left })
-                    : t('game.results.complete', { count: cards })}
+            {isBids
+              ? t('game.bids.sum', { count: bidTotal, bid: bidTotal, cards })
+              : left > 0
+                ? t('game.results.remaining', { count: left })
+                : left < 0
+                  ? t('game.results.over', { count: -left })
+                  : t('game.results.complete', { count: cards })}
           </p>
 
           {isBids ? (
@@ -329,6 +383,8 @@ interface PlayerTileProps {
   bid: number | null
   tricks: number | null
   bonus: RoundBonus
+  /** Tuile dont la valeur se déduit des autres. */
+  auto: boolean
   issues: Issue[]
   onBid: (value: number) => void
   onTricks: (value: number) => void
@@ -346,6 +402,7 @@ function PlayerTile(props: PlayerTileProps) {
     bid,
     tricks,
     bonus,
+    auto,
     issues,
     onBid,
     onTricks,
@@ -364,12 +421,10 @@ function PlayerTile(props: PlayerTileProps) {
   const bonusCount = Object.values(bonus).reduce((total, count) => total + count, 0)
 
   return (
-    <Widget
-      surface={value === null ? 'card' : 'accent'}
-      span="sm"
-      tight
-      marker="player-tile"
-    >
+    // Tout part rempli : le contraste ne peut plus dire « saisi ou non ». Il
+    // dit désormais ce qui reste vrai — qui porte un chiffre, et qui est à
+    // zéro.
+    <Widget surface={value ? 'accent' : 'card'} span="sm" tight marker="player-tile">
       {/* Le nom entier : deux joueurs en « D » doivent rester distinguables,
           et la couleur ne doit jamais porter seule l'information. */}
       <h2 className={styles.name}>{name}</h2>
@@ -386,7 +441,9 @@ function PlayerTile(props: PlayerTileProps) {
       {!isBids && (
         <div className={styles.tileMeta}>
           <span className={styles.bidRecall}>
-            {bid !== null ? t('game.bid', { bid }) : ''}
+            {/* La tuile déduite le dit : sinon son chiffre bouge tout seul
+                pendant qu'on saisit les autres, sans que rien l'explique. */}
+            {auto ? t('game.results.autofilled') : bid !== null ? t('game.bid', { bid }) : ''}
           </span>
           {score && <span className={styles.tileScore}>{signed(score.total)}</span>}
         </div>

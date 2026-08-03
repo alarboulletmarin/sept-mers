@@ -117,12 +117,16 @@ export function remainingTricks(tricks: TrickMap, cards: number, playerIds: Id[]
 }
 
 /**
- * Le joueur dont la valeur se déduit des autres, ou `null` s'il en manque
+ * Le joueur dont la valeur se déduit des autres, ou `null` s'il y en a
  * plusieurs. La phase résultats le complète automatiquement.
+ *
+ * Les plis partent semés sur les mises : plus personne n'est « non renseigné »,
+ * et c'est donc le fait d'avoir été repris en main, et lui seul, qui distingue
+ * celui qu'on déduit de ceux qu'on a posés.
  */
-export function soleMissingPlayer(tricks: TrickMap, playerIds: Id[]): Id | null {
-  const missing = playerIds.filter((id) => tricks[id] === null || tricks[id] === undefined)
-  return missing.length === 1 ? missing[0] : null
+export function soleUntouchedPlayer(touched: Id[], playerIds: Id[]): Id | null {
+  const untouched = playerIds.filter((id) => !touched.includes(id))
+  return untouched.length === 1 ? untouched[0] : null
 }
 
 // -------------------------------------------------------------------- Bonus
