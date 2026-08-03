@@ -8,6 +8,11 @@
   "nav.settings": "Settings",
   "nav.back": "Back",
   "nav.close": "Close",
+
+  "update.available": "A new version is ready.",
+  "update.action": "Reload",
+  "update.dismiss": "Later",
+
   "action.cancel": "Cancel",
   "action.undo": "Undo",
   "action.delete": "Delete",

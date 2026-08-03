@@ -22,12 +22,7 @@ if (container) {
   )
 }
 
-// Le service worker précache le shell. L'app ne fait aucun appel réseau :
-// une fois le shell en cache, il n'y a rien d'autre à gérer.
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {
-      // Hors ligne ou contexte non sécurisé : l'app marche quand même.
-    })
-  })
-}
+// L'enregistrement du service worker n'est pas ici : il se fait dans
+// `UpdatePrompt`, qui a besoin de la même inscription pour savoir qu'une
+// version attend. Deux points d'entrée pour un seul worker, et le bandeau ne
+// verrait jamais rien venir.

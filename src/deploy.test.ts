@@ -64,14 +64,15 @@ describe('vercel.json', () => {
     }
   })
 
-  it('sert le service worker et sa liste de fichiers sans cache', () => {
+  it('sert le service worker sans cache', () => {
+    // C'est la comparaison octet à octet de `sw.js` qui déclenche la mise à
+    // jour. Servi depuis un cache, le fichier reste identique à lui-même et
+    // aucune nouvelle version n'est jamais détectée.
     const headers = config.headers as { source: string; headers: { key: string; value: string }[] }[]
-    for (const source of ['/sw.js', '/sw-version.js']) {
-      const entry = headers.find((candidate) => candidate.source === source)
-      expect(entry, `${source} sans en-tête`).toBeTruthy()
-      const cache = entry?.headers.find((h) => h.key === 'Cache-Control')?.value ?? ''
-      expect(cache, source).toContain('max-age=0')
-    }
+    const entry = headers.find((candidate) => candidate.source === '/sw.js')
+    expect(entry, '/sw.js sans en-tête').toBeTruthy()
+    const cache = entry?.headers.find((h) => h.key === 'Cache-Control')?.value ?? ''
+    expect(cache).toContain('max-age=0')
   })
 
   it('met les fichiers hachés en cache long', () => {
@@ -86,7 +87,6 @@ describe('vercel.json', () => {
     for (const real of [
       '/index.html',
       '/sw.js',
-      '/sw-version.js',
       '/manifest.webmanifest',
       '/assets/index-abc123.js',
       '/assets/index-abc123.css',
@@ -103,6 +103,32 @@ describe('vercel.json', () => {
     for (const typed of ['/regles', '/game', '/joueurs/ana']) {
       expect(pattern.test(typed), `${typed} devrait être rattrapé`).toBe(true)
     }
+  })
+})
+
+describe('vite.config.ts', () => {
+  const source = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8')
+
+  it('laisse le nouveau worker attendre au lieu de prendre la main', () => {
+    /*
+     * `autoUpdate` rechargerait la page dès qu'une version est prête, sans
+     * prévenir. Les parties ne vivent que dans le navigateur : une manche en
+     * cours de saisie partirait avec. La bascule est d'un mot, et rien d'autre
+     * dans le projet ne la signalerait.
+     */
+    expect(source).toMatch(/registerType:\s*'prompt'/)
+    // Le mot en prose est autorisé — l'option, non : elle annulerait l'attente.
+    expect(source).not.toMatch(/skipWaiting\s*:/)
+  })
+
+  it('fait attraper la page dès la première visite', () => {
+    // Sans revendication, le premier chargement reste non contrôlé et le hors
+    // ligne n'arrive qu'au démarrage suivant.
+    expect(source).toMatch(/clientsClaim:\s*true/)
+  })
+
+  it('purge le précache de la version précédente', () => {
+    expect(source).toMatch(/cleanupOutdatedCaches:\s*true/)
   })
 })
 

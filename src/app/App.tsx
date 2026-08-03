@@ -14,6 +14,7 @@ import { useRoute, useScrollReset, type Route } from './Router.tsx'
 import { StoreProvider, useStore } from './StoreProvider.tsx'
 import { TabBar } from './TabBar.tsx'
 import { ThemeProvider } from './ThemeProvider.tsx'
+import { UpdatePrompt } from './UpdatePrompt.tsx'
 
 export function App() {
   return (
@@ -21,6 +22,10 @@ export function App() {
       <ThemeProvider>
         <ToastProvider>
           <Screens />
+          {/* Monté une fois, hors des écrans : la proposition de recharger
+              survit à la navigation plutôt que de disparaître parce qu'on est
+              passé aux réglages. */}
+          <UpdatePrompt />
         </ToastProvider>
       </ThemeProvider>
     </StoreProvider>
