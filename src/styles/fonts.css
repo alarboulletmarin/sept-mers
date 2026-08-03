@@ -1,22 +1,22 @@
 /*
- * Deux voix, et deux seulement. Voir docs/design-system.md, section 3.
+ * Deux familles, et deux seulement. Voir docs/design-system.md, section 3.
  *
- * Le romain nomme, le grotesque compte. Instrument Serif porte les mots qui
- * désignent — l'app, l'écran, le vainqueur, le chapitre de règle. Instrument
- * Sans porte tout le reste, et surtout les chiffres : c'est le seul des deux
- * qui embarque des chasses tabulaires, sans lesquelles une colonne de scores
- * danse à chaque manche.
+ * Le texte parle, les chiffres se lisent. Instrument Sans porte tout ce qui
+ * s'énonce — noms, libellés, boutons, règles. JetBrains Mono porte tout ce qui
+ * se compte : un score, une mise, un numéro de manche, une colonne de totaux.
+ * La chasse fixe n'est pas une coquetterie ici, c'est la fonction même de
+ * l'app — des chiffres qui s'alignent d'une manche à l'autre sans danser.
  *
  * Les fichiers vivent dans `src/` et non dans `public/` : Vite leur pose un
  * hash de contenu, le service worker les précache avec le reste du bundle, et
- * le mode avion n'a plus rien à télécharger. Deux tranches Unicode par style —
- * `latin-ext` ne descend que si un caractère l'exige.
+ * le mode avion n'a plus rien à télécharger. Deux tranches Unicode par
+ * famille — `latin-ext` ne descend que si un caractère l'exige.
  */
 
-/* ------------------------------------------------ le grotesque : Instrument Sans
-   Variable sur deux axes. `wght` 400→700 pour la hiérarchie, `wdth` 75→100 pour
-   les micro-libellés : c'est la chasse étroite, pas une graisse de plus, qui
-   donne aux étiquettes leur allure de tampon. */
+/* ------------------------------------------------- la voix : Instrument Sans
+   Variable sur deux axes. `wght` 400→700 pour la hiérarchie, `wdth` 75→100
+   pour les micro-libellés : c'est la chasse étroite, pas une graisse de plus,
+   qui donne aux étiquettes leur allure de tampon. */
 
 @font-face {
   font-family: 'Instrument Sans';
@@ -42,50 +42,28 @@
     U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* -------------------------------------------------- le romain : Instrument Serif
-   Une seule graisse, romain et italique. C'est voulu : un romain de labeur qui
-   ne connaît pas le gras oblige à hiérarchiser par la taille, ce qui est
-   exactement la discipline qu'on veut. */
+/* ------------------------------------------------ le chiffre : JetBrains Mono
+   Variable en graisse. Chasse fixe, zéro barré, signes moins et plus de même
+   largeur que les chiffres : une colonne de scores reste une colonne, quelle
+   que soit la valeur. */
 
 @font-face {
-  font-family: 'Instrument Serif';
+  font-family: 'JetBrains Mono';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100 800;
   font-display: swap;
-  src: url('./fonts/instrument-serif-latin.woff2') format('woff2');
+  src: url('./fonts/jetbrains-mono-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
     U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
     U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
-  font-family: 'Instrument Serif';
+  font-family: 'JetBrains Mono';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100 800;
   font-display: swap;
-  src: url('./fonts/instrument-serif-latin-ext.woff2') format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
-    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
-    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-@font-face {
-  font-family: 'Instrument Serif';
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
-  src: url('./fonts/instrument-serif-italic-latin.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
-    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
-    U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: 'Instrument Serif';
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
-  src: url('./fonts/instrument-serif-italic-latin-ext.woff2') format('woff2');
+  src: url('./fonts/jetbrains-mono-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
     U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
     U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;

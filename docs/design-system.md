@@ -8,7 +8,7 @@
 
 ## 1. Direction
 
-**La mosaïque, pas le tableau. Deux voix, pas une.**
+**La mosaïque, pas le tableau. Deux familles, pas une.**
 
 L'information ne vit pas dans une grille de lignes et de colonnes, mais dans des
 **widgets** : des blocs autonomes, de tailles inégales, chacun avec sa propre
@@ -17,10 +17,9 @@ une seule, et il l'annonce par un chiffre qu'on lit de loin.
 
 Quatre principes.
 
-1. **Le romain nomme, le grotesque compte.** Tout ce qui désigne — l'app,
-   l'écran, le vainqueur, un chapitre de règle — est en romain. Tout ce qui se
-   mesure, se compte ou se manipule est en grotesque. C'est la règle qui donne à
-   l'app sa voix, et c'est aussi elle qui l'empêche de bavarder.
+1. **Le texte parle, les chiffres se lisent.** Une seule famille pour tout ce
+   qui s'énonce, une chasse fixe pour tout ce qui se compte. C'est la règle qui
+   donne à l'app sa voix, et c'est aussi elle qui l'empêche de bavarder.
 2. **Le chiffre est l'objet.** Il occupe la moitié du widget, serré et tabulaire.
    L'étiquette est une pastille minuscule au-dessus. Jamais l'inverse.
 3. **La valeur découpe, elle n'informe pas.** Un widget est encre, papier ou
@@ -121,22 +120,34 @@ porte, et restent donc lisibles sur `accent` comme sur `card`.
 
 ## 3. Typographie
 
-**Deux familles. Le romain nomme, le grotesque compte.**
+**Deux familles. Le texte parle, les chiffres se lisent.**
 
 C'est le cœur du système. En monochrome, la typographie fait à elle seule le
-travail que la couleur ferait ailleurs : elle sépare le discours de la donnée.
+travail que la couleur ferait ailleurs.
 
 | Famille | Rôle | Ce qu'elle porte |
 |---|---|---|
-| **Instrument Serif** | Le romain — la voix | Nom de l'app, titre d'écran, titre de widget, nom du vainqueur, chapitre de règle, consigne du moment, dénominateurs (« *sur 10* ») |
-| **Instrument Sans** | Le grotesque — la mesure | Tous les chiffres, libellés, boutons, tableaux, étiquettes, texte courant |
+| **Instrument Sans** | La voix | Noms de joueurs, titres, libellés, boutons, règles, consignes, étiquettes |
+| **JetBrains Mono** | Le chiffre | Scores, mises, plis, numéros de manche, colonnes de totaux, valeurs de bonus |
 
-Les deux sont **embarquées** (`src/styles/fonts.css`), en `woff2` variable,
-découpées en `latin` et `latin-ext` par `unicode-range` : les accents ne coûtent
-que quand ils servent. Elles pèsent 152 ko au total, sont posées dans `src/` et
-non dans `public/` pour que Vite leur donne un hash de contenu, et le service
-worker les précache avec le reste du bundle — le mode avion n'a rien à
-télécharger.
+Le partage n'est pas décoratif, il est fonctionnel. **La chasse fixe est la
+raison d'être de l'app** : un carnet de score est une colonne de nombres qu'on
+relit d'une manche à l'autre, et une colonne ne se relit que si elle ne danse
+pas. Le zéro barré, le signe moins de même largeur qu'un chiffre, les colonnes
+qui s'alignent sans qu'on ait rien à demander — tout cela vient du dessin de la
+police, pas d'un réglage.
+
+Il en découle une frontière nette, et elle n'a qu'une exception : **un mot qui
+introduit un chiffre reste dans la voix**. « sur 10 » s'écrit avec « sur » en
+Instrument Sans et « 10 » à sa suite ; le mot passé en chasse fixe se lisait
+comme du code.
+
+Les deux familles sont **embarquées** (`src/styles/fonts.css`), en `woff2`
+variable, découpées en `latin` et `latin-ext` par `unicode-range` : les accents
+ne coûtent que quand ils servent. Elles pèsent 132 ko au total, vivent dans
+`src/` et non dans `public/` pour que Vite leur donne un hash de contenu, et le
+service worker les précache avec le reste du bundle — le mode avion n'a rien à
+télécharger. Les deux tranches `latin` sont préchargées dans le HTML.
 
 **Instrument Sans est variable sur deux axes** : `wght` 400→700 et `wdth`
 75→100. La chasse étroite n'est pas un effet : elle est réservée aux
@@ -145,48 +156,46 @@ donne l'allure de tampon, et aux noms en diagonale du tableau des scores, où
 elle gagne les deux lettres qui font tenir un nom entier plutôt qu'une
 abréviation.
 
-**Instrument Serif n'a qu'une graisse**, romain et italique. C'est voulu : un
-romain qui ne connaît pas le gras oblige à hiérarchiser par la taille, ce qui est
-exactement la discipline qu'on veut. Il n'a pas non plus de chasses tabulaires —
-raison de plus pour que les chiffres ne soient jamais de son ressort.
-
 ### L'échelle
 
 | Rôle | Famille | Taille / interligne | Graisse | Approche |
 |---|---|---|---|---|
-| `t-display` | romain | `clamp(30, 8.5vw, 40)` / 1 | 400 | −0.02em |
-| `t-title` | romain | 26 / 1.12 | 400 | −0.01em |
-| `t-lede` | romain *italique* | 16 / 1.4 | 400 | 0 |
-| `t-hero` | grotesque | 60 / 0.86 | 700 | −0.05em |
-| `t-figure` | grotesque | 38 / 0.9 | 700 | −0.04em |
-| `t-figure-sm` | grotesque | 26 / 1 | 700 | −0.03em |
-| `t-subtitle` | grotesque | 16 / 1.25 | 600 | −0.01em |
-| `t-body` | grotesque | 15 / 1.6 | 400 | 0 |
-| `t-label` | grotesque | 13 / 1.4 | 600 | 0 |
-| `t-caption` | grotesque | 12 / 1.45 | 500 | 0 |
-| `t-tag` | grotesque, chasse 84 % | 11 / 1 | 700 | +0.14em, capitales |
+| `t-display` | voix | `clamp(30, 8.5vw, 40)` / 1.02 | 700 | −0.035em |
+| `t-title` | voix | 26 / 1.15 | 700 | −0.025em |
+| `t-lede` | voix | 16 / 1.45 | 400 | −0.005em |
+| `t-hero` | chiffre | 50 / 0.86 | 700 | −0.03em |
+| `t-figure` | chiffre | 32 / 0.9 | 700 | −0.02em |
+| `t-figure-sm` | chiffre | 23 / 1 | 700 | −0.03em |
+| `t-subtitle` | voix | 16 / 1.25 | 600 | −0.01em |
+| `t-body` | voix | 15 / 1.6 | 400 | 0 |
+| `t-label` | voix | 13 / 1.4 | 600 | 0 |
+| `t-caption` | voix | 12 / 1.45 | 500 | 0 |
+| `t-tag` | voix, chasse 84 % | 11 / 1 | 700 | +0.14em, capitales |
 
-Trois règles qui n'ont pas d'exception.
+Quatre règles qui n'ont pas d'exception.
 
-1. **Tout élément contenant un nombre porte `font-variant-numeric: tabular-nums`.**
-   Sans ça les colonnes dansent à chaque manche.
-2. **L'approche se resserre quand le corps grandit.** C'est ce qui donne aux
-   chiffres leur densité et ce qui empêche un grand titre de se déliter. Les
-   valeurs vivent dans des jetons (`--track-hero`, `--track-figure`,
-   `--track-display`), pas en dur dans les composants.
-3. **Un chiffre héros est collé au bord du widget, pas à sa gouttière optique.**
-   Un `margin-left` négatif de 2 à 3 centièmes de cadratin rattrape l'approche
-   latérale du glyphe. Sans ça le chiffre paraît rentré d'un cheveu par rapport
-   à l'étiquette qui le surmonte.
+1. **Tout élément contenant un nombre porte `font-variant-numeric: tabular-nums`**,
+   chasse fixe comprise. C'est une ceinture et des bretelles, et ça ne coûte
+   rien.
+2. **Une famille ne s'écrit jamais en dur dans un composant.** Trois jetons, et
+   trois seulement : `--font-sans`, `--font-figure`, et rien d'autre. Un test le
+   vérifie sur toutes les feuilles de `src/`.
+3. **L'approche se resserre quand le corps grandit** — mais pas au même rythme
+   dans les deux familles. Une chasse fixe porte ses blancs latéraux dans le
+   dessin même des glyphes ; les rogner autant qu'une proportionnelle collerait
+   les chiffres. Le titre est donc plus serré que le chiffre, et c'est voulu.
+4. **L'échelle des chiffres est un cran sous celle d'une proportionnelle.** À
+   corps égal, une chasse fixe est un tiers plus large : c'est ce qui a fait
+   déborder « 1 100 » d'une tuile avant que le héros ne descende de 60 à 50.
 
-### L'italique
+### Ce qu'il n'y a pas
 
-C'est la voix de l'app, et elle sert précisément à une chose : **dire où on en
-est et ce qu'on attend de nous**. La phrase sous chaque titre d'écran, la
-consigne au-dessus des tuiles, le « *sur 10* » après un numéro de manche, la
-mention légale au bas des règles. Rien d'autre. Elle ne doit ressembler à aucune
-donnée de l'écran — c'est justement pour ça qu'elle est en romain italique au
-milieu d'un grotesque.
+Ni romain, ni italique. Une première version en avait un — un romain d'affiche
+pour les titres et une consigne en italique — et il donnait à un compteur de
+points l'allure d'un magazine. Sans seconde famille de texte, la hiérarchie
+tient sur trois leviers et trois seulement : la taille, la graisse et
+l'approche. C'est peu, et c'est exactement pour ça que chaque cran de l'échelle
+doit avoir un rôle et un seul.
 
 ## 4. Espacement, formes, élévation
 
@@ -234,6 +243,31 @@ l'écart de valeur qui sépare.
 
 ## 6. Composants
 
+### La barre de navigation
+
+Quatre destinations, en bas, toujours là — y compris au milieu d'une manche.
+C'est le seul repère de l'app qui ne bouge jamais d'un écran à l'autre, et
+c'est ce qui permet de sortir voir les règles ou l'historique sans avoir peur
+de perdre la partie en cours.
+
+- **Accueil, Historique, Joueurs, Règles.** Les réglages n'en font pas partie :
+  on y va une fois pour choisir sa langue et son thème, pas en jouant. Ils
+  vivent en bouton rond sur l'accueil.
+- L'onglet **Accueil porte le logotype** plutôt qu'une maison : la houle est
+  déjà le dessin de la maison.
+- L'onglet actif porte **un trait court au-dessus de son icône** — le même geste
+  que le logotype et que la houle de progression, à la plus petite échelle. Le
+  trait est toujours présent et toujours à la même place ; seule son encre
+  change, si bien que rien ne saute quand on change d'onglet.
+- Une partie, sa composition et son résultat allument **Accueil** : ce sont
+  trois moments d'un même geste, et une barre sans repère se lit comme une barre
+  cassée.
+- **Un onglet au repos est sourd, pas transparent.** L'opacité aurait été plus
+  simple, mais un libellé de 10 px à 45 % tombe sous le seuil AA. La sourdine du
+  canevas, elle, est calibrée pour le tenir.
+- Sa hauteur est un jeton, `--tabbar-h`, et **tout ce qui vit en bas s'y empile**
+  : la barre d'action se colle au-dessus d'elle, le bandeau au-dessus des deux.
+
 ### Le filet de section
 
 L'intitulé de section est en capitales étroites, et **le filet le prolonge
@@ -269,7 +303,7 @@ sortie de secours.
 Deux fois par manche, une fois par joueur. Tout le reste peut être ordinaire,
 celui-ci doit être juste.
 
-- `−` valeur `+`, sur une ligne, la valeur au centre à 36 px.
+- `−` valeur `+`, sur une ligne, la valeur au centre à 31 px, en chasse fixe.
 - **La valeur crie, les boutons chuchotent.** Des pastilles pleines faisaient de
   la commande l'objet le plus sombre de l'écran, alors que ce qu'on vient y lire
   c'est le chiffre. Elles sont donc au filet, à 45 % d'opacité, et ne se
@@ -333,11 +367,36 @@ Fond `card` : elle suit le thème comme le reste.
 
 ### Toast
 
-Bandeau bas, fond `accent`, rayon 999, action à droite. Cinq secondes. Il
-remplace toute boîte de confirmation : on agit d'abord, on peut revenir. Il se
-pose **au-dessus** de la barre d'action, jamais par-dessus — tout écran qui
-possède une barre d'action doit donc publier sa hauteur via
-`useActionBarHeight`, sinon le bandeau intercepte le tap suivant.
+Bandeau bas, fond `accent`, rayon 999, action à droite, croix au bout. **Une
+seconde.** Il remplace toute boîte de confirmation : on agit d'abord, on peut
+revenir.
+
+Trois gestes l'écourtent — la croix, le glissé vers le bas, un appui n'importe
+où dessus. C'est ce qui autorise une durée aussi courte : un message qui ne se
+chasse pas devient un obstacle, et il est posé juste au-dessus du bouton
+suivant.
+
+Il s'empile **au-dessus** de la barre d'action, elle-même au-dessus de la barre
+de navigation. Tout écran qui possède une barre d'action publie donc sa hauteur
+via `useActionBarHeight`, sinon le bandeau intercepte le tap suivant.
+
+**Ce que ça coûte** : la fenêtre pour annuler une manche validée tombe à une
+seconde. Le rattrapage passe alors par le tableau des scores, où toute manche
+jouée se rouvre à la correction.
+
+### La feuille de bonus
+
+Cinq lignes, pas cinq cartes. Chaque bonus tenait dans un bloc gris avec son
+titre, deux lignes d'aide et parfois un motif de plafond : la feuille débordait
+avant la troisième ligne, et il fallait la faire défiler pour attribuer une
+sirène.
+
+Une ligne dit trois choses, et dans cet ordre : ce que c'est, ce que ça vaut,
+combien on en a. Le nombre de points sort de la phrase d'aide et prend sa propre
+colonne — c'est le chiffre qu'on vient chercher. L'aide tient sur une ligne, et
+cède la place au motif de plafond quand le compteur est bloqué. En tête, le
+total de points du joueur suit la saisie : on voit ce qu'on ajoute sans refermer
+la feuille.
 
 ### EmptyState
 
@@ -358,7 +417,8 @@ du design.
    titre, jamais plus d'une ligne et demie.
 3. **Le contexte de la manche est permanent** : la houle pour la partie, les deux
    temps pour la manche, le nombre de cartes en étiquette, les totaux courants
-   sous le tout.
+   sous le tout. Et la barre de navigation reste en place : on peut aller lire
+   une règle et revenir sans rien perdre.
 4. **Le blocage se dit avant de bloquer.** Tant qu'il manque une saisie, la barre
    basse annonce laquelle — « Il manque la mise de 3 joueurs » — au lieu de se
    contenter de griser le bouton. Une fois tout renseigné, elle passe au compte
@@ -485,20 +545,24 @@ qu'on met à distance.
   --dash-5: 7 3 2 3;   --dash-6: 1 3;
   --dash-7: 13 3 2 4;  --dash-8: 4 2 1 2;
 
-  /* Deux voix. Le romain nomme, le grotesque compte. */
+  /* Deux familles. Le texte parle, les chiffres se lisent. */
   --font-sans: 'Instrument Sans', ui-sans-serif, -apple-system, BlinkMacSystemFont,
                'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-serif: 'Instrument Serif', 'Iowan Old Style', 'Palatino Linotype',
-                Palatino, Georgia, 'Times New Roman', serif;
+  --font-figure: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono',
+                 Menlo, Consolas, monospace;
   --stretch-tight: 84%;
 
   --size-display: 40px;  --size-title: 26px;      --size-lede: 16px;
-  --size-hero: 60px;     --size-figure: 38px;     --size-figure-sm: 26px;
+  --size-hero: 50px;     --size-figure: 32px;     --size-figure-sm: 23px;
   --size-subtitle: 16px; --size-body: 15px;       --size-label: 13px;
   --size-caption: 12px;  --size-tag: 11px;
 
-  --track-hero: -0.05em;    --track-figure: -0.04em;
-  --track-display: -0.02em; --track-tag: 0.14em;
+  --track-hero: -0.03em;     --track-figure: -0.02em;
+  --track-display: -0.035em; --track-tag: 0.14em;
+
+  /* Tout ce qui vit en bas s'empile sur la barre de navigation. */
+  --tabbar-h: calc(58px + env(safe-area-inset-bottom));
+  --actionbar-h: 0px;
 
   --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
   --space-5: 20px; --space-6: 24px; --space-7: 32px; --space-8: 40px;

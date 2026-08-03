@@ -5,14 +5,24 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-2);
-  padding: calc(env(safe-area-inset-top) + var(--space-6)) 0 var(--space-2);
+  padding: calc(env(safe-area-inset-top) + var(--space-4)) 0 var(--space-2);
   min-width: 0;
+}
+
+/* Le logotype à gauche, les réglages à droite : la seule ligne d'en-tête de
+   l'accueil, et elle ne porte rien d'autre. */
+.mastheadTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--space-2);
 }
 
 .logo {
   color: var(--canvas-on);
   flex: none;
-  margin-bottom: var(--space-1);
 }
 
 /* Le nom est la seule chose de l'écran qui a le droit d'être grande. */
@@ -75,9 +85,9 @@
   align-items: center;
   gap: var(--space-2);
   min-height: var(--tap-min);
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: var(--size-lede);
+  font-size: var(--size-body);
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--canvas-on);
   text-decoration: underline;
   text-underline-offset: 4px;
@@ -107,7 +117,7 @@
 }
 
 .resumeNumber {
-  font-family: var(--font-sans);
+  font-family: var(--font-figure);
   font-size: var(--size-hero);
   line-height: 0.82;
   font-weight: 700;
@@ -117,11 +127,12 @@
   margin-left: -0.03em;
 }
 
-/* Le dénominateur est une parole, pas une donnée : il est donc en romain. */
+/* « sur 10 » : la chasse fixe est pour les chiffres, pas pour le mot qui les
+   introduit — « sur » en mono se lit comme du code. */
 .resumeTotal {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 17px;
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   color: var(--surface-muted);
   flex: none;
 }
@@ -156,55 +167,10 @@
 }
 
 .resumeValue {
+  font-family: var(--font-figure);
   font-size: 15px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   flex: none;
-}
-
-/* --------------------------------------------------------- navigation basse
- *
- * Un sommaire au filet. Quatre pastilles bordées réclamaient autant
- * d'attention que l'action principale, ce qu'elles ne méritent pas.
- */
-
-.nav {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.navItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  width: 100%;
-  min-height: 52px;
-  padding: 0 var(--space-1);
-  border: 0;
-  border-bottom: 1px solid var(--hairline);
-  background: transparent;
-  color: var(--canvas-on);
-  text-align: left;
-  transition: opacity var(--dur-fast) var(--ease);
-}
-
-.navItem:first-child {
-  border-top: 1px solid var(--hairline);
-}
-
-.navItem:active {
-  opacity: 0.55;
-}
-
-.navLabel {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--size-subtitle);
-  font-weight: 500;
-  letter-spacing: -0.01em;
 }

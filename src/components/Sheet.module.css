@@ -53,15 +53,14 @@
   flex: none;
 }
 
-/* Le titre nomme la feuille : il est donc en romain, comme les titres d'écran. */
+/* Le titre d'une feuille se lit comme un titre d'écran, un cran plus bas. */
 .title {
   flex: 1;
   min-width: 0;
-  font-family: var(--font-serif);
-  font-weight: 400;
+  font-weight: 700;
   font-size: var(--size-title);
-  line-height: 1.12;
-  letter-spacing: -0.01em;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
   overflow-wrap: break-word;
   padding-top: 2px;
 }

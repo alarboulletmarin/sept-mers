@@ -1,15 +1,13 @@
 # Fontes embarquées
 
-Deux familles, six fichiers `woff2`, 152 ko au total.
+Deux familles, quatre fichiers `woff2`, 132 ko au total.
 
-| Fichier | Famille | Style | Tranche |
+| Fichier | Famille | Axes | Tranche |
 |---|---|---|---|
-| `instrument-sans-latin.woff2` | Instrument Sans | variable, `wght` 400–700, `wdth` 75–100 | latin |
+| `instrument-sans-latin.woff2` | Instrument Sans | `wght` 400–700, `wdth` 75–100 | latin |
 | `instrument-sans-latin-ext.woff2` | Instrument Sans | idem | latin étendu |
-| `instrument-serif-latin.woff2` | Instrument Serif | romain 400 | latin |
-| `instrument-serif-latin-ext.woff2` | Instrument Serif | romain 400 | latin étendu |
-| `instrument-serif-italic-latin.woff2` | Instrument Serif | italique 400 | latin |
-| `instrument-serif-italic-latin-ext.woff2` | Instrument Serif | italique 400 | latin étendu |
+| `jetbrains-mono-latin.woff2` | JetBrains Mono | `wght` 100–800 | latin |
+| `jetbrains-mono-latin-ext.woff2` | JetBrains Mono | idem | latin étendu |
 
 Ce sont les fichiers servis par Google Fonts, repris tels quels — le découpage
 par `unicode-range` vient de là, et `latin-ext` ne descend que si un caractère
@@ -23,11 +21,11 @@ mode avion perdrait la typographie de l'app.
 
 ## Licence
 
-Les deux familles sont publiées par Instrument sous **SIL Open Font License
-1.1**. Le texte complet et la mention de copyright de chacune sont conservés
-ici, comme la licence l'exige :
+Les deux familles sont publiées sous **SIL Open Font License 1.1** — Instrument
+Sans par Instrument, JetBrains Mono par JetBrains. Le texte complet et la
+mention de copyright de chacune sont conservés ici, comme la licence l'exige :
 
 - [`OFL-instrument-sans.txt`](OFL-instrument-sans.txt)
-- [`OFL-instrument-serif.txt`](OFL-instrument-serif.txt)
+- [`OFL-jetbrains-mono.txt`](OFL-jetbrains-mono.txt)
 
 La licence de l'app elle-même (MIT) ne s'applique pas à ces fichiers.

@@ -140,9 +140,28 @@ async function playRound(round, bids, tricks, bonus = null) {
   await page.getByRole('button', { name: 'Valider la manche' }).click()
 }
 
+check(
+  'la barre de navigation reste en partie',
+  await page.getByRole('navigation', { name: 'Sections' }).isVisible(),
+)
+check(
+  'l onglet Accueil est celui de la partie',
+  (await page.getByRole('link', { name: 'Accueil' }).getAttribute('aria-current')) === 'page',
+)
+
 // Manche 1 : une carte, un pli.
 await playRound(1, [1, 0, 0, 0], [1, 0, 0, 0])
 check('la manche 1 est enregistrée', await page.getByText('Manche 1 enregistrée').isVisible())
+check(
+  'le bandeau porte une croix pour le chasser',
+  (await page.getByRole('button', { name: 'Fermer' }).count()) > 0,
+)
+// Une seconde, pas cinq : le bandeau confirme, il ne réclame pas de lecture.
+await page.waitForTimeout(1400)
+check(
+  'le bandeau s efface de lui-même en une seconde',
+  (await page.getByText('Manche 1 enregistrée').count()) === 0,
+)
 await shot('manche-2-mises')
 
 // Manche 2, avec un 14 noir pour Ana.

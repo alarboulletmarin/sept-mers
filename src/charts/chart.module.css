@@ -70,8 +70,6 @@
 
 .empty {
   color: var(--surface-muted, var(--canvas-muted));
-  font-family: var(--font-serif);
-  font-style: italic;
   font-size: var(--size-label);
 }
 

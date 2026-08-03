@@ -61,8 +61,8 @@
 }
 
 .roundNumber {
-  font-family: var(--font-sans);
-  font-size: 52px;
+  font-family: var(--font-figure);
+  font-size: 44px;
   line-height: 0.82;
   font-weight: 700;
   letter-spacing: var(--track-hero);
@@ -72,11 +72,12 @@
   margin-left: -0.03em;
 }
 
-/* « sur 10 » est une parole, pas une donnée : elle est donc en romain. */
+/* « sur 10 » : la chasse fixe est pour les chiffres, pas pour le mot qui les
+   introduit — « sur » en mono se lit comme du code. */
 .roundTotal {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 17px;
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   color: var(--accent-muted);
   flex: none;
 }
@@ -143,6 +144,7 @@
 }
 
 .totalValue {
+  font-family: var(--font-figure);
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -191,6 +193,7 @@
 
 /* Le score de la manche : le signe porte l'information, pas la couleur. */
 .tileScore {
+  font-family: var(--font-figure);
   font-size: 18px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;

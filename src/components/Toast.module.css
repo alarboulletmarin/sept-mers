@@ -2,14 +2,17 @@
  * Le bandeau remplace toute boîte de confirmation : on agit d'abord, on peut
  * revenir en arrière. Il se pose au-dessus de la barre d'action, jamais
  * par-dessus, sinon il intercepte le tap suivant.
+ *
+ * Il dure une seconde, et trois gestes l'écourtent : la croix, le glissé vers
+ * le bas, un appui n'importe où dessus.
  */
 .wrap {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: var(--actionbar-h);
+  bottom: calc(var(--tabbar-h) + var(--actionbar-h));
   z-index: 50;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-4);
   display: flex;
   justify-content: center;
   pointer-events: none;
@@ -24,14 +27,18 @@
   max-width: 560px;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  min-height: var(--tap-min);
-  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-5);
+  gap: var(--space-2);
+  min-height: 46px;
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-4);
   background: var(--surface);
   color: var(--surface-on);
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-toast);
   animation: rise var(--dur-base) var(--ease);
+  /* Le glissé suit le doigt : pas de défilement parasite pendant le geste. */
+  touch-action: none;
+  transition: transform var(--dur-fast) var(--ease);
+  cursor: pointer;
 }
 
 .message {
@@ -46,13 +53,36 @@
 
 .action {
   flex: none;
-  min-height: 36px;
+  min-height: 38px;
   padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
   background: var(--accent-on);
   color: var(--accent);
   font-size: var(--size-label);
   font-weight: 600;
+  touch-action: manipulation;
+}
+
+/* La croix : la sortie visible, celle qu'on cherche des yeux. */
+.close {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  color: var(--accent-on);
+  opacity: 0.5;
+  touch-action: manipulation;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.close:active {
+  opacity: 1;
+  background: var(--accent-on);
+  color: var(--accent);
+  transition-duration: 0s;
 }
 
 @keyframes rise {

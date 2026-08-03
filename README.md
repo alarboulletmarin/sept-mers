@@ -29,9 +29,12 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 - **Aucun scroll latéral**, à aucune largeur : tout se plie à l'écran.
 - **Design en mosaïque, monochrome** : des widgets noir, blanc ou gris, un
   chiffre en héros par widget. Voir [le design system](docs/design-system.md).
-- **Deux voix typographiques** : un romain pour ce qui nomme, un grotesque pour
-  ce qui compte. Les deux familles sont embarquées et précachées : rien à
-  télécharger, y compris en mode avion.
+- **Deux familles typographiques** : une pour la voix, une chasse fixe pour les
+  chiffres. Les deux sont embarquées et précachées : rien à télécharger, y
+  compris en mode avion.
+- **Barre de navigation basse**, quatre destinations, présente y compris au
+  milieu d'une manche : aller lire une règle ne fait perdre ni la partie ni la
+  saisie en cours.
 - **Guidage permanent** : trois phrases au premier lancement, une consigne sous
   chaque titre d'écran, la progression de la partie et le temps de la manche
   affichés en continu, et un blocage qui se nomme avant de griser un bouton.
@@ -86,7 +89,8 @@ texte, et dont le contenu devient blanc sur blanc.
 ```
 src/
   main.tsx
-  app/          App, Router, Layout, StoreProvider, ThemeProvider, useWakeLock
+  app/          App, Router, Layout, TabBar, StoreProvider, ThemeProvider,
+                useWakeLock
   screens/      Home, NewGame, Game, GameSummary, History, Players, Rules, Settings
   components/   Widget, Button, Stepper, Rail, PlayerChip, ScoreTable, Sheet,
                 Toast, Icon, EmptyState, BonusDrawer
@@ -121,7 +125,7 @@ version de schéma soit une addition et pas une réécriture.
 
 ## Tests
 
-156 tests unitaires couvrent le moteur de score — dont les huit cas de référence
+158 tests unitaires couvrent le moteur de score — dont les huit cas de référence
 du cahier des charges —, la validation de saisie, le plafonnement du paquet, les
 statistiques, le réducteur, la complétion automatique du dernier joueur,
 l'aller-retour export/import, la lecture défensive du stockage, les pluriels, la
@@ -170,12 +174,11 @@ une série à son motif de tiretés. C'est aussi ce qui la rend lisible en visio
 dichromate comme en noir et blanc.
 
 Sans couleur, c'est la typographie qui sépare le discours de la donnée. Deux
-familles, embarquées en `woff2` variable : **Instrument Serif** pour ce qui
-nomme — l'app, l'écran, le vainqueur, un chapitre de règle, la consigne du
-moment — et **Instrument Sans** pour ce qui se mesure, se compte ou se
-manipule. Le romain nomme, le grotesque compte, et la règle n'a pas
-d'exception : Instrument Serif n'a pas de chasses tabulaires, un chiffre ne peut
-donc jamais être de son ressort.
+familles, embarquées en `woff2` variable : **Instrument Sans** pour tout ce qui
+s'énonce, **JetBrains Mono** pour tout ce qui se compte. Le partage est
+fonctionnel plutôt que décoratif — un carnet de score est une colonne de nombres
+qu'on relit d'une manche à l'autre, et une colonne ne se relit que si elle ne
+danse pas.
 
 Les surfaces portent un rôle et **s'inversent avec le thème** : `accent` est le
 bloc de contraste maximal, noir de jour et blanc de nuit. Une surface figée
@@ -202,8 +205,8 @@ inégales, une houle vue de profil, sept traits pour sept mers.
 
 MIT. Voir [LICENSE](LICENSE).
 
-Les deux familles typographiques embarquées — **Instrument Sans** et
-**Instrument Serif**, publiées par Instrument — sont sous SIL Open Font License
-1.1. Leur texte de licence est conservé dans
+Les deux familles typographiques embarquées — **Instrument Sans**, publiée par
+Instrument, et **JetBrains Mono**, publiée par JetBrains — sont sous SIL Open
+Font License 1.1. Leur texte de licence est conservé dans
 [`src/styles/fonts/`](src/styles/fonts/), et la licence de l'app ne s'y applique
 pas.

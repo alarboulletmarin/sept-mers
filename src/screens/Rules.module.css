@@ -1,7 +1,5 @@
 .note {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: var(--size-label);
+  font-size: var(--size-caption);
   line-height: 1.5;
   color: var(--canvas-muted);
   padding: var(--space-3) 0;

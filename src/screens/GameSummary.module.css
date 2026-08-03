@@ -1,11 +1,9 @@
-/* Le nom du vainqueur nomme : romain, et grand. C'est la seule chose qu'on
-   regarde en premier sur cet écran. */
+/* Le nom d'un classé, juste au-dessus de son score. */
 .rankName {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 19px;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
   min-width: 0;
   overflow-wrap: break-word;
 }

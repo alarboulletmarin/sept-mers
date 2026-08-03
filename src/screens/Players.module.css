@@ -88,7 +88,8 @@
 }
 
 .statValue {
-  font-size: 30px;
+  font-family: var(--font-figure);
+  font-size: 25px;
   line-height: 1;
   font-weight: 700;
   letter-spacing: var(--track-figure);

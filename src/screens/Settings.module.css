@@ -32,9 +32,7 @@
 }
 
 .note {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: var(--size-label);
+  font-size: var(--size-caption);
   line-height: 1.5;
   color: var(--canvas-muted);
   max-width: 46ch;

@@ -26,19 +26,29 @@ function styleSheets(): { path: string; source: string }[] {
   return found
 }
 
-describe('les deux voix sont déclarées', () => {
-  it('nomme un romain et un grotesque', () => {
+describe('les deux familles sont déclarées', () => {
+  it('nomme une famille de texte et une famille de chiffres', () => {
     expect(tokens).toMatch(/--font-sans:\s*'Instrument Sans'/)
-    expect(tokens).toMatch(/--font-serif:\s*'Instrument Serif'/)
+    expect(tokens).toMatch(/--font-figure:\s*'JetBrains Mono'/)
   })
 
-  it('garde une pile de secours derrière chacun', () => {
+  it('garde une pile de secours derrière chacune', () => {
     // La fonte embarquée met quelques millisecondes à arriver, et un navigateur
     // sans woff2 ne la recevra jamais : la pile système doit rester complète.
     const sans = tokens.match(/--font-sans:([^;]+);/s)?.[1] ?? ''
-    const serif = tokens.match(/--font-serif:([^;]+);/s)?.[1] ?? ''
+    const figure = tokens.match(/--font-figure:([^;]+);/s)?.[1] ?? ''
     expect(sans).toMatch(/sans-serif\s*$/)
-    expect(serif).toMatch(/serif\s*$/)
+    expect(figure).toMatch(/monospace\s*$/)
+  })
+
+  it('n habille plus rien en romain', () => {
+    // Le romain a été retiré : aucune feuille ne doit encore l'appeler, sans
+    // quoi la déclaration retomberait silencieusement sur la pile système.
+    expect(tokens).not.toContain('--font-serif')
+    for (const { path, source } of styleSheets()) {
+      expect(source, `${path} appelle encore le romain`).not.toContain('--font-serif')
+      expect(source, `${path} pose encore un italique`).not.toMatch(/font-style:\s*italic/)
+    }
   })
 
   it('publie toute l échelle typographique en jetons', () => {
@@ -64,12 +74,27 @@ describe('les deux voix sont déclarées', () => {
     }
   })
 
+  it('publie la hauteur de la barre de navigation', () => {
+    // Barre d'action, bandeau et fond d'écran s'empilent tous dessus : si le
+    // jeton disparaît, ils reviennent se poser sous la barre.
+    expect(tokens).toContain('--tabbar-h:')
+  })
+
   it('resserre l approche à mesure que le corps grandit', () => {
     const value = (token: string) =>
       Number.parseFloat(tokens.match(new RegExp(`${token}:\\s*(-?[\\d.]+)em`))?.[1] ?? 'NaN')
+
+    // Dans chaque famille, le grand corps se resserre plus que le petit.
     expect(value('--track-hero')).toBeLessThan(value('--track-figure'))
-    expect(value('--track-figure')).toBeLessThan(value('--track-display'))
     expect(value('--track-display')).toBeLessThan(0)
+
+    /*
+     * Les deux familles ne se comparent pas entre elles : une chasse fixe
+     * porte ses blancs latéraux dans le dessin même des glyphes, et la rogner
+     * autant qu'une proportionnelle collerait les chiffres. Le titre est donc
+     * plus serré que le chiffre, et c'est voulu.
+     */
+    expect(value('--track-display')).toBeLessThan(value('--track-figure'))
   })
 })
 
@@ -79,7 +104,7 @@ describe('les fichiers de fonte', () => {
   it('sont référencés relativement, donc hachés par le bundler', () => {
     // Posés dans `public/`, ils seraient servis sans hash et le service worker
     // ne saurait pas les précacher avec le reste du bundle.
-    expect(faces.length).toBeGreaterThanOrEqual(6)
+    expect(faces.length).toBeGreaterThanOrEqual(4)
     expect(fonts).not.toMatch(/url\('?\//)
   })
 
@@ -90,7 +115,7 @@ describe('les fichiers de fonte', () => {
   })
 
   it('découpent le latin étendu, qui ne descend que s il sert', () => {
-    expect(faces.filter((file) => file.includes('latin-ext')).length).toBeGreaterThanOrEqual(3)
+    expect(faces.filter((file) => file.includes('latin-ext')).length).toBeGreaterThanOrEqual(2)
     expect([...fonts.matchAll(/unicode-range:/g)].length).toBe(faces.length)
   })
 
@@ -105,7 +130,7 @@ describe('aucune fonte ne rentre par la fenêtre', () => {
     // système : c'est par là que la typographie se délite.
     for (const { path, source } of styleSheets()) {
       for (const [, value] of source.matchAll(/font-family:\s*([^;]+);/g)) {
-        expect(value.trim(), `${path} déclare une famille en dur`).toMatch(/^var\(--font-(sans|serif)\)$/)
+        expect(value.trim(), `${path} déclare une famille en dur`).toMatch(/^var\(--font-(sans|figure)\)$/)
       }
     }
   })

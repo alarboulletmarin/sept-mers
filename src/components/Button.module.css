@@ -24,9 +24,11 @@
   cursor: default;
 }
 
+/* Un enfoncement de 1,5 % ne se voyait pas : à l'appui, on veut être sûr
+   d'avoir appuyé. */
 .base:not(:disabled):active {
-  transform: scale(0.985);
-  opacity: 0.85;
+  transform: scale(0.97);
+  opacity: 0.72;
 }
 
 .full {

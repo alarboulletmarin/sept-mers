@@ -1,0 +1,113 @@
+/*
+ * La barre de navigation. Fixe, toujours visible, y compris en partie : c'est
+ * le seul repère qui ne bouge jamais d'un écran à l'autre.
+ *
+ * Elle est posée sur le canevas et séparée par un filet, comme tout le reste.
+ * Ni fond rapporté, ni flou, ni ombre : ce qui la détache, c'est le trait.
+ */
+.bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  height: var(--tabbar-h);
+  background: var(--canvas);
+  border-top: 1px solid var(--hairline);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.list {
+  display: flex;
+  align-items: stretch;
+  max-width: 560px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 var(--space-2);
+}
+
+.item {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+}
+
+.tab {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding-top: 5px;
+  /*
+   * Un onglet au repos est sourd, pas transparent. L'opacité aurait été plus
+   * simple à écrire, mais un libellé de 10 px à 45 % tombe sous le seuil AA :
+   * la sourdine du canevas, elle, est calibrée pour le tenir.
+   */
+  color: var(--canvas-muted);
+  transition:
+    color var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease);
+}
+
+.tab:active {
+  opacity: 0.6;
+  transition-duration: 0s;
+}
+
+.current {
+  color: var(--canvas-on);
+}
+
+/*
+ * Le trait de l'onglet actif. Toujours présent pour que rien ne saute quand on
+ * change d'onglet — c'est sa largeur et son encre qui changent, pas la place
+ * qu'il occupe.
+ */
+.mark {
+  width: 16px;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  opacity: 0;
+  transform: scaleX(0.3);
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-base) var(--ease);
+}
+
+.current .mark {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.icon {
+  flex: none;
+}
+
+.label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 600;
+  font-stretch: 92%;
+  letter-spacing: -0.005em;
+}
+
+.current .label {
+  font-weight: 700;
+}
+
+/* Sous 340 px, les quatre libellés se serrent : la chasse étroite les sauve
+   avant qu'on ait à les couper. */
+@media (max-width: 339px) {
+  .label {
+    font-size: 9px;
+    font-stretch: var(--stretch-tight);
+  }
+}

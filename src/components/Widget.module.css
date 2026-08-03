@@ -106,7 +106,7 @@
 
 /* Le chiffre est l'objet du widget : grotesque, tabulaire, serré. */
 .figure {
-  font-family: var(--font-sans);
+  font-family: var(--font-figure);
   font-size: var(--size-figure);
   line-height: 0.9;
   font-weight: 700;
@@ -117,7 +117,7 @@
 }
 
 .hero {
-  font-family: var(--font-sans);
+  font-family: var(--font-figure);
   font-size: var(--size-hero);
   line-height: 0.86;
   font-weight: 700;
@@ -135,13 +135,12 @@
   max-width: 100%;
 }
 
-/* Le titre nomme : il est donc en romain. */
+/* Le titre d'un widget : un cran sous le chiffre, jamais au-dessus. */
 .title {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 21px;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  font-size: 17px;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
   min-width: 0;
   max-width: 100%;
   overflow-wrap: break-word;
@@ -172,5 +171,6 @@
 }
 
 .pressable:active {
-  transform: scale(0.985);
+  transform: scale(0.975);
+  opacity: 0.9;
 }

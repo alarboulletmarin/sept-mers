@@ -53,6 +53,34 @@ button {
   cursor: pointer;
 }
 
+/*
+ * `manipulation` retire l'attente du double-tap : le navigateur n'a plus à se
+ * demander si un second appui va suivre, et le clic part tout de suite.
+ */
+button,
+a,
+input,
+label,
+[role='button'],
+[role='radio'],
+[role='switch'],
+[role='spinbutton'] {
+  touch-action: manipulation;
+}
+
+/*
+ * L'appui s'affiche à l'instant, le relâchement s'adoucit. Une transition de
+ * 120 ms à l'aller se lit comme un décalage : c'est exactement la sensation de
+ * lourdeur qu'on veut supprimer, et elle ne coûte pourtant aucun calcul.
+ */
+button:active,
+a:active,
+[role='button']:active,
+[role='radio']:active,
+[role='switch']:active {
+  transition-duration: 0s;
+}
+
 ul,
 ol {
   list-style: none;
@@ -91,52 +119,49 @@ table {
 
 /* ------------------------------------------------------------ typographie
  *
- * Le romain nomme, le grotesque compte.
+ * Le texte parle, les chiffres se lisent.
  *
- * Tout ce qui désigne — l'app, l'écran, le vainqueur, un chapitre de règle —
- * est en romain. Tout ce qui se mesure, se compte ou se manipule est en
- * grotesque. La règle n'a pas d'exception : c'est elle qui donne à l'app sa
- * voix, et c'est aussi elle qui empêche l'écran de bavarder.
+ * Une seule famille pour tout ce qui s'énonce, une chasse fixe pour tout ce
+ * qui se compte. Sans couleur et sans seconde famille de texte, la hiérarchie
+ * tient sur trois leviers et trois seulement : la taille, la graisse et
+ * l'approche. C'est peu, et c'est exactement pour ça que chaque cran doit
+ * avoir un rôle et un seul.
  */
 
 /* Le titre d'un écran. Corps fluide : il tient à 320 px sans se couper. */
 .t-display {
-  font-family: var(--font-serif);
-  font-weight: 400;
+  font-weight: 700;
   font-size: clamp(30px, 8.5vw, var(--size-display));
-  line-height: 1;
+  line-height: 1.02;
   letter-spacing: var(--track-display);
   overflow-wrap: break-word;
 }
 
 /* Le titre d'un widget, d'une feuille, d'un chapitre. */
 .t-title {
-  font-family: var(--font-serif);
-  font-weight: 400;
+  font-weight: 700;
   font-size: var(--size-title);
-  line-height: 1.12;
-  letter-spacing: -0.01em;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
   overflow-wrap: break-word;
 }
 
 /*
- * La voix de l'app : une phrase en italique qui dit où on en est et quoi faire.
- * C'est le seul endroit où l'interface se permet de parler à la première
- * personne du jeu — et c'est aussi ce qui empêche de perdre quelqu'un.
+ * La consigne : une phrase qui dit où on en est et quoi faire. Elle ne crie
+ * pas, elle ne compte pas, elle accompagne — d'où le corps de texte courant en
+ * sourdine plutôt qu'un cran de titre de plus.
  */
 .t-lede {
-  font-family: var(--font-serif);
-  font-style: italic;
   font-weight: 400;
   font-size: var(--size-lede);
-  line-height: 1.4;
-  letter-spacing: 0;
+  line-height: 1.45;
+  letter-spacing: -0.005em;
   text-wrap: pretty;
 }
 
 /* Les chiffres. Chasse tabulaire obligatoire : sans elle les colonnes dansent. */
 .t-hero {
-  font-family: var(--font-sans);
+  font-family: var(--font-figure);
   font-size: var(--size-hero);
   line-height: 0.86;
   font-weight: 700;
@@ -145,7 +170,7 @@ table {
 }
 
 .t-figure {
-  font-family: var(--font-sans);
+  font-family: var(--font-figure);
   font-size: var(--size-figure);
   line-height: 0.9;
   font-weight: 700;
@@ -154,7 +179,7 @@ table {
 }
 
 .t-figure-sm {
-  font-family: var(--font-sans);
+  font-family: var(--font-figure);
   font-size: var(--size-figure-sm);
   line-height: 1;
   font-weight: 700;
@@ -233,7 +258,9 @@ table {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom));
+  /* La barre de navigation est fixe : on lui réserve sa place plutôt que de
+     laisser le dernier élément passer dessous. */
+  padding-bottom: calc(var(--tabbar-h) + var(--space-4));
 }
 
 .screen-body {
@@ -298,10 +325,10 @@ table {
 /* Barre basse : l'action principale reste au pouce. */
 .actionbar {
   position: sticky;
-  bottom: 0;
+  bottom: var(--tabbar-h);
   z-index: 20;
   background: var(--canvas);
-  padding: var(--space-3) var(--space-4) calc(env(safe-area-inset-bottom) + var(--space-3));
+  padding: var(--space-3) var(--space-4);
   margin-top: auto;
 }
 

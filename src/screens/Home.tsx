@@ -30,7 +30,19 @@ export function Home({ go }: { go: (route: Route) => void }) {
             dit ce que fait l'app. Une seule fois, en haut, et on n'y revient
             plus de l'écran. */}
         <header className={styles.masthead}>
-          <Logo size={34} className={styles.logo} />
+          <div className={styles.mastheadTop}>
+            <Logo size={32} className={styles.logo} />
+            {/* Les réglages ne méritent pas un onglet : on y va une fois pour
+                choisir sa langue et son thème, pas au milieu d'une partie. */}
+            <button
+              type="button"
+              className="round-button"
+              aria-label={t('nav.settings')}
+              onClick={() => go({ name: 'settings' })}
+            >
+              <Icon name="gear" size={20} />
+            </button>
+          </div>
           <h1 className={`t-display ${styles.wordmark}`}>{t('app.name')}</h1>
           <p className={`t-lede ${styles.tagline}`}>{t('app.tagline')}</p>
         </header>
@@ -82,26 +94,6 @@ export function Home({ go }: { go: (route: Route) => void }) {
           </>
         )}
 
-        {/*
-          La navigation secondaire : une liste au filet, pas quatre pastilles.
-          Elle doit se lire comme un sommaire et ne rien réclamer.
-        */}
-        <h2 className="section-title">{t('home.section.more')}</h2>
-        <nav className={styles.nav} aria-label={t('nav.home')}>
-          {(
-            [
-              [{ name: 'history' } as Route, 'nav.history'],
-              [{ name: 'players' } as Route, 'nav.players'],
-              [{ name: 'rules' } as Route, 'nav.rules'],
-              [{ name: 'settings' } as Route, 'nav.settings'],
-            ] as const
-          ).map(([route, key]) => (
-            <button key={key} type="button" className={styles.navItem} onClick={() => go(route)}>
-              <span className={styles.navLabel}>{t(key)}</span>
-              <Icon name="chevron" size={15} />
-            </button>
-          ))}
-        </nav>
       </main>
 
       <div className="actionbar" ref={actionBar}>

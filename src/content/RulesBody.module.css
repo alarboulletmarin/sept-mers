@@ -22,7 +22,7 @@
   border-top: 1px solid var(--hairline);
 }
 
-/* Le titre de chapitre nomme : romain, et de la place autour. */
+/* Le titre de chapitre : gras et de la place autour, pas un cran de plus. */
 .header {
   display: flex;
   align-items: center;
@@ -32,11 +32,10 @@
   min-height: 60px;
   padding: var(--space-3) var(--space-1);
   text-align: left;
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 21px;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   color: inherit;
 }
 
