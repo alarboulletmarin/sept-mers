@@ -51,7 +51,9 @@ npm run verify     # types, tests et build
 npm run build      # bundle de production dans dist/
 ```
 
-Node 22.12 ou plus récent.
+Node 22. Le champ `engines` déclare `22.x` plutôt qu'une plage : c'est la forme
+que les hébergeurs reconnaissent sans discuter. Vite 7 demande au minimum
+Node 22.12, que toute version 22 récente satisfait.
 
 | Script | Ce qu'il fait |
 |---|---|
@@ -110,9 +112,7 @@ docs/           design-system.md
 ```
 
 **React 19 + TypeScript + Vite, et rien d'autre en dépendance d'exécution.**
-En développement s'ajoutent Vitest, Playwright pour les parcours navigateur, et
-`@vercel/routing-utils` — le paquet dont Vercel tire lui-même son schéma — pour
-valider `vercel.json` avant qu'un déploiement ne le refuse.
+En développement s'ajoutent Vitest et Playwright, pour les parcours navigateur.
 Pas de routeur, pas de librairie d'état, pas de Tailwind, pas de librairie de
 graphiques, pas de pack d'icônes. Les deux fichiers de police vivent dans `src/`
 pour que Vite leur pose un hash de contenu et que le service worker les
@@ -133,15 +133,14 @@ version de schéma soit une addition et pas une réécriture.
 
 ## Tests
 
-162 tests unitaires couvrent le moteur de score — dont les huit cas de référence
+167 tests unitaires couvrent le moteur de score — dont les huit cas de référence
 du cahier des charges —, la validation de saisie, le plafonnement du paquet, les
 statistiques, le réducteur, la complétion automatique du dernier joueur,
 l'aller-retour export/import, la lecture défensive du stockage, les pluriels, la
 géométrie des graphiques, la configuration de déploiement, les jetons de la
-palette et le système typographique —
-familles, échelle, fichiers de fonte embarqués, et l'absence de toute famille
-écrite en dur hors des jetons. Le parcours navigateur complète le tout sur l'app
-réellement construite.
+palette et le système typographique — familles, échelle, fichiers de fonte
+embarqués, et l'absence de toute famille écrite en dur hors des jetons. Le
+parcours navigateur complète le tout sur l'app réellement construite.
 
 ```bash
 npm run verify \
@@ -161,17 +160,13 @@ L'app est un site statique : `npm run build` produit `dist/`, et n'importe quel
 hébergeur de fichiers suffit. `vercel.json` est fourni pour Vercel — préréglage
 Vite, aucune variable d'environnement, aucune fonction serveur.
 
-`engines.node` vaut `22.x` et non une plage : Vercel n'accepte dans ce champ que
-la forme majeure.
-
-**`vercel.json` ne porte aucun commentaire**, et c'est délibéré. JSON n'en a pas,
-et Vercel valide le fichier contre un schéma qui interdit toute propriété
-supplémentaire : trois clés `"//"` glissées dans `headers` suffisaient à faire
-refuser le déploiement à la validation, avant même le clonage, avec un
-« Deployment failed » sans journal. `src/deploy.test.ts` valide désormais le
-fichier contre le schéma que Vercel utilise lui-même — c'est la seule façon
-d'attraper la faute ici plutôt qu'en production. Les explications, elles, vivent
-ci-dessous.
+Ce fichier ne contient **aucun commentaire** : JSON n'en a pas, et le schéma de
+Vercel refuse toute propriété inconnue, y compris une clé `"//"` employée comme
+telle. Le déploiement échoue alors à la validation, avant même le clonage, avec
+un « Deployment failed » sans journal — trois clés glissées dans `headers` ont
+suffi. `src/deploy.test.ts` le vérifie, avec le reste de la configuration : les
+clés autorisées à chaque niveau, le comportement réel de la redirection, et la
+forme de `engines.node`. Les explications, elles, vivent ci-dessous.
 
 | Fichier | Cache | Pourquoi |
 |---|---|---|

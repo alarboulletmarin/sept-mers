@@ -6,4 +6,6 @@ dist-ssr
 .vite
 coverage
 shots
+
+# Artefacts de compilation incrémentale de TypeScript.
 *.tsbuildinfo

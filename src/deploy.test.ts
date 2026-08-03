@@ -1,64 +1,118 @@
 import { readFileSync } from 'node:fs'
-import Ajv from 'ajv'
-import { headersSchema, redirectsSchema } from '@vercel/routing-utils/dist/schemas.js'
 import { describe, expect, it } from 'vitest'
 
 /**
- * La configuration de déploiement est le seul fichier du projet dont une faute
- * ne se voit ni au build, ni aux tests, ni à l'exécution : Vercel la refuse à
- * la validation, avant même de cloner, et rend un « Deployment failed » sans
- * journal. On a perdu deux déploiements sur trois clés de commentaire `//`
- * glissées dans `headers` — la spécification y interdit toute propriété
- * supplémentaire.
- *
- * On valide donc le fichier contre le schéma que Vercel utilise lui-même, tiré
- * de son propre paquet. C'est la seule façon d'attraper la faute ici plutôt
- * qu'en production.
+ * Le schéma de Vercel refuse toute propriété qu'il ne connaît pas, y compris
+ * une clé `"//"` employée comme commentaire. Le déploiement échoue alors dès
+ * l'import, avec « should NOT have additional property `//` », et rien dans le
+ * projet ne l'aurait signalé. D'où ce test.
  */
-const config = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'))
+const raw = readFileSync(new URL('../vercel.json', import.meta.url), 'utf8')
+const config = JSON.parse(raw) as Record<string, unknown>
 
-const ajv = new Ajv({ allErrors: true, strict: false })
+/** Les seules clés de premier niveau que l'app utilise. */
+const ALLOWED_TOP_LEVEL = new Set(['$schema', 'redirects', 'headers', 'rewrites', 'cleanUrls', 'trailingSlash'])
 
-function errorsFor(schema: object, value: unknown): string[] {
-  const validate = ajv.compile(schema)
-  if (validate(value)) return []
-  return (validate.errors ?? []).map(
-    (error) => `${error.instancePath || '(racine)'} ${error.message ?? ''}`.trim(),
-  )
+/**
+ * Et les seules qu'une entrée de route accepte. Le contrôle des `"//"` attrape
+ * la faute qu'on a commise ; celui-ci attrape la suivante, celle où l'on écrit
+ * `sources` au lieu de `source` ou l'on glisse un `comment`. Vercel refuse
+ * l'une comme l'autre à la validation, sans plus de journal.
+ */
+const ALLOWED_IN_ENTRY: Record<string, Set<string>> = {
+  headers: new Set(['source', 'headers', 'has', 'missing']),
+  redirects: new Set(['source', 'destination', 'permanent', 'statusCode', 'has', 'missing']),
+}
+
+function everyKey(value: unknown, seen: string[] = []): string[] {
+  if (Array.isArray(value)) {
+    for (const item of value) everyKey(item, seen)
+  } else if (value !== null && typeof value === 'object') {
+    for (const [key, child] of Object.entries(value)) {
+      seen.push(key)
+      everyKey(child, seen)
+    }
+  }
+  return seen
 }
 
 describe('vercel.json', () => {
-  it('déclare des en-têtes conformes au schéma de Vercel', () => {
-    expect(errorsFor(headersSchema, config.headers)).toEqual([])
+  it('est du JSON valide', () => {
+    expect(typeof config).toBe('object')
   })
 
-  it('déclare des redirections conformes au schéma de Vercel', () => {
-    expect(errorsFor(redirectsSchema, config.redirects)).toEqual([])
+  it("n'emploie aucune clé de commentaire, à aucun niveau", () => {
+    // JSON n'a pas de commentaires : les simuler casse la validation de schéma.
+    const commentKeys = everyKey(config).filter((key) => key.trim().startsWith('//'))
+    expect(commentKeys).toEqual([])
   })
 
-  it('ne glisse aucune clé de commentaire nulle part', () => {
-    // JSON n'a pas de commentaires, et Vercel refuse la convention `//`.
-    // L'explication de chaque en-tête vit dans le README, section Déploiement.
-    const walk = (node: unknown, path: string): string[] => {
-      if (Array.isArray(node)) return node.flatMap((item, i) => walk(item, `${path}[${i}]`))
-      if (node === null || typeof node !== 'object') return []
-      return Object.entries(node).flatMap(([key, value]) =>
-        key === '//' ? [`${path}/${key}`] : walk(value, `${path}/${key}`),
-      )
+  it("ne déclare que des clés de premier niveau connues", () => {
+    for (const key of Object.keys(config)) {
+      expect(ALLOWED_TOP_LEVEL, `clé inattendue : ${key}`).toContain(key)
     }
-    expect(walk(config, '')).toEqual([])
   })
 
-  it('ne met jamais le service worker en cache', () => {
-    // Un `sw.js` périmé empêche toute mise à jour d'arriver, définitivement :
-    // c'est lui qui porte la liste des fichiers à précacher.
-    for (const name of ['/sw.js', '/sw-version.js']) {
-      const rule = config.headers.find((entry: { source: string }) => entry.source === name)
-      expect(rule, `${name} sans règle de cache`).toBeTruthy()
-      const cacheControl = rule.headers.find(
-        (header: { key: string }) => header.key === 'Cache-Control',
-      )
-      expect(cacheControl.value, name).toContain('max-age=0')
+  it('ne déclare que des clés connues dans chaque entrée de route', () => {
+    for (const [section, allowed] of Object.entries(ALLOWED_IN_ENTRY)) {
+      const entries = (config[section] ?? []) as Record<string, unknown>[]
+      for (const [index, entry] of entries.entries()) {
+        for (const key of Object.keys(entry)) {
+          expect(allowed, `${section}[${index}] : clé inattendue « ${key} »`).toContain(key)
+        }
+      }
     }
+  })
+
+  it('sert le service worker et sa liste de fichiers sans cache', () => {
+    const headers = config.headers as { source: string; headers: { key: string; value: string }[] }[]
+    for (const source of ['/sw.js', '/sw-version.js']) {
+      const entry = headers.find((candidate) => candidate.source === source)
+      expect(entry, `${source} sans en-tête`).toBeTruthy()
+      const cache = entry?.headers.find((h) => h.key === 'Cache-Control')?.value ?? ''
+      expect(cache, source).toContain('max-age=0')
+    }
+  })
+
+  it('met les fichiers hachés en cache long', () => {
+    const headers = config.headers as { source: string; headers: { key: string; value: string }[] }[]
+    const assets = headers.find((candidate) => candidate.source === '/assets/(.*)')
+    expect(assets?.headers[0].value).toContain('immutable')
+  })
+
+  it('ne redirige aucun fichier réel du build', () => {
+    const redirects = config.redirects as { source: string }[]
+    const pattern = new RegExp(`^${redirects[0].source}$`)
+    for (const real of [
+      '/index.html',
+      '/sw.js',
+      '/sw-version.js',
+      '/manifest.webmanifest',
+      '/assets/index-abc123.js',
+      '/assets/index-abc123.css',
+      '/icons/favicon.svg',
+      '/icons/icon-192.png',
+    ]) {
+      expect(pattern.test(real), `${real} serait redirigé`).toBe(false)
+    }
+  })
+
+  it('rattrape une adresse tapée à la main', () => {
+    const redirects = config.redirects as { source: string }[]
+    const pattern = new RegExp(`^${redirects[0].source}$`)
+    for (const typed of ['/regles', '/game', '/joueurs/ana']) {
+      expect(pattern.test(typed), `${typed} devrait être rattrapé`).toBe(true)
+    }
+  })
+})
+
+describe('package.json', () => {
+  const pkg = JSON.parse(
+    readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+  ) as { engines?: { node?: string } }
+
+  it('déclare Node dans la forme que les hébergeurs acceptent', () => {
+    // Une plage semver comme « >=22.12 » est refusée par certaines plateformes.
+    expect(pkg.engines?.node).toMatch(/^\d+\.x$/)
   })
 })
