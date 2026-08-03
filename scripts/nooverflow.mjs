@@ -5,7 +5,7 @@
  * choses : la page ne défile pas horizontalement, et aucun élément ne déborde
  * de son conteneur — un composant qui défile en interne compte comme un échec.
  */
-import { chromium } from 'playwright'
+import { launchChromium } from './browser.mjs'
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { extname, join, normalize } from 'node:path'
@@ -76,7 +76,7 @@ async function setValue(tile, target) {
   throw new Error(`valeur ${target} inatteignable`)
 }
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
+const browser = await launchChromium()
 
 for (const width of WIDTHS) {
   const context = await browser.newContext({ viewport: { width, height: 800 }, locale: 'fr-FR' })

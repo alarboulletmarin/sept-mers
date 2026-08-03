@@ -66,6 +66,11 @@ Node 22.12 ou plus récent.
 | `node scripts/contrast.mjs` | Absence de texte illisible, dans les deux thèmes |
 | `python3 scripts/make-icons.py` | Regénère les icônes PNG depuis le logotype |
 
+Les quatre parcours navigateur ont besoin d'un Chromium. Après
+`npx playwright install chromium` ils le trouvent seuls ; `scripts/browser.mjs`
+regarde d'abord `CHROMIUM_PATH`, puis les emplacements où un Chromium
+préinstallé se trouve d'ordinaire, et laisse Playwright résoudre à défaut.
+
 `scripts/smoke.mjs` joue une partie entière à quatre, vérifie la reprise après
 rechargement, le plafond à huit joueurs, le changement de thème et de langue,
 l'absence de requête réseau et l'absence d'emoji. Il attend un `dist/` à jour.
@@ -142,11 +147,19 @@ npm run verify \
   && node scripts/contrast.mjs
 ```
 
+Ces cinq vérifications tournent à chaque poussée et à chaque pull request, dans
+[`.github/workflows/verification.yml`](.github/workflows/verification.yml), sur
+la même majeure de Node que le déploiement.
+
 ## Déploiement
 
 L'app est un site statique : `npm run build` produit `dist/`, et n'importe quel
 hébergeur de fichiers suffit. `vercel.json` est fourni pour Vercel — préréglage
 Vite, aucune variable d'environnement, aucune fonction serveur.
+
+`engines.node` vaut `22.x` et non une plage : Vercel n'accepte dans ce champ que
+la forme majeure, et une plage comme `>=22.12` fait échouer le déploiement à la
+validation, avant même le premier `npm install`.
 
 Deux détails y comptent vraiment. `sw.js` et `sw-version.js` sont servis sans
 cache : ce sont eux qui portent la liste des fichiers à précacher, et un service

@@ -6,8 +6,9 @@
   "author": "Andréa Larboullet Marin",
   "type": "module",
   "private": true,
+  "//": "Vercel n'accepte dans engines.node que la forme majeure : une plage comme >=22.12 fait échouer le déploiement à la validation, avant le premier install. Vite 7 demande 20.19+ ou 22.12+, et 22.x les couvre.",
   "engines": {
-    "node": ">=22.12"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "vite",

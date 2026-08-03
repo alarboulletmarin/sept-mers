@@ -4,7 +4,7 @@
  *
  *   node scripts/smoke.mjs [--shots]
  */
-import { chromium } from 'playwright'
+import { launchChromium } from './browser.mjs'
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { extname, join, normalize } from 'node:path'
@@ -41,7 +41,7 @@ const server = createServer(async (req, res) => {
 await new Promise((resolve) => server.listen(0, resolve))
 const base = `http://127.0.0.1:${server.address().port}`
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
+const browser = await launchChromium()
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'fr-FR' })
 const page = await context.newPage()
 
