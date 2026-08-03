@@ -24,6 +24,9 @@ export default defineConfig({
       },
     },
   ],
+  // Chemins relatifs : l'app tourne aussi bien à la racine d'un domaine que
+  // dans un sous-dossier, ou ouverte directement depuis le disque.
+  base: './',
   build: {
     target: 'es2022',
     // Un seul chunk : l'app est petite et doit démarrer d'un trait hors ligne.
