@@ -15,11 +15,18 @@ export default defineConfig({
       transformIndexHtml(html) {
         return html.replace(/__BUILD_VERSION__/g, BUILD_VERSION)
       },
-      generateBundle() {
+      generateBundle(_options, bundle) {
+        // Le service worker doit précacher les fichiers réellement produits :
+        // leurs noms portent un hash, il ne peut pas les deviner. Sans cette
+        // liste, le shell est en cache mais le JS manque, et le mode avion
+        // ouvre une page blanche.
+        const assets = Object.keys(bundle).filter((name) => name !== 'sw-version.js')
         this.emitFile({
           type: 'asset',
           fileName: 'sw-version.js',
-          source: `self.__SEPT_MERS_VERSION = ${JSON.stringify(BUILD_VERSION)}\n`,
+          source:
+            `self.__SEPT_MERS_VERSION = ${JSON.stringify(BUILD_VERSION)}\n` +
+            `self.__SEPT_MERS_ASSETS = ${JSON.stringify(assets)}\n`,
         })
       },
     },

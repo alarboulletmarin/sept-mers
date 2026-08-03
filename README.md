@@ -44,12 +44,17 @@ Node 22.12 ou plus récent.
 | `npm run typecheck` | TypeScript seul |
 | `npm run verify` | Les trois d'affilée |
 | `node scripts/smoke.mjs` | Parcours complet dans un vrai navigateur, sur `dist/` |
+| `node scripts/offline.mjs` | Mode avion et suivi du thème système, sur `dist/` |
 | `python3 scripts/make-icons.py` | Regénère les icônes PNG depuis le logotype |
 
 `scripts/smoke.mjs` joue une partie entière à quatre, vérifie la reprise après
 rechargement, le plafond à huit joueurs, le changement de thème et de langue,
 l'absence de requête réseau et l'absence d'emoji. Il attend un `dist/` à jour.
 L'option `--shots` écrit des captures dans `shots/`.
+
+`scripts/offline.mjs` coupe le réseau une fois le service worker installé, puis
+relance l'app, valide une manche et ouvre les règles hors ligne. Il vérifie aussi
+que le thème système bascule en direct, sans rechargement.
 
 ## Architecture
 
@@ -95,7 +100,7 @@ stockage, les pluriels et la géométrie des graphiques. Le parcours navigateur
 complète le tout sur l'app réellement construite.
 
 ```bash
-npm run verify && node scripts/smoke.mjs
+npm run verify && node scripts/smoke.mjs && node scripts/offline.mjs
 ```
 
 ## Vie privée

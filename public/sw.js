@@ -2,8 +2,9 @@
  * Service worker écrit à la main.
  *
  * L'app ne fait aucun appel réseau après le chargement : il n'y a donc qu'une
- * chose à gérer, le shell. On le précache, on sert en cache-first, et on
- * invalide par version de build.
+ * chose à gérer, le shell. On le précache intégralement — JS et CSS compris,
+ * dont les noms sont injectés au build parce qu'ils portent un hash —, on sert
+ * en cache-first, et on invalide par version de build.
  */
 
 importScripts('./sw-version.js')
@@ -11,17 +12,29 @@ importScripts('./sw-version.js')
 const VERSION = self.__SEPT_MERS_VERSION || 'dev'
 const CACHE = `sept-mers-${VERSION}`
 
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/favicon.svg']
+const SHELL = [
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './icons/favicon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-512.png',
+  './icons/icon-180.png',
+  ...(self.__SEPT_MERS_ASSETS || []).map((name) => `./${name}`),
+]
+
+/**
+ * Un `addAll` échoue en bloc dès qu'une entrée manque, et laisse le cache vide.
+ * On ajoute une par une : une icône absente ne doit pas coûter le hors-ligne.
+ */
+async function precache() {
+  const cache = await caches.open(CACHE)
+  await Promise.allSettled(SHELL.map((url) => cache.add(url)))
+}
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches
-      .open(CACHE)
-      .then((cache) => cache.addAll(SHELL))
-      // Une icône manquante ne doit pas empêcher l'installation.
-      .catch(() => undefined)
-      .then(() => self.skipWaiting()),
-  )
+  event.waitUntil(precache().then(() => self.skipWaiting()))
 })
 
 self.addEventListener('activate', (event) => {
@@ -46,10 +59,7 @@ self.addEventListener('fetch', (event) => {
   // une seule page suffit, et le mode avion ne doit rien bloquer.
   if (request.mode === 'navigate') {
     event.respondWith(
-      caches
-        .match('./index.html')
-        .then((cached) => cached || fetch(request))
-        .catch(() => caches.match('./index.html')),
+      caches.match('./index.html').then((cached) => cached || fetch(request)),
     )
     return
   }
