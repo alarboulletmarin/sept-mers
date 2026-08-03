@@ -1,12 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "//": "L'app vit sur le hash : aucune route serveur à réécrire. La redirection sert juste à rattraper une adresse tapée à la main, et elle redirige plutôt qu'elle ne réécrit, parce que le build utilise des chemins relatifs.",
   "redirects": [
     { "source": "/((?!assets/|icons/|.*\\..*).+)", "destination": "/", "permanent": false }
   ],
   "headers": [
     {
-      "//": "Le service worker et sa liste de fichiers ne doivent jamais être servis périmés, sinon une mise à jour ne descend plus jamais.",
       "source": "/sw.js",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
     },
@@ -19,12 +17,10 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
     },
     {
-      "//": "Les assets portent un hash de contenu : leur nom change à chaque build.",
       "source": "/assets/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
-      "//": "Les icônes n'ont pas de hash : une journée, pour pouvoir les corriger.",
       "source": "/icons/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }]
     }

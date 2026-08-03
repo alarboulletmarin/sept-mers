@@ -136,6 +136,11 @@ L'app est un site statique : `npm run build` produit `dist/`, et n'importe quel
 hébergeur de fichiers suffit. `vercel.json` est fourni pour Vercel — préréglage
 Vite, aucune variable d'environnement, aucune fonction serveur.
 
+Ce fichier ne contient **aucun commentaire** : JSON n'en a pas, et le schéma de
+Vercel refuse toute propriété inconnue, y compris une clé `"//"`. Le
+déploiement échouerait dès l'import. `src/deploy.test.ts` le vérifie, avec le
+reste de la configuration.
+
 Deux détails y comptent vraiment. `sw.js` et `sw-version.js` sont servis sans
 cache : ce sont eux qui portent la liste des fichiers à précacher, et un service
 worker périmé empêcherait toute mise à jour d'arriver. Les fichiers de `assets/`
