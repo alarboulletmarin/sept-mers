@@ -42,7 +42,9 @@ npm run verify     # types, tests et build
 npm run build      # bundle de production dans dist/
 ```
 
-Node 22.12 ou plus récent.
+Node 22. Le champ `engines` déclare `22.x` plutôt qu'une plage : c'est la forme
+que les hébergeurs reconnaissent sans discuter. Vite 7 demande au minimum
+Node 22.12, que toute version 22 récente satisfait.
 
 | Script | Ce qu'il fait |
 |---|---|
