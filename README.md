@@ -29,6 +29,15 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 - **Aucun scroll latéral**, à aucune largeur : tout se plie à l'écran.
 - **Design en mosaïque, monochrome** : des widgets noir, blanc ou gris, un
   chiffre en héros par widget. Voir [le design system](docs/design-system.md).
+- **Deux familles typographiques** : une pour la voix, une chasse fixe pour les
+  chiffres. Les deux sont embarquées et précachées : rien à télécharger, y
+  compris en mode avion.
+- **Barre de navigation basse**, quatre destinations, présente y compris au
+  milieu d'une manche : aller lire une règle ne fait perdre ni la partie ni la
+  saisie en cours.
+- **Guidage permanent** : trois phrases au premier lancement, une consigne sous
+  chaque titre d'écran, la progression de la partie et le temps de la manche
+  affichés en continu, et un blocage qui se nomme avant de griser un bouton.
 - **Noms entiers partout**, jamais une initiale ni une pastille de couleur. Dans
   le tableau des scores, les huit noms sont écrits en diagonale pour tenir dans
   la largeur d'un téléphone. La couleur ne porte jamais seule une information.
@@ -59,6 +68,11 @@ Node 22.12, que toute version 22 récente satisfait.
 | `node scripts/contrast.mjs` | Absence de texte illisible, dans les deux thèmes |
 | `python3 scripts/make-icons.py` | Regénère les icônes PNG depuis le logotype |
 
+Les quatre parcours navigateur ont besoin d'un Chromium. Après
+`npx playwright install chromium` ils le trouvent seuls ; `scripts/browser.mjs`
+regarde d'abord `CHROMIUM_PATH`, puis les emplacements où un Chromium
+préinstallé se trouve d'ordinaire, et laisse Playwright résoudre à défaut.
+
 `scripts/smoke.mjs` joue une partie entière à quatre, vérifie la reprise après
 rechargement, le plafond à huit joueurs, le changement de thème et de langue,
 l'absence de requête réseau et l'absence d'emoji. Il attend un `dist/` à jour.
@@ -82,23 +96,27 @@ texte, et dont le contenu devient blanc sur blanc.
 ```
 src/
   main.tsx
-  app/          App, Router, Layout, StoreProvider, ThemeProvider, useWakeLock
+  app/          App, Router, Layout, TabBar, StoreProvider, ThemeProvider,
+                useWakeLock
   screens/      Home, NewGame, Game, GameSummary, History, Players, Rules, Settings
-  components/   Widget, Button, Stepper, PlayerChip, ScoreTable, Sheet,
+  components/   Widget, Button, Stepper, Rail, PlayerChip, ScoreTable, Sheet,
                 Toast, Icon, EmptyState, BonusDrawer
   domain/       scoring, deck, validation, stats, types
   store/        storage, reducer, migrations
   charts/       ScoreLines, AccuracyBars, BonusBars, RankingBars, primitives
   i18n/         fr.json, en.json, index
   content/      rules.fr, rules.en, RulesBody
-  styles/       tokens.css, base.css
+  styles/       tokens.css, fonts.css, base.css, fonts/*.woff2
 public/         manifest.webmanifest, sw.js, icons/
 docs/           design-system.md
 ```
 
 **React 19 + TypeScript + Vite, et rien d'autre en dépendance d'exécution.**
+En développement s'ajoutent Vitest et Playwright, pour les parcours navigateur.
 Pas de routeur, pas de librairie d'état, pas de Tailwind, pas de librairie de
-graphiques, pas de pack d'icônes. Le routeur tient sur le hash, l'état sur un
+graphiques, pas de pack d'icônes. Les deux fichiers de police vivent dans `src/`
+pour que Vite leur pose un hash de contenu et que le service worker les
+précache avec le bundle. Le routeur tient sur le hash, l'état sur un
 `useReducer` persisté, les styles sur des variables CSS et des modules CSS, les
 graphiques sur du SVG calculé à la main.
 
@@ -115,12 +133,14 @@ version de schéma soit une addition et pas une réécriture.
 
 ## Tests
 
-146 tests unitaires couvrent le moteur de score — dont les huit cas de référence
+167 tests unitaires couvrent le moteur de score — dont les huit cas de référence
 du cahier des charges —, la validation de saisie, le plafonnement du paquet, les
 statistiques, le réducteur, la complétion automatique du dernier joueur,
-l'aller-retour export/import, la lecture défensive du stockage, les pluriels et
-la géométrie des graphiques et les jetons de la palette. Le parcours navigateur
-complète le tout sur l'app réellement construite.
+l'aller-retour export/import, la lecture défensive du stockage, les pluriels, la
+géométrie des graphiques, la configuration de déploiement, les jetons de la
+palette et le système typographique — familles, échelle, fichiers de fonte
+embarqués, et l'absence de toute famille écrite en dur hors des jetons. Le
+parcours navigateur complète le tout sur l'app réellement construite.
 
 ```bash
 npm run verify \
@@ -130,6 +150,10 @@ npm run verify \
   && node scripts/contrast.mjs
 ```
 
+Ces cinq vérifications tournent à chaque poussée et à chaque pull request, dans
+[`.github/workflows/verification.yml`](.github/workflows/verification.yml), sur
+la même majeure de Node que le déploiement.
+
 ## Déploiement
 
 L'app est un site statique : `npm run build` produit `dist/`, et n'importe quel
@@ -137,14 +161,19 @@ hébergeur de fichiers suffit. `vercel.json` est fourni pour Vercel — prérég
 Vite, aucune variable d'environnement, aucune fonction serveur.
 
 Ce fichier ne contient **aucun commentaire** : JSON n'en a pas, et le schéma de
-Vercel refuse toute propriété inconnue, y compris une clé `"//"`. Le
-déploiement échouerait dès l'import. `src/deploy.test.ts` le vérifie, avec le
-reste de la configuration.
+Vercel refuse toute propriété inconnue, y compris une clé `"//"` employée comme
+telle. Le déploiement échoue alors à la validation, avant même le clonage, avec
+un « Deployment failed » sans journal — trois clés glissées dans `headers` ont
+suffi. `src/deploy.test.ts` le vérifie, avec le reste de la configuration : les
+clés autorisées à chaque niveau, le comportement réel de la redirection, et la
+forme de `engines.node`. Les explications, elles, vivent ci-dessous.
 
-Deux détails y comptent vraiment. `sw.js` et `sw-version.js` sont servis sans
-cache : ce sont eux qui portent la liste des fichiers à précacher, et un service
-worker périmé empêcherait toute mise à jour d'arriver. Les fichiers de `assets/`
-portent un hash de contenu et sont donc mis en cache pour un an.
+| Fichier | Cache | Pourquoi |
+|---|---|---|
+| `sw.js`, `sw-version.js` | aucun | Ce sont eux qui portent la liste des fichiers à précacher. Un service worker périmé empêche toute mise à jour d'arriver, définitivement. |
+| `manifest.webmanifest` | aucun | Il change avec le thème et les icônes. |
+| `assets/*` | un an, immuable | Ces fichiers portent un hash de contenu : leur nom change à chaque build. |
+| `icons/*` | un jour | Ils n'ont pas de hash, et on doit pouvoir les corriger. |
 
 L'app vivant sur le hash, il n'y a aucune route serveur à réécrire : la
 redirection déclarée ne sert qu'à rattraper une adresse tapée à la main.
@@ -165,6 +194,13 @@ L'app est **monochrome** : noir, blanc, gris. Aucune information ne peut donc
 dépendre d'une teinte — un score se lit à son signe, un état à son remplissage,
 une série à son motif de tiretés. C'est aussi ce qui la rend lisible en vision
 dichromate comme en noir et blanc.
+
+Sans couleur, c'est la typographie qui sépare le discours de la donnée. Deux
+familles, embarquées en `woff2` variable : **Instrument Sans** pour tout ce qui
+s'énonce, **JetBrains Mono** pour tout ce qui se compte. Le partage est
+fonctionnel plutôt que décoratif — un carnet de score est une colonne de nombres
+qu'on relit d'une manche à l'autre, et une colonne ne se relit que si elle ne
+danse pas.
 
 Les surfaces portent un rôle et **s'inversent avec le thème** : `accent` est le
 bloc de contraste maximal, noir de jour et blanc de nuit. Une surface figée
@@ -190,3 +226,9 @@ inégales, une houle vue de profil, sept traits pour sept mers.
 ## Licence
 
 MIT. Voir [LICENSE](LICENSE).
+
+Les deux familles typographiques embarquées — **Instrument Sans**, publiée par
+Instrument, et **JetBrains Mono**, publiée par JetBrains — sont sous SIL Open
+Font License 1.1. Leur texte de licence est conservé dans
+[`src/styles/fonts/`](src/styles/fonts/), et la licence de l'app ne s'y applique
+pas.

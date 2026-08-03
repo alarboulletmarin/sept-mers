@@ -1,3 +1,8 @@
+/*
+ * Les primitives : remise à zéro, échelle typographique, gabarit d'écran.
+ * Voir docs/design-system.md.
+ */
+
 *,
 *::before,
 *::after {
@@ -19,12 +24,16 @@ html {
 body {
   max-width: 100%;
   overflow-x: hidden;
-  font-family: var(--font);
-  font-size: 15px;
-  line-height: 1.5;
+  font-family: var(--font-sans);
+  font-size: var(--size-body);
+  line-height: 1.6;
   color: var(--canvas-on);
   background: var(--canvas);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Les ligatures et le crénage du fichier, plutôt que ceux du moteur. */
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
 }
@@ -42,6 +51,34 @@ button {
   border: none;
   padding: 0;
   cursor: pointer;
+}
+
+/*
+ * `manipulation` retire l'attente du double-tap : le navigateur n'a plus à se
+ * demander si un second appui va suivre, et le clic part tout de suite.
+ */
+button,
+a,
+input,
+label,
+[role='button'],
+[role='radio'],
+[role='switch'],
+[role='spinbutton'] {
+  touch-action: manipulation;
+}
+
+/*
+ * L'appui s'affiche à l'instant, le relâchement s'adoucit. Une transition de
+ * 120 ms à l'aller se lit comme un décalage : c'est exactement la sensation de
+ * lourdeur qu'on veut supprimer, et elle ne coûte pourtant aucun calcul.
+ */
+button:active,
+a:active,
+[role='button']:active,
+[role='radio']:active,
+[role='switch']:active {
+  transition-duration: 0s;
 }
 
 ul,
@@ -80,63 +117,117 @@ table {
   border-radius: var(--radius-control);
 }
 
-/* ------------------------------------------------------------ typographie */
+/* ------------------------------------------------------------ typographie
+ *
+ * Le texte parle, les chiffres se lisent.
+ *
+ * Une seule famille pour tout ce qui s'énonce, une chasse fixe pour tout ce
+ * qui se compte. Sans couleur et sans seconde famille de texte, la hiérarchie
+ * tient sur trois leviers et trois seulement : la taille, la graisse et
+ * l'approche. C'est peu, et c'est exactement pour ça que chaque cran doit
+ * avoir un rôle et un seul.
+ */
 
+/* Le titre d'un écran. Corps fluide : il tient à 320 px sans se couper. */
+.t-display {
+  font-weight: 700;
+  font-size: clamp(30px, 8.5vw, var(--size-display));
+  line-height: 1.02;
+  letter-spacing: var(--track-display);
+  overflow-wrap: break-word;
+}
+
+/* Le titre d'un widget, d'une feuille, d'un chapitre. */
+.t-title {
+  font-weight: 700;
+  font-size: var(--size-title);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  overflow-wrap: break-word;
+}
+
+/*
+ * La consigne : une phrase qui dit où on en est et quoi faire. Elle ne crie
+ * pas, elle ne compte pas, elle accompagne — d'où le corps de texte courant en
+ * sourdine plutôt qu'un cran de titre de plus.
+ */
+.t-lede {
+  font-weight: 400;
+  font-size: var(--size-lede);
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+}
+
+/* Les chiffres. Chasse tabulaire obligatoire : sans elle les colonnes dansent. */
 .t-hero {
-  font-size: 64px;
-  line-height: 0.9;
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  font-family: var(--font-figure);
+  font-size: var(--size-hero);
+  line-height: 0.86;
+  font-weight: 700;
+  letter-spacing: var(--track-hero);
   font-variant-numeric: tabular-nums;
 }
 
 .t-figure {
-  font-size: 40px;
-  line-height: 0.95;
-  font-weight: 800;
-  letter-spacing: -0.035em;
+  font-family: var(--font-figure);
+  font-size: var(--size-figure);
+  line-height: 0.9;
+  font-weight: 700;
+  letter-spacing: var(--track-figure);
   font-variant-numeric: tabular-nums;
 }
 
 .t-figure-sm {
-  font-size: 28px;
+  font-family: var(--font-figure);
+  font-size: var(--size-figure-sm);
   line-height: 1;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 
-.t-title {
-  font-size: 22px;
-  line-height: 1.2;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-}
-
 .t-subtitle {
-  font-size: 17px;
-  line-height: 1.3;
+  font-size: var(--size-subtitle);
+  line-height: 1.25;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .t-body {
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: var(--size-body);
+  line-height: 1.6;
   font-weight: 400;
+  text-wrap: pretty;
 }
 
 .t-label {
-  font-size: 13px;
+  font-size: var(--size-label);
   line-height: 1.4;
   font-weight: 600;
 }
 
+.t-caption {
+  font-size: var(--size-caption);
+  line-height: 1.45;
+  font-weight: 500;
+  color: var(--surface-muted, var(--canvas-muted));
+}
+
+/*
+ * L'étiquette : capitales, chasse étroite, approche très ouverte. C'est la
+ * signature de la mosaïque, et le seul endroit de l'app où l'on crie.
+ */
 .t-tag {
-  font-size: 11px;
+  font-size: var(--size-tag);
   line-height: 1;
   font-weight: 700;
+  font-stretch: var(--stretch-tight);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--track-tag);
+  /* L'approche pousse un blanc après la dernière lettre : on le reprend. */
+  text-indent: 0.01em;
+  margin-right: calc(var(--track-tag) * -1);
 }
 
 .num {
@@ -167,7 +258,9 @@ table {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom));
+  /* La barre de navigation est fixe : on lui réserve sa place plutôt que de
+     laisser le dernier élément passer dessous. */
+  padding-bottom: calc(var(--tabbar-h) + var(--space-4));
 }
 
 .screen-body {
@@ -175,7 +268,7 @@ table {
   padding: 0 var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
   max-width: 560px;
   width: 100%;
   margin: 0 auto;
@@ -216,22 +309,26 @@ table {
   display: grid;
   place-items: center;
   border-radius: var(--radius-pill);
-  background: var(--canvas-on);
-  color: var(--canvas);
-  transition: opacity var(--dur-fast) var(--ease);
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--canvas-on);
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 .round-button:active {
-  opacity: 0.75;
+  background: var(--canvas-on);
+  color: var(--canvas);
 }
 
 /* Barre basse : l'action principale reste au pouce. */
 .actionbar {
   position: sticky;
-  bottom: 0;
+  bottom: var(--tabbar-h);
   z-index: 20;
   background: var(--canvas);
-  padding: var(--space-3) var(--space-4) calc(env(safe-area-inset-bottom) + var(--space-3));
+  padding: var(--space-3) var(--space-4);
   margin-top: auto;
 }
 
@@ -276,15 +373,32 @@ table {
   min-width: 0;
 }
 
-/* Intitulé de section, posé sur le canevas. */
+/*
+ * Intitulé de section. Le filet qui le prolonge est le seul ornement de l'app :
+ * il coûte un pixel, il tient la page ensemble, et il vient de la même famille
+ * de gestes que le logotype — des traits horizontaux, rien d'autre.
+ */
 .section-title {
-  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
+  font-size: var(--size-tag);
   line-height: 1;
   font-weight: 700;
+  font-stretch: var(--stretch-tight);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--canvas-muted);
-  padding: var(--space-3) var(--space-1) var(--space-1);
+  letter-spacing: var(--track-tag);
+  color: var(--surface-muted, var(--canvas-muted));
+  padding: var(--space-2) 0 0;
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
 }
 
 /* Champ texte : le seul endroit où un clavier s'ouvre, jamais en partie. */
@@ -298,15 +412,17 @@ table {
   min-height: var(--tap-min);
   padding: 0 var(--space-4);
   background: var(--card);
-  border: 1px solid transparent;
+  border: 1px solid var(--hairline);
   border-radius: var(--radius-pill);
   color: var(--card-on);
   width: 100%;
-  font-size: 15px;
+  font-size: var(--size-body);
+  font-weight: 500;
 }
 
 .input::placeholder {
   color: var(--card-muted);
+  font-weight: 400;
 }
 
 .input:focus-visible {
@@ -321,22 +437,31 @@ table {
   gap: var(--space-2);
 }
 
+/*
+ * L'option suit la surface qui la porte, jamais l'accent global : posée sur un
+ * widget encre, une option cochée en `--accent` aurait été noire sur noire.
+ */
 .segmented-option {
   flex: 1 1 auto;
   min-width: 0;
   min-height: var(--tap-min);
   padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
-  background: var(--card);
-  color: var(--card-on);
-  font-size: 13px;
-  font-weight: 600;
-  border: 1px solid transparent;
+  background: transparent;
+  color: var(--surface-on, var(--canvas-on));
+  font-size: var(--size-label);
+  font-weight: 500;
+  border: 1px solid color-mix(in srgb, currentColor 32%, transparent);
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 .segmented-option[aria-checked='true'] {
-  background: var(--accent);
-  color: var(--accent-on);
+  background: var(--surface-on, var(--canvas-on));
+  color: var(--surface, var(--canvas));
+  border-color: transparent;
+  font-weight: 600;
 }
 
 /* Bascule à deux états. */

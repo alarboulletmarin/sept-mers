@@ -1,79 +1,152 @@
-/* Cinq compteurs, chacun avec son libellé complet et sa valeur en points. */
-.list {
+/*
+ * Cinq lignes, pas cinq cartes. Voir le commentaire de BonusDrawer.tsx : des
+ * blocs empilés faisaient déborder la feuille avant la troisième ligne.
+ */
+.drawer {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  min-width: 0;
 }
 
-.counter {
+/* Le suivi de points, en tête. */
+.total {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
+  padding-bottom: var(--space-2);
+}
+
+.totalFigure {
+  font-family: var(--font-figure);
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: var(--track-figure);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+  margin-left: -0.02em;
+}
+
+.totalLabel {
+  min-width: 0;
+  font-size: var(--size-caption);
+  color: var(--surface-muted, var(--canvas-muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  min-height: var(--tap-min);
-  padding: var(--space-3);
-  border-radius: var(--radius-control);
-  background: var(--canvas);
-  color: var(--canvas-on);
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.row:last-child {
+  border-bottom: 1px solid var(--hairline);
 }
 
 .text {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
-  flex: 1;
 }
 
 .name {
-  font-size: 14px;
+  font-size: var(--size-label);
   font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word;
 }
 
+/* Une ligne d'aide, jamais deux : soit ce que la carte fait, soit pourquoi le
+   compteur est bloqué, mais pas les deux empilées. */
 .help {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.35;
-  color: var(--canvas-muted);
+  color: var(--surface-muted, var(--canvas-muted));
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Ce que la carte vaut. C'est le chiffre qu'on cherche : il sort de la phrase. */
+.worth {
+  flex: none;
+  min-width: 34px;
+  text-align: right;
+  font-size: var(--size-label);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--surface-muted, var(--canvas-muted));
+}
+
+/* Une ligne renseignée passe en pleine encre : on repère ce qu'on a posé. */
+.set .worth {
+  color: var(--surface-on, var(--canvas-on));
 }
 
 .stepper {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 2px;
   flex: none;
 }
 
+/* Mêmes commandes que le stepper de tuile : au filet, pleines à l'appui. */
 .step {
   width: var(--tap-min);
   height: var(--tap-min);
   display: grid;
   place-items: center;
   border-radius: var(--radius-pill);
-  background: var(--canvas-on);
-  color: var(--canvas);
-  transition: transform var(--dur-fast) var(--ease);
+  border: 1px solid currentColor;
+  color: var(--surface-on, var(--canvas-on));
+  opacity: 0.45;
+  touch-action: manipulation;
+  transition: opacity var(--dur-fast) var(--ease);
 }
 
 .step:disabled {
-  opacity: 0.25;
+  opacity: 0.15;
 }
 
 .step:not(:disabled):active {
-  transform: scale(0.92);
+  opacity: 1;
+  background: var(--surface-on, var(--canvas-on));
+  color: var(--surface, var(--canvas));
+  transition-duration: 0s;
 }
 
 .minus {
   display: block;
-  width: 15px;
-  height: 2.5px;
+  width: 14px;
+  height: 2px;
   border-radius: 2px;
   background: currentColor;
 }
 
 .value {
-  min-width: 26px;
+  min-width: 22px;
   text-align: center;
+  font-family: var(--font-figure);
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }

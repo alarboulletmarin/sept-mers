@@ -6,7 +6,7 @@
  * devient blanc sur blanc, sans que rien ne casse par ailleurs. On mesure donc
  * le contraste réel de chaque texte contre son fond effectif.
  */
-import { chromium } from 'playwright'
+import { launchChromium } from './browser.mjs'
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { extname, join, normalize } from 'node:path'
@@ -77,7 +77,7 @@ const AUDIT = (floor) => {
   return [...new Set(problems)]
 }
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
+const browser = await launchChromium()
 const failures = []
 
 for (const theme of ['light', 'dark']) {

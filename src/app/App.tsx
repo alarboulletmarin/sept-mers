@@ -12,6 +12,7 @@ import { TOTAL_ROUNDS } from '../domain/types.ts'
 import { runningGame } from '../store/reducer.ts'
 import { useRoute, useScrollReset, type Route } from './Router.tsx'
 import { StoreProvider, useStore } from './StoreProvider.tsx'
+import { TabBar } from './TabBar.tsx'
 import { ThemeProvider } from './ThemeProvider.tsx'
 
 export function App() {
@@ -48,22 +49,33 @@ function Screens() {
     if (running.rounds.length >= TOTAL_ROUNDS) return
   }, [route.name, running])
 
+  return (
+    <>
+      <Screen route={route} go={navigate} />
+      {/* La barre ne dépend d'aucun écran : elle est le seul repère qui ne
+          bouge jamais, y compris au milieu d'une manche. */}
+      <TabBar route={route} go={navigate} />
+    </>
+  )
+}
+
+function Screen({ route, go }: { route: Route; go: (next: Route) => void }) {
   switch (route.name) {
     case 'new':
-      return <NewGame go={navigate} />
+      return <NewGame go={go} />
     case 'game':
-      return <Game go={navigate} />
+      return <Game go={go} />
     case 'summary':
-      return <GameSummary gameId={route.gameId} go={navigate} />
+      return <GameSummary gameId={route.gameId} go={go} />
     case 'history':
-      return <History go={navigate} />
+      return <History go={go} />
     case 'players':
-      return <Players playerId={route.playerId} go={navigate} />
+      return <Players playerId={route.playerId} go={go} />
     case 'rules':
-      return <Rules go={navigate} />
+      return <Rules go={go} />
     case 'settings':
-      return <Settings go={navigate} />
+      return <Settings go={go} />
     default:
-      return <Home go={navigate} />
+      return <Home go={go} />
   }
 }

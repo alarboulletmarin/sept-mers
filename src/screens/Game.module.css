@@ -17,7 +17,11 @@
   min-width: 0;
 }
 
-/* Le widget de manche : encre, chiffre héros, actions rondes à droite. */
+/*
+ * Le widget de manche. Il porte quatre choses, et rien d'autre : où on en est
+ * dans la partie (la houle), de quelle manche il s'agit, à quel temps de la
+ * manche on est, et qui mène.
+ */
 .roundWidget {
   --surface: var(--accent);
   --surface-on: var(--accent-on);
@@ -34,17 +38,18 @@
 
 .roundTop {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-2);
   min-width: 0;
 }
 
-.roundLeft {
+.tags {
   flex: 1;
-  min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
 .roundFigure {
@@ -52,34 +57,29 @@
   align-items: baseline;
   gap: var(--space-2);
   min-width: 0;
+  margin-top: calc(var(--space-1) * -1);
 }
 
 .roundNumber {
-  font-size: 56px;
-  line-height: 0.85;
-  font-weight: 800;
-  letter-spacing: -0.045em;
+  font-family: var(--font-figure);
+  font-size: 44px;
+  line-height: 0.82;
+  font-weight: 700;
+  letter-spacing: var(--track-hero);
   font-variant-numeric: tabular-nums;
   color: var(--accent-on);
   flex: none;
+  margin-left: -0.03em;
 }
 
+/* « sur 10 » : la chasse fixe est pour les chiffres, pas pour le mot qui les
+   introduit — « sur » en mono se lit comme du code. */
 .roundTotal {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--accent-muted);
   flex: none;
-}
-
-.roundCaption {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--accent-muted);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .roundActions {
@@ -88,19 +88,27 @@
   flex: none;
 }
 
-/* Action ronde, comme la flèche en coin de la référence. */
+/* Action ronde, au filet : elle est là si on la cherche, elle ne crie pas. */
 .action {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   border-radius: var(--radius-pill);
-  background: var(--accent-on);
-  color: var(--accent);
-  transition: transform var(--dur-fast) var(--ease);
+  border: 1px solid currentColor;
+  color: var(--accent-on);
+  opacity: 0.5;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
 }
 
 .action:active {
+  opacity: 1;
+  background: var(--accent-on);
+  color: var(--accent);
   transform: scale(0.92);
 }
 
@@ -122,11 +130,11 @@
   gap: var(--space-2);
   min-width: 0;
   padding: var(--space-1) 0;
-  border-top: 1px solid rgb(255 255 255 / 0.12);
+  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
 }
 
 .totalName {
-  font-size: 12px;
+  font-size: var(--size-caption);
   font-weight: 500;
   color: var(--accent-muted);
   min-width: 0;
@@ -136,8 +144,10 @@
 }
 
 .totalValue {
+  font-family: var(--font-figure);
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   flex: none;
 }
@@ -146,17 +156,19 @@
 
 /* Le nom entier, sur deux lignes s'il le faut. Jamais réduit à une initiale. */
 .name {
-  font-size: 15px;
-  line-height: 1.15;
-  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   min-width: 0;
+  width: 100%;
   overflow-wrap: anywhere;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 2.3em;
+  min-height: 2.4em;
 }
 
 .tileMeta {
@@ -164,12 +176,13 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-2);
+  width: 100%;
   min-width: 0;
 }
 
 .bidRecall {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--size-caption);
+  font-weight: 500;
   color: var(--surface-muted);
   font-variant-numeric: tabular-nums;
   min-width: 0;
@@ -180,10 +193,11 @@
 
 /* Le score de la manche : le signe porte l'information, pas la couleur. */
 .tileScore {
+  font-family: var(--font-figure);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   flex: none;
 }
 
@@ -193,12 +207,16 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  min-height: 36px;
+  width: 100%;
+  min-height: 34px;
   border-radius: var(--radius-pill);
   border: 1px solid currentColor;
   color: var(--surface-muted);
-  font-size: 12px;
+  font-size: var(--size-tag);
   font-weight: 700;
+  font-stretch: var(--stretch-tight);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   min-width: 0;
   padding: 0 var(--space-2);
   transition: transform var(--dur-fast) var(--ease);
@@ -216,7 +234,7 @@
 
 .tileIssue {
   font-size: 11px;
-  line-height: 1.3;
+  line-height: 1.35;
   font-weight: 600;
   color: var(--surface-on);
 }
@@ -225,29 +243,37 @@
 
 .counter {
   text-align: center;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--size-label);
+  font-weight: 500;
   color: var(--canvas-muted);
+  font-variant-numeric: tabular-nums;
 }
 
-.counterWarn {
-  color: var(--canvas-on);
-}
-
+/*
+ * Un avis qui change la manche en cours — plafond du paquet, correction. Fond
+ * creux et non pastille : ce n'est pas une alerte, c'est un fait à connaître.
+ */
 .notice {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-control);
   background: var(--sunken);
   color: var(--sunken-on);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--size-label);
+  font-weight: 500;
   min-width: 0;
 }
 
+.alert {
+  font-size: var(--size-label);
+  font-weight: 600;
+  color: var(--canvas-on);
+}
+
+/* La consigne du moment. Elle est en romain italique : c'est la voix de
+   l'app, et elle ne doit ressembler à aucune donnée de l'écran. */
 .hint {
-  font-size: 13px;
   color: var(--canvas-muted);
-  padding: 0 var(--space-1);
+  max-width: 38ch;
 }
 
 .footRow {

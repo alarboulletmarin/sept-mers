@@ -1,20 +1,20 @@
 .hint {
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--size-caption);
+  line-height: 1.45;
   color: var(--canvas-muted);
-  padding: 0 var(--space-1);
+  max-width: 46ch;
 }
 
 .footNote {
-  font-size: 12px;
+  font-size: var(--size-caption);
   text-align: center;
   color: var(--canvas-muted);
 }
 
 .error {
-  font-size: 12px;
+  font-size: var(--size-caption);
   font-weight: 600;
-  color: var(--surface-on);
+  color: var(--canvas-on);
 }
 
 /* L'ordre à table : une liste de pastilles, nom entier et flèches. */
@@ -22,6 +22,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  counter-reset: seat;
 }
 
 .seat {
@@ -38,6 +39,7 @@
   border: 1px solid var(--hairline);
   border-radius: var(--radius-pill);
   min-width: 0;
+  counter-increment: seat;
 }
 
 .grip {
@@ -49,14 +51,24 @@
   width: 20px;
 }
 
+/* Le rang à table est une donnée : chiffre tabulaire, en sourdine. */
 .seatName {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: var(--size-body);
+  font-weight: 500;
+  letter-spacing: -0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.seatName::before {
+  content: counter(seat) '  ';
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--card-muted);
+  white-space: pre;
 }
 
 .move {
@@ -86,7 +98,7 @@
   width: 100%;
   min-height: var(--tap-min);
   text-align: left;
-  color: var(--canvas-on);
+  color: var(--canvas-muted);
 }
 
 .optionPanel {
@@ -102,12 +114,12 @@
 }
 
 .optionLabel {
-  font-size: 14px;
+  font-size: var(--size-label);
   font-weight: 600;
 }
 
 .optionHelp {
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--size-caption);
+  line-height: 1.45;
   color: var(--card-muted);
 }

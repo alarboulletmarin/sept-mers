@@ -13,6 +13,8 @@ export type IconName =
   | 'gear'
   | 'trash'
   | 'grip'
+  | 'history'
+  | 'players'
 
 const paths: Record<IconName, React.ReactNode> = {
   chevron: <path d="M9 5l7 7-7 7" />,
@@ -50,10 +52,14 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="M18 20v-9" />
     </>
   ),
+  /* Deux curseurs plutôt qu'une roue dentée : à 20 px, les six dents d'un
+     engrenage se referment en soleil et l'icône ne veut plus rien dire. */
   gear: (
     <>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 3v2.5M12 18.5V21M4.2 7.5l2.2 1.3M17.6 15.2l2.2 1.3M4.2 16.5l2.2-1.3M17.6 8.8l2.2-1.3" />
+      <path d="M4 8.5h4.5M13.5 8.5H20" />
+      <path d="M4 15.5h6.5M15.5 15.5H20" />
+      <circle cx="11" cy="8.5" r="2.5" />
+      <circle cx="13" cy="15.5" r="2.5" />
     </>
   ),
   trash: (
@@ -67,6 +73,20 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <path d="M9 6h.01M9 12h.01M9 18h.01" />
       <path d="M15 6h.01M15 12h.01M15 18h.01" />
+    </>
+  ),
+  history: (
+    <>
+      <circle cx="12" cy="12" r="8.25" />
+      <path d="M12 7.25V12l3.25 2" />
+    </>
+  ),
+  players: (
+    <>
+      <circle cx="9.25" cy="9" r="3.25" />
+      <path d="M3.5 19.25a5.75 5.75 0 0 1 11.5 0" />
+      <path d="M16.25 6.4a3.25 3.25 0 0 1 0 5.2" />
+      <path d="M17.5 15.1a5.75 5.75 0 0 1 3 4.15" />
     </>
   ),
 }

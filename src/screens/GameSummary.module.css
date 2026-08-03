@@ -1,9 +1,11 @@
+/* Le nom d'un classé, juste au-dessus de son score. */
 .rankName {
-  font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 16px;
   line-height: 1.2;
+  letter-spacing: -0.015em;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .actions {

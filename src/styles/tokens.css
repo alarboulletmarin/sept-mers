@@ -3,7 +3,7 @@
  *
  * Monochrome : noir, blanc, gris. Aucune information ne peut donc dépendre
  * d'une teinte — la question ne se pose plus. Tout se dit par la valeur, le
- * remplissage et la forme.
+ * remplissage, la forme et la typographie.
  *
  * Les surfaces portent un rôle, pas une valeur, et s'inversent avec le thème :
  * `accent` est le bloc de contraste maximal, noir de jour et blanc de nuit.
@@ -41,8 +41,49 @@
   --dash-7: 13 3 2 4;
   --dash-8: 4 2 1 2;
 
-  --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  /* ------------------------------------------------------------ typographie
+   *
+   * Deux familles. Le texte parle, les chiffres se lisent. Les deux sont
+   * embarquées (voir fonts.css) ; la pile derrière n'est là que pour les
+   * premières millisecondes et pour un navigateur qui refuserait le woff2.
+   */
+  --font-sans: 'Instrument Sans', ui-sans-serif, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* La chasse fixe est ici fonctionnelle : c'est elle qui empêche une colonne
+     de scores de danser d'une manche à l'autre. Tout ce qui se compte la
+     porte, et rien d'autre. */
+  --font-figure: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono',
+    Menlo, Consolas, monospace;
+
+  /* Chasse étroite : réservée aux micro-libellés en capitales. C'est elle, et
+     non une graisse de plus, qui leur donne leur allure de tampon. */
+  --stretch-tight: 84%;
+
+  /* Une échelle, pas un tas de tailles. Chaque cran a un rôle et un seul. */
+  --size-display: 40px;
+  --size-title: 26px;
+  --size-lede: 16px;
+  /* Un cran sous une échelle proportionnelle : à corps égal, la chasse fixe
+     est un tiers plus large, et « 1 100 » ne tenait plus dans une tuile. */
+  --size-hero: 50px;
+  --size-figure: 32px;
+  --size-figure-sm: 23px;
+  --size-subtitle: 16px;
+  --size-body: 15px;
+  --size-label: 13px;
+  --size-caption: 12px;
+  --size-tag: 11px;
+
+  /*
+   * L'approche se resserre quand le corps grandit : c'est ce qui donne aux
+   * titres leur densité. Les chiffres se resserrent moins — une chasse fixe a
+   * ses blancs latéraux dans le dessin, les rogner colle les glyphes.
+   */
+  --track-hero: -0.03em;
+  --track-figure: -0.02em;
+  --track-display: -0.035em;
+  --track-tag: 0.14em;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -69,8 +110,15 @@
   --tap-min: 44px;
   --tap-step: 48px;
 
+  /*
+   * La barre de navigation est fixe et toujours là : sa hauteur est un jeton,
+   * pas une mesure. Tout ce qui vit en bas — barre d'action, bandeau — s'y
+   * empile plutôt que de passer dessous.
+   */
+  --tabbar-h: calc(58px + env(safe-area-inset-bottom));
+
   /* Publiée par la barre d'action, pour que le bandeau se pose au-dessus. */
-  --actionbar-h: env(safe-area-inset-bottom);
+  --actionbar-h: 0px;
 }
 
 :root[data-theme='dark'] {

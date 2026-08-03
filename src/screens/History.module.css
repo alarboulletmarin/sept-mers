@@ -34,34 +34,40 @@
 
 .tag {
   align-self: flex-start;
-  padding: 4px 9px;
+  padding: 5px 9px 5px 10px;
   border-radius: var(--radius-pill);
   background: var(--card-on);
   color: var(--card);
-  font-size: 10px;
+  font-size: var(--size-tag);
   line-height: 1;
   font-weight: 700;
+  font-stretch: var(--stretch-tight);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--track-tag);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* Le nom du vainqueur : c'est ce qu'on lit avant le score. */
 .winner {
-  font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 16px;
   line-height: 1.2;
-  overflow-wrap: anywhere;
+  letter-spacing: -0.015em;
+  overflow-wrap: break-word;
+  padding-top: var(--space-1);
 }
 
 .score {
-  font-size: 34px;
+  font-family: var(--font-figure);
+  font-size: 28px;
   line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.035em;
+  font-weight: 700;
+  letter-spacing: var(--track-figure);
   font-variant-numeric: tabular-nums;
+  margin-left: -0.02em;
 }
 
 .names {

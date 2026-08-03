@@ -4,7 +4,7 @@
  *
  *   node scripts/smoke.mjs [--shots]
  */
-import { chromium } from 'playwright'
+import { launchChromium } from './browser.mjs'
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { extname, join, normalize } from 'node:path'
@@ -41,7 +41,7 @@ const server = createServer(async (req, res) => {
 await new Promise((resolve) => server.listen(0, resolve))
 const base = `http://127.0.0.1:${server.address().port}`
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
+const browser = await launchChromium()
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'fr-FR' })
 const page = await context.newPage()
 
@@ -72,13 +72,13 @@ const shot = async (name) => {
 
 await page.goto(base)
 await page.waitForSelector('text=Sept Mers')
-check('l accueil s affiche', await page.getByText('Aucune partie enregistrée').isVisible())
+check('l accueil guide au premier lancement', await page.getByText('Comment ça marche').isVisible())
 await shot('accueil-vide')
 
 // -------------------------------------------------------------- nouvelle partie
 
 await page.getByRole('button', { name: 'Nouvelle partie' }).click()
-await page.waitForSelector('text=Qui joue')
+await page.waitForSelector('text=Ajouter un joueur')
 
 for (const name of ['Ana', 'Bo', 'Cy', 'Dee']) {
   await page.getByPlaceholder('Nom du joueur').fill(name)
@@ -140,9 +140,28 @@ async function playRound(round, bids, tricks, bonus = null) {
   await page.getByRole('button', { name: 'Valider la manche' }).click()
 }
 
+check(
+  'la barre de navigation reste en partie',
+  await page.getByRole('navigation', { name: 'Sections' }).isVisible(),
+)
+check(
+  'l onglet Accueil est celui de la partie',
+  (await page.getByRole('link', { name: 'Accueil' }).getAttribute('aria-current')) === 'page',
+)
+
 // Manche 1 : une carte, un pli.
 await playRound(1, [1, 0, 0, 0], [1, 0, 0, 0])
 check('la manche 1 est enregistrée', await page.getByText('Manche 1 enregistrée').isVisible())
+check(
+  'le bandeau porte une croix pour le chasser',
+  (await page.getByRole('button', { name: 'Fermer' }).count()) > 0,
+)
+// Une seconde, pas cinq : le bandeau confirme, il ne réclame pas de lecture.
+await page.waitForTimeout(1400)
+check(
+  'le bandeau s efface de lui-même en une seconde',
+  (await page.getByText('Manche 1 enregistrée').count()) === 0,
+)
 await shot('manche-2-mises')
 
 // Manche 2, avec un 14 noir pour Ana.

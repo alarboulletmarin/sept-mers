@@ -36,7 +36,7 @@ function PlayerList({ go }: { go: (route: Route) => void }) {
   }
 
   return (
-    <Screen title={t('players.title')} onBack={() => go({ name: 'home' })}>
+    <Screen title={t('players.title')} lede={t('players.lede')} onBack={() => go({ name: 'home' })}>
       <section className="field">
         <label className="section-title" htmlFor="add-player">
           {t('newGame.addPlayer')}

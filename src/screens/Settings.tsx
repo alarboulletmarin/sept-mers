@@ -71,7 +71,7 @@ export function Settings({ go }: { go: (route: Route) => void }) {
   }
 
   return (
-    <Screen title={t('settings.title')} onBack={() => go({ name: 'home' })}>
+    <Screen title={t('settings.title')} lede={t('settings.lede')} onBack={() => go({ name: 'home' })}>
       <section className="stack-tight">
         <h2 className="section-title">{t('settings.language')}</h2>
         <div className="segmented" role="radiogroup" aria-label={t('settings.language')}>

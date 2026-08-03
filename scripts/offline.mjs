@@ -2,7 +2,7 @@
  * Vérifie les deux critères qui demandent un vrai navigateur :
  * le mode avion, et le suivi du thème système en direct.
  */
-import { chromium } from 'playwright'
+import { launchChromium } from './browser.mjs'
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { extname, join, normalize } from 'node:path'
@@ -39,7 +39,7 @@ async function setValue(tile, target) {
   throw new Error(`valeur ${target} inatteignable`)
 }
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
+const browser = await launchChromium()
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'fr-FR' })
 const page = await context.newPage()
 

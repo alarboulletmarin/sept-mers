@@ -1,42 +1,58 @@
+/*
+ * Les règles sont le seul texte long de l'app. Elles se lisent donc comme du
+ * texte : un romain pour les titres de chapitre, une mesure courte, un
+ * interlignage confortable. Pas de fond de carte par chapitre — un empilement
+ * de blocs blancs se lit comme un formulaire, pas comme un livret.
+ */
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  min-width: 0;
 }
 
 .section {
-  --surface: var(--card);
-  --surface-on: var(--card-on);
-  --surface-muted: var(--card-muted);
-  background: var(--card);
-  color: var(--card-on);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-widget);
-  overflow: hidden;
+  --surface: var(--canvas);
+  --surface-on: var(--canvas-on);
+  --surface-muted: var(--canvas-muted);
+  border-bottom: 1px solid var(--hairline);
+  min-width: 0;
 }
 
+.section:first-child {
+  border-top: 1px solid var(--hairline);
+}
+
+/* Le titre de chapitre : gras et de la place autour, pas un cran de plus. */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
   width: 100%;
-  min-height: 56px;
-  padding: var(--space-3) var(--space-4);
+  min-height: 60px;
+  padding: var(--space-3) var(--space-1);
   text-align: left;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   color: inherit;
+}
+
+.header svg {
+  flex: none;
+  opacity: 0.5;
 }
 
 .body {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding: 0 var(--space-4) var(--space-4);
-  font-size: 14px;
-  line-height: 1.55;
+  padding: 0 var(--space-1) var(--space-5);
+  font-size: var(--size-body);
+  line-height: 1.65;
+  max-width: 62ch;
+  text-wrap: pretty;
 }
 
 .unordered,
@@ -57,5 +73,6 @@
 
 .unordered li::marker,
 .ordered li::marker {
-  color: var(--card-muted);
+  color: var(--canvas-muted);
+  font-variant-numeric: tabular-nums;
 }

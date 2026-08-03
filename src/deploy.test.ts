@@ -13,6 +13,17 @@ const config = JSON.parse(raw) as Record<string, unknown>
 /** Les seules clés de premier niveau que l'app utilise. */
 const ALLOWED_TOP_LEVEL = new Set(['$schema', 'redirects', 'headers', 'rewrites', 'cleanUrls', 'trailingSlash'])
 
+/**
+ * Et les seules qu'une entrée de route accepte. Le contrôle des `"//"` attrape
+ * la faute qu'on a commise ; celui-ci attrape la suivante, celle où l'on écrit
+ * `sources` au lieu de `source` ou l'on glisse un `comment`. Vercel refuse
+ * l'une comme l'autre à la validation, sans plus de journal.
+ */
+const ALLOWED_IN_ENTRY: Record<string, Set<string>> = {
+  headers: new Set(['source', 'headers', 'has', 'missing']),
+  redirects: new Set(['source', 'destination', 'permanent', 'statusCode', 'has', 'missing']),
+}
+
 function everyKey(value: unknown, seen: string[] = []): string[] {
   if (Array.isArray(value)) {
     for (const item of value) everyKey(item, seen)
@@ -39,6 +50,17 @@ describe('vercel.json', () => {
   it("ne déclare que des clés de premier niveau connues", () => {
     for (const key of Object.keys(config)) {
       expect(ALLOWED_TOP_LEVEL, `clé inattendue : ${key}`).toContain(key)
+    }
+  })
+
+  it('ne déclare que des clés connues dans chaque entrée de route', () => {
+    for (const [section, allowed] of Object.entries(ALLOWED_IN_ENTRY)) {
+      const entries = (config[section] ?? []) as Record<string, unknown>[]
+      for (const [index, entry] of entries.entries()) {
+        for (const key of Object.keys(entry)) {
+          expect(allowed, `${section}[${index}] : clé inattendue « ${key} »`).toContain(key)
+        }
+      }
     }
   })
 

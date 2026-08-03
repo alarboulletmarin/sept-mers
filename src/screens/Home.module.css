@@ -1,36 +1,140 @@
+/* ------------------------------------------------------------- le bandeau */
+
+.masthead {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: calc(env(safe-area-inset-top) + var(--space-4)) 0 var(--space-2);
+  min-width: 0;
+}
+
+/* Le logotype à gauche, les réglages à droite : la seule ligne d'en-tête de
+   l'accueil, et elle ne porte rien d'autre. */
+.mastheadTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--space-2);
+}
+
 .logo {
   color: var(--canvas-on);
   flex: none;
 }
 
-.tagline {
-  font-size: 13px;
-  color: var(--canvas-muted);
-  padding: 0 var(--space-1) var(--space-1);
+/* Le nom est la seule chose de l'écran qui a le droit d'être grande. */
+.wordmark {
+  min-width: 0;
 }
 
-/* -------------------------------------------------------------- reprise */
+.tagline {
+  color: var(--canvas-muted);
+  max-width: 32ch;
+  /* Deux lignes à peu près égales valent mieux qu'une pleine et un mot seul. */
+  text-wrap: balance;
+}
+
+/* ---------------------------------------------------------- premier lancement
+ *
+ * Trois phrases numérotées, sans widget ni fond : c'est du texte, il doit
+ * ressembler à du texte.
+ */
+
+.how {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.howStep {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.howIndex {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline);
+  color: var(--canvas-muted);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.howText {
+  min-width: 0;
+  font-size: var(--size-body);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.howLink {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  font-size: var(--size-body);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--canvas-on);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--hairline);
+}
+
+/* -------------------------------------------------------------- la reprise */
+
+.resumeArrow {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  opacity: 0.55;
+}
 
 .resumeFigure {
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
   min-width: 0;
+  padding-top: var(--space-1);
 }
 
 .resumeNumber {
-  font-size: 60px;
-  line-height: 0.85;
-  font-weight: 800;
-  letter-spacing: -0.045em;
+  font-family: var(--font-figure);
+  font-size: var(--size-hero);
+  line-height: 0.82;
+  font-weight: 700;
+  letter-spacing: var(--track-hero);
   font-variant-numeric: tabular-nums;
+  flex: none;
+  margin-left: -0.03em;
 }
 
+/* « sur 10 » : la chasse fixe est pour les chiffres, pas pour le mot qui les
+   introduit — « sur » en mono se lit comme du code. */
 .resumeTotal {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--surface-muted);
+  flex: none;
 }
 
 .resumeScores {
@@ -38,6 +142,7 @@
   grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
   gap: 0 var(--space-4);
   min-width: 0;
+  width: 100%;
   margin-top: var(--space-1);
 }
 
@@ -48,12 +153,12 @@
   gap: var(--space-2);
   min-width: 0;
   padding: var(--space-1) 0;
-  border-top: 1px solid rgb(255 255 255 / 0.14);
+  border-top: 1px solid color-mix(in srgb, currentColor 22%, transparent);
 }
 
 .resumeName {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--size-caption);
+  font-weight: 500;
   color: var(--surface-muted);
   min-width: 0;
   overflow: hidden;
@@ -62,46 +167,10 @@
 }
 
 .resumeValue {
+  font-family: var(--font-figure);
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   flex: none;
-}
-
-/* ---------------------------------------------------------- navigation */
-
-.nav {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin-top: var(--space-2);
-}
-
-.navItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  width: 100%;
-  min-height: var(--tap-min);
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  border: 1px solid var(--hairline);
-  color: var(--canvas-on);
-  font-size: 14px;
-  font-weight: 600;
-  text-align: left;
-  transition: transform var(--dur-fast) var(--ease);
-}
-
-.navItem:active {
-  transform: scale(0.98);
-}
-
-.navItem span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
