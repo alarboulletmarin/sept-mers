@@ -1,77 +1,76 @@
 /*
  * Un registre plutôt qu'une grille : la manche en cours porte un filet de
  * laiton pleine hauteur, et chaque résultat porte un signe explicite.
+ *
+ * Aucun défilement horizontal. Les colonnes se partagent la largeur, et
+ * au-delà de cinq joueurs la table se resserre : le cumul cède la place,
+ * les totaux courants restent lisibles en tête d'écran et en pied de table.
  */
-.scroller {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+.frame {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
+  overflow: hidden;
 }
 
 .table {
-  border-collapse: separate;
-  border-spacing: 0;
+  table-layout: fixed;
   width: 100%;
+  border-collapse: collapse;
   font-variant-numeric: tabular-nums;
 }
 
 .table th,
 .table td {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-1);
   text-align: right;
-  white-space: nowrap;
   border-bottom: 1px solid var(--line);
+  overflow: hidden;
 }
 
+.table tbody tr:last-child th,
 .table tbody tr:last-child td {
   border-bottom: 0;
 }
 
-/* En-tête collant, et colonne des manches figée à gauche. */
 .head th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
   background: var(--sunken);
   font-size: 12px;
   line-height: 1.4;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--ink-muted);
 }
 
+/* La colonne des manches se contente du strict nécessaire. */
 .roundCol {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  background: var(--surface);
+  width: 15%;
+  min-width: 34px;
   text-align: left;
+  padding-left: var(--space-3);
   border-right: 1px solid var(--line);
-  min-width: 76px;
-}
-
-.head .roundCol {
-  z-index: 3;
-  background: var(--sunken);
 }
 
 .playerHead {
-  min-width: 84px;
+  padding-left: 2px;
+  padding-right: 2px;
 }
 
 .playerName {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  text-transform: none;
-  letter-spacing: 0;
-  font-size: 14px;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 0;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ink);
+}
+
+.playerNameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .roundLabel {
@@ -80,13 +79,24 @@
   gap: 1px;
 }
 
-/* Le filet de laiton, pleine hauteur de ligne. */
-.current .roundCol {
-  box-shadow: inset 3px 0 0 var(--brass);
+.roundIndex {
+  font-size: 14px;
+  font-weight: 600;
 }
 
+.roundCards {
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+/* Le filet de laiton, pleine hauteur de ligne. */
+.current th,
 .current td {
   background: var(--brass-soft);
+}
+
+.current .roundCol {
+  box-shadow: inset 3px 0 0 var(--brass);
 }
 
 .cell {
@@ -94,43 +104,80 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 1px;
+  padding-right: var(--space-2);
 }
 
 .delta {
   font-size: 14px;
-  line-height: 1.4;
-  font-weight: 500;
+  line-height: 1.3;
+  font-weight: 600;
 }
 
 .running {
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 11px;
+  line-height: 1.3;
   color: var(--ink-muted);
 }
 
 .pending {
   color: var(--ink-muted);
+  padding-right: var(--space-2);
+  display: block;
+  text-align: right;
 }
 
+.totalRow th,
 .totalRow td {
   background: var(--sunken);
   border-top: 1px solid var(--line);
-  border-bottom: 0;
-}
-
-.totalRow .roundCol {
-  background: var(--sunken);
 }
 
 .total {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
+  padding-right: var(--space-2);
+  display: block;
+  text-align: right;
 }
 
 .editable {
   cursor: pointer;
 }
 
-.editable:active .roundCol {
-  background: var(--sunken);
+/* Six joueurs ou plus : on resserre, et le cumul s'efface. */
+.dense .roundCol {
+  width: 13%;
+  padding-left: var(--space-2);
+}
+
+.dense .delta {
+  font-size: 12px;
+}
+
+.dense .total {
+  font-size: 14px;
+}
+
+.dense .roundIndex {
+  font-size: 13px;
+}
+
+.dense .cell,
+.dense .total,
+.dense .pending {
+  padding-right: var(--space-1);
+}
+
+.dense .playerNameText {
+  display: none;
+}
+
+.dense .running {
+  display: none;
+}
+
+.dense .table th,
+.dense .table td {
+  padding-left: 1px;
+  padding-right: 1px;
 }

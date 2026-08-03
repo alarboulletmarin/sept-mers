@@ -1,53 +1,58 @@
 /*
  * Le contrôle central : deux fois par manche, une fois par joueur.
- * Une rangée de pastilles, défilable. Jamais de clavier, jamais de stepper :
- * atteindre 7 doit coûter un tap, pas sept.
+ *
+ * Grille qui prend exactement la largeur disponible et passe à la ligne.
+ * Jamais de défilement : à dix cartes, la valeur 7 doit être visible sans
+ * geste préalable, sinon on la cherche au lieu de la toucher.
  */
-.row {
-  display: flex;
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--picker-columns, 6), minmax(0, 1fr));
   gap: var(--space-2);
-  overflow-x: auto;
-  scrollbar-width: none;
-  /* Le débord permet aux pastilles de bord de respirer sans rogner le focus. */
-  padding: 2px;
-  margin: -2px;
-  scroll-padding: var(--space-2);
-  -webkit-overflow-scrolling: touch;
+  /*
+   * Les pastilles remplissent la largeur quand elles sont nombreuses, mais
+   * cessent de s'étirer quand il n'y en a que deux ou trois : à la manche 1,
+   * on veut deux touches, pas deux bandeaux.
+   */
+  max-width: calc(
+    var(--picker-columns, 6) * 60px + (var(--picker-columns, 6) - 1) * var(--space-2)
+  );
 }
 
-.row::-webkit-scrollbar {
-  display: none;
-}
-
+/*
+ * Une touche, pas un bloc. Le fond plein sur chaque pastille faisait un mur
+ * gris : seul l'état choisi mérite d'être rempli, le reste se contente d'un
+ * filet. Ce qui n'aide pas à saisir disparaît.
+ */
 .pill {
-  flex: none;
-  min-width: var(--tap-picker);
+  min-width: 0;
   height: var(--tap-picker);
-  padding: 0 var(--space-2);
   border-radius: var(--radius-control);
-  background: var(--sunken);
+  background: transparent;
   border: 1px solid var(--line);
-  color: var(--ink);
+  color: var(--ink-muted);
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   display: grid;
   place-items: center;
-  transition: background var(--dur-fast) var(--ease);
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 .pill:active {
-  background: var(--line);
+  background: var(--sunken);
 }
 
 .selected {
   background: var(--brass-soft);
   border: 2px solid var(--brass);
   color: var(--ink);
+  font-weight: 700;
 }
 
 .compact .pill {
-  min-width: var(--tap-min);
   height: var(--tap-min);
   font-size: 15px;
 }

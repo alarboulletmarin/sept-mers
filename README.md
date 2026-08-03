@@ -24,6 +24,7 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
   quitter la manche en cours.
 - **Français et anglais**, thème clair, sombre ou système, changeables à chaud.
 - **Export / import** du fichier de données.
+- **Aucun scroll latéral**, à aucune largeur : tout se plie à l'écran.
 
 ## Faire tourner le projet
 
@@ -45,6 +46,7 @@ Node 22.12 ou plus récent.
 | `npm run verify` | Les trois d'affilée |
 | `node scripts/smoke.mjs` | Parcours complet dans un vrai navigateur, sur `dist/` |
 | `node scripts/offline.mjs` | Mode avion et suivi du thème système, sur `dist/` |
+| `node scripts/nooverflow.mjs` | Absence de scroll latéral, à cinq largeurs |
 | `python3 scripts/make-icons.py` | Regénère les icônes PNG depuis le logotype |
 
 `scripts/smoke.mjs` joue une partie entière à quatre, vérifie la reprise après
@@ -55,6 +57,10 @@ L'option `--shots` écrit des captures dans `shots/`.
 `scripts/offline.mjs` coupe le réseau une fois le service worker installé, puis
 relance l'app, valide une manche et ouvre les règles hors ligne. Il vérifie aussi
 que le thème système bascule en direct, sans rechargement.
+
+`scripts/nooverflow.mjs` parcourt les treize écrans à 320, 360, 390, 430 et
+820 px, avec huit joueurs et le sélecteur le plus long, et échoue dès qu'un
+élément dépasse la largeur ou qu'un composant défile horizontalement.
 
 ## Architecture
 
@@ -100,7 +106,10 @@ stockage, les pluriels et la géométrie des graphiques. Le parcours navigateur
 complète le tout sur l'app réellement construite.
 
 ```bash
-npm run verify && node scripts/smoke.mjs && node scripts/offline.mjs
+npm run verify \
+  && node scripts/smoke.mjs \
+  && node scripts/offline.mjs \
+  && node scripts/nooverflow.mjs
 ```
 
 ## Vie privée

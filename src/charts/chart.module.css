@@ -5,9 +5,11 @@
 }
 
 .svg {
+  display: block;
   width: 100%;
   height: auto;
-  overflow: visible;
+  /* Un nom de série un peu long dépassait du viewBox et poussait la page. */
+  overflow: hidden;
 }
 
 .grid {
@@ -39,6 +41,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-4);
+  min-width: 0;
+}
+
+/* La table de données en lecture d'écran seule ne doit jamais peser sur la
+   largeur rendue : `.sr-only` la sort déjà du flux, on le garde strict. */
+.frame figcaption {
+  max-width: 100%;
 }
 
 .legendItem {
@@ -48,6 +57,12 @@
   font-size: 12px;
   font-weight: 500;
   color: var(--ink-muted);
+  min-width: 0;
+}
+
+.legendItem span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .swatch {

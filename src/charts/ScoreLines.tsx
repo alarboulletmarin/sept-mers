@@ -3,6 +3,7 @@ import { playerColor } from '../components/PlayerChip.tsx'
 import { cumulativeSeries } from '../domain/stats.ts'
 import type { Game } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
+import { shorten } from './labels.ts'
 import { extent, niceTicks, plotArea, polyline, scale } from './primitives.ts'
 import styles from './chart.module.css'
 
@@ -78,7 +79,7 @@ export function ScoreLines({ game }: { game: Game }) {
                   y={last.y + 3}
                   fill={playerColor(seat)}
                 >
-                  {game.nameSnapshot[line.playerId]}
+                  {shorten(game.nameSnapshot[line.playerId] ?? '')}
                 </text>
               )}
             </g>

@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import type { PlayerStats } from '../domain/stats.ts'
 import { useT } from '../i18n/index.ts'
+import { shorten } from './labels.ts'
 import { plotArea, scale } from './primitives.ts'
 import styles from './chart.module.css'
 
@@ -96,7 +97,7 @@ export function RankingBars({ rows, names }: RankingBarsProps) {
                 y={centre + 3}
                 textAnchor="end"
               >
-                {names[row.playerId] ?? ''}
+                {shorten(names[row.playerId] ?? '')}
               </text>
               <rect
                 x={start}

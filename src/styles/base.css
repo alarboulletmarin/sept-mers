@@ -11,9 +11,14 @@
 html {
   -webkit-text-size-adjust: 100%;
   background: var(--paper);
+  /* Aucun scroll latéral, nulle part. Ce qui dépasse est un défaut de mise en
+     page, pas quelque chose à faire défiler. */
+  overflow-x: hidden;
 }
 
 body {
+  max-width: 100%;
+  overflow-x: hidden;
   font-family: var(--font-ui);
   font-size: 16px;
   line-height: 1.5;
@@ -54,6 +59,21 @@ a {
 
 svg {
   display: block;
+}
+
+/* Sans `min-width: 0`, un enfant de flex refuse de rétrécir sous son contenu
+   et pousse la largeur de la page. C'est la cause numéro un de débordement. */
+.row > *,
+.row-between > *,
+.stack > *,
+.stack-tight > * {
+  min-width: 0;
+}
+
+img,
+svg,
+table {
+  max-width: 100%;
 }
 
 /* Tout ce qui porte un nombre garde ses colonnes droites. */
@@ -141,6 +161,7 @@ svg {
   margin: -1px;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
 }
@@ -166,7 +187,7 @@ svg {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  max-width: 720px;
+  max-width: 560px;
   width: 100%;
   margin: 0 auto;
 }
@@ -182,7 +203,7 @@ svg {
 }
 
 .topbar-inner {
-  max-width: 720px;
+  max-width: 560px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -211,7 +232,7 @@ svg {
 }
 
 .actionbar-inner {
-  max-width: 720px;
+  max-width: 560px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -319,6 +340,14 @@ svg {
 .linkrow-label {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+}
+
+.linkrow-label > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .linkrow-chevron {
@@ -396,11 +425,13 @@ svg {
 /* Groupe de choix exclusifs, pour la langue et le thème. */
 .segmented {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
 }
 
 .segmented-option {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: var(--tap-min);
   padding: 0 var(--space-3);
   border: 1px solid var(--line);

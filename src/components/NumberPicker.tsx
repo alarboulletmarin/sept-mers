@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import styles from './NumberPicker.module.css'
 
 /** Retour haptique léger, quand l'appareil le propose. */
@@ -12,8 +11,20 @@ function tick(): void {
   }
 }
 
+/**
+ * Découpe la rangée en lignes égales.
+ *
+ * On cherche le nombre de colonnes qui remplit le mieux la largeur sans
+ * laisser d'orphelin : 11 valeurs tiennent en 6 + 5 plutôt qu'en 6 + 4 + 1.
+ */
+export function columnsFor(count: number): number {
+  if (count <= 6) return count
+  const rows = Math.ceil(count / 6)
+  return Math.ceil(count / rows)
+}
+
 interface NumberPickerProps {
-  /** Valeur haute incluse. La rangée va de 0 à `max`. */
+  /** Valeur haute incluse. La grille va de 0 à `max`. */
   max: number
   value: number | null
   onChange: (value: number) => void
@@ -34,33 +45,14 @@ export function NumberPicker({
   compact = false,
   disabled = false,
 }: NumberPickerProps) {
-  const rowRef = useRef<HTMLDivElement>(null)
   const values = Array.from({ length: max + 1 }, (_, index) => index)
-
-  // Une valeur choisie hors du champ visible doit se montrer d'elle-même,
-  // sinon on croit que rien n'a été saisi.
-  useEffect(() => {
-    if (value === null) return
-    const row = rowRef.current
-    const selected = row?.querySelector<HTMLElement>('[data-selected="true"]')
-    if (!row || !selected) return
-    const overflowsLeft = selected.offsetLeft < row.scrollLeft
-    const overflowsRight =
-      selected.offsetLeft + selected.offsetWidth > row.scrollLeft + row.clientWidth
-    if (overflowsLeft || overflowsRight) {
-      row.scrollTo({
-        left: selected.offsetLeft - row.clientWidth / 2 + selected.offsetWidth / 2,
-        behavior: 'auto',
-      })
-    }
-  }, [value])
 
   return (
     <div
-      ref={rowRef}
-      className={`${styles.row} ${compact ? styles.compact : ''}`}
+      className={`${styles.grid} ${compact ? styles.compact : ''}`}
       role="radiogroup"
       aria-label={label}
+      style={{ ['--picker-columns' as string]: columnsFor(values.length) }}
     >
       {values.map((option) => {
         const selected = option === value
@@ -71,7 +63,6 @@ export function NumberPicker({
             role="radio"
             aria-checked={selected}
             aria-label={optionLabel ? optionLabel(option) : String(option)}
-            data-selected={selected}
             disabled={disabled}
             className={`${styles.pill} ${selected ? styles.selected : ''}`}
             onClick={() => {

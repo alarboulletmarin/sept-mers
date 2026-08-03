@@ -5,6 +5,9 @@ import { useT } from '../i18n/index.ts'
 import { Initial } from './PlayerChip.tsx'
 import styles from './ScoreTable.module.css'
 
+/** Au-delà de cinq colonnes, la table se resserre pour tenir dans la largeur. */
+const DENSE_FROM = 6
+
 interface ScoreTableProps {
   game: Game
   /** Manche mise en évidence par le filet de laiton. */
@@ -16,6 +19,7 @@ interface ScoreTableProps {
 export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps) {
   const { t, signed, number } = useT()
   const finalTotals = totals(game)
+  const dense = game.playerIds.length >= DENSE_FROM
 
   // Cumul par joueur au fil des manches, pour la seconde ligne de chaque cellule.
   const running: Record<Id, number> = {}
@@ -41,7 +45,7 @@ export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps)
   })
 
   return (
-    <div className={styles.scroller} tabIndex={0} role="group" aria-label={t('a11y.scrollTable')}>
+    <div className={`${styles.frame} ${dense ? styles.dense : ''}`}>
       <table className={styles.table}>
         <thead className={styles.head}>
           <tr>
@@ -52,8 +56,10 @@ export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps)
               <th key={playerId} scope="col" className={styles.playerHead}>
                 <span className={styles.playerName}>
                   <Initial name={game.nameSnapshot[playerId] ?? ''} seat={seat} />
-                  {game.nameSnapshot[playerId]}
+                  <span className={styles.playerNameText}>{game.nameSnapshot[playerId]}</span>
                 </span>
+                {/* Le nom complet reste lu, même quand la colonne est étroite. */}
+                <span className="sr-only">{game.nameSnapshot[playerId]}</span>
               </th>
             ))}
           </tr>
@@ -70,8 +76,8 @@ export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps)
               >
                 <th scope="row" className={styles.roundCol}>
                   <span className={styles.roundLabel}>
-                    <span className="t-label">{row.roundIndex}</span>
-                    <span className={styles.running}>
+                    <span className={styles.roundIndex}>{row.roundIndex}</span>
+                    <span className={styles.roundCards}>
                       {t('table.cards', { count: row.cards })}
                     </span>
                   </span>
@@ -85,9 +91,7 @@ export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps)
                       </span>
                     ) : (
                       <span className={styles.cell}>
-                        <span
-                          className={`${styles.delta} ${cell.delta < 0 ? 'missed' : 'kept'}`}
-                        >
+                        <span className={`${styles.delta} ${cell.delta < 0 ? 'missed' : 'kept'}`}>
                           {signed(cell.delta)}
                         </span>
                         <span className={styles.running}>{number(cell.running ?? 0)}</span>

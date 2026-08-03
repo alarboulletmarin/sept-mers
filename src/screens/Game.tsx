@@ -246,7 +246,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
                     ? t('game.results.over', { count: -left })
                     : t('game.results.complete', { count: cards })}
               </p>
-              <div className="row" style={{ gap: 'var(--space-2)' }}>
+              <div className={styles.footRow}>
                 <Button onClick={() => dispatch({ type: 'game/phase', phase: 'bids' })}>
                   {t('game.bids.back')}
                 </Button>
@@ -350,13 +350,18 @@ function PlayerRow(props: PlayerRowProps) {
   const bonusCount = Object.values(bonus).reduce((total, value) => total + value, 0)
 
   return (
-    <section className={`${styles.row} ${issues.length > 0 ? styles.rowInvalid : ''}`}>
+    <section
+      data-player-row
+      className={`${styles.row} ${issues.length > 0 ? styles.rowInvalid : ''}`}
+    >
       <header className={styles.rowHead}>
-        <Initial name={name} seat={seat} />
-        <span className={`${styles.rowName} t-section`}>{name}</span>
-        {!isBids && bid !== null && (
-          <span className={styles.rowBid}>{t('game.bid', { bid })}</span>
-        )}
+        <span className={styles.rowIdentity}>
+          <Initial name={name} seat={seat} />
+          <span className={styles.rowName}>{name}</span>
+          {!isBids && bid !== null && (
+            <span className={styles.rowBid}>{t('game.bid', { bid })}</span>
+          )}
+        </span>
         {score && (
           <span className={`${styles.rowTotal} ${score.total < 0 ? 'missed' : 'kept'}`}>
             {signed(score.total)}
@@ -395,7 +400,7 @@ function PlayerRow(props: PlayerRowProps) {
               <Icon name="chevron" rotate={bonusOpen ? 'up' : 'down'} size={16} />
             </button>
             {!bonusOpen && bonusIsEmpty(bonus) && (
-              <span className="t-caption muted">{t('bonus.none')}</span>
+              <span className={styles.rowHint}>{t('bonus.none')}</span>
             )}
           </div>
 

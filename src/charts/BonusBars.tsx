@@ -2,6 +2,7 @@ import { useId } from 'react'
 import { bonusTotals } from '../domain/stats.ts'
 import { BONUS_KEYS, type Game } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
+import { shorten } from './labels.ts'
 import { plotArea, scale } from './primitives.ts'
 import styles from './chart.module.css'
 
@@ -86,7 +87,7 @@ export function BonusBars({ game }: { game: Game }) {
                 y={BOX.height - 8}
                 textAnchor="middle"
               >
-                {game.nameSnapshot[row.playerId]}
+                {shorten(game.nameSnapshot[row.playerId] ?? '')}
               </text>
             </g>
           )
