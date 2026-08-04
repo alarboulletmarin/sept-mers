@@ -53,8 +53,8 @@ export function TabBar({ route, go }: { route: Route; go: (next: Route) => void 
                   go(target)
                 }}
               >
-                {/* Le trait de l'onglet actif : le même geste que le logotype
-                    et que la houle de progression, à la plus petite échelle. */}
+                {/* Le trait de l'onglet actif : le même geste que la houle de
+                    progression, à la plus petite échelle. */}
                 <span className={styles.mark} aria-hidden="true" />
                 {tab.icon === 'logo' ? (
                   <Logo size={21} className={styles.icon} />

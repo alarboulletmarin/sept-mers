@@ -75,7 +75,7 @@ Node 22.12, que toute version 22 récente satisfait.
 | `node scripts/offline.mjs` | Mode avion et suivi du thème système, sur `dist/` |
 | `node scripts/nooverflow.mjs` | Absence de scroll latéral, à cinq largeurs |
 | `node scripts/contrast.mjs` | Absence de texte illisible, dans les deux thèmes |
-| `python3 scripts/make-icons.py` | Regénère les icônes PNG depuis le logotype |
+| `python3 scripts/make-icons.py` | Regénère les icônes et le `favicon.ico` depuis le logotype |
 
 Les quatre parcours navigateur ont besoin d'un Chromium. Après
 `npx playwright install chromium` ils le trouvent seuls ; `scripts/browser.mjs`
@@ -230,10 +230,12 @@ Le texte des règles présenté dans l'app est une réécriture originale. Les
 mécanismes d'un jeu ne sont pas protégeables, la prose d'un livret l'est : rien
 n'est repris du livret officiel, ni dans les mots, ni dans le découpage des
 chapitres. L'app ne contient aucune illustration de carte, aucun visuel de boîte,
-aucune reprise de la typographie ou du logo du jeu.
+aucune reprise de la typographie du jeu.
 
-Le logotype est un dessin original : sept traits horizontaux de longueurs
-inégales, une houle vue de profil, sept traits pour sept mers.
+Le logotype est un crâne couronné, plein, d'un seul tenant. C'est un motif de
+pavillon pirate, et il ressemble par force à ce qu'un jeu de pirates arbore : la
+formule qui précédait — « aucune reprise du logo du jeu » — ne tenait plus, elle
+est retirée. À vérifier avant toute publication sous ce nom.
 
 ## Licence
 

@@ -1,8 +1,9 @@
 import styles from './Rail.module.css'
 
 /**
- * La houle : une barre par manche, du même geste que le logotype — des traits
- * horizontaux de longueurs inégales, rien d'autre.
+ * La houle : une barre par manche — des traits horizontaux de longueurs
+ * inégales, rien d'autre. C'est le motif de la maison, repris au filet de
+ * section et au trait de l'onglet actif.
  *
  * Elle ne décore pas, elle situe. Dix traits, on voit d'un coup d'œil combien
  * de manches sont derrière et combien restent, sans lire un seul chiffre.

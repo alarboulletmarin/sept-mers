@@ -99,6 +99,49 @@ describe('icônes de l app', () => {
   })
 })
 
+describe('logotype', () => {
+  /**
+   * Le tracé vit à trois endroits : le composant React, le favicon SVG et le
+   * générateur d'icônes. Aucun des trois ne peut lire les deux autres — l'un
+   * est compilé dans le bundle, l'autre servi tel quel, le troisième est du
+   * Python lancé à la main. D'où cette comparaison : une divergence ne se
+   * verrait qu'à l'icône installée, c'est-à-dire trop tard.
+   */
+  const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')
+
+  /** Les espaces d'un `d` ne portent rien : on les ramène à une seule. */
+  const tidy = (value: string) => value.replace(/\s+/g, ' ').trim()
+
+  /** Recolle les littéraux d'une constante écrite sur plusieurs lignes. */
+  const joined = (source: string, from: RegExp) =>
+    tidy(
+      [...(source.match(from)?.[1].matchAll(/'([^']*)'/g) ?? [])]
+        .map(([, piece]) => piece)
+        .join(''),
+    )
+
+  const component = joined(read('src/components/Icon.tsx'), /const LOGO_PATH =\n([\s\S]*?)\n\n/)
+  const generator = joined(read('scripts/make-icons.py'), /LOGO_PATH = \(\n([\s\S]*?)\n\)/)
+  const favicon = tidy(read('public/icons/favicon.svg').match(/\sd="([\s\S]*?)"/)?.[1] ?? '')
+
+  it('est bien lu dans les trois fichiers', () => {
+    // Un `d` vide passerait les comparaisons suivantes sans rien garantir.
+    for (const [name, value] of [
+      ['le composant', component],
+      ['le générateur', generator],
+      ['le favicon', favicon],
+    ] as const) {
+      expect(value.length, `tracé introuvable dans ${name}`).toBeGreaterThan(500)
+      expect(value.startsWith('M'), `${name} ne commence pas par un déplacement`).toBe(true)
+    }
+  })
+
+  it('est le même dans le composant, le favicon et le générateur', () => {
+    expect(favicon, 'le favicon a divergé du composant').toBe(component)
+    expect(generator, 'le générateur a divergé du composant').toBe(component)
+  })
+})
+
 describe('favicon', () => {
   it('sert un .ico à la racine, aux trois tailles utiles', () => {
     // À la racine et non dans `icons/` : c'est `/favicon.ico` qu'un navigateur
