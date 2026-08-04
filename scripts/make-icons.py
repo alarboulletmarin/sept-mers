@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Rend les icônes PNG de l'app à partir du logotype.
+Rend les icônes de l'app à partir du logotype : les PNG du manifeste, et le
+`favicon.ico` de la racine.
 
 Le logotype est décrit une seule fois, en unités du viewBox 48x48, et
 rastérisé ici sans dépendance : sept segments à extrémités arrondies, donc
@@ -46,8 +47,8 @@ def capsule_distance(px: float, py: float, x1: float, y1: float, x2: float, y2: 
     return ((px - nearest_x) ** 2 + (py - nearest_y) ** 2) ** 0.5
 
 
-def render(size: int, background: tuple, foreground: tuple, *, scale: float) -> bytes:
-    """Rend une icône carrée, pleine et opaque, et rend les octets PNG."""
+def rasterise(size: int, background: tuple, foreground: tuple, *, scale: float) -> list[list[tuple]]:
+    """Rend une icône carrée, pleine et opaque, en lignes de triplets RVB."""
     unit = VIEWBOX / size
     radius = STROKE_WIDTH / 2 * scale
     centre = VIEWBOX / 2
@@ -66,8 +67,7 @@ def render(size: int, background: tuple, foreground: tuple, *, scale: float) -> 
 
     rows = []
     for row in range(size):
-        line = bytearray()
-        line.append(0)  # filtre PNG « None »
+        line = []
         for column in range(size):
             covered = 0
             for sy in range(SAMPLES):
@@ -81,13 +81,23 @@ def render(size: int, background: tuple, foreground: tuple, *, scale: float) -> 
                             break
 
             mix = covered / (SAMPLES * SAMPLES)
-            line.extend(
-                round(background[channel] * (1 - mix) + foreground[channel] * mix)
-                for channel in range(3)
+            line.append(
+                tuple(
+                    round(background[channel] * (1 - mix) + foreground[channel] * mix)
+                    for channel in range(3)
+                )
             )
-        rows.append(bytes(line))
+        rows.append(line)
+    return rows
 
-    raw = b''.join(rows)
+
+def encode_png(rows: list[list[tuple]]) -> bytes:
+    """Encode des lignes RVB en PNG."""
+    size = len(rows)
+    raw = b''.join(
+        bytes([0]) + bytes(channel for pixel in line for channel in pixel)  # filtre « None »
+        for line in rows
+    )
 
     def chunk(tag: bytes, payload: bytes) -> bytes:
         return (
@@ -108,8 +118,75 @@ def render(size: int, background: tuple, foreground: tuple, *, scale: float) -> 
     )
 
 
+def encode_ico(images: list[list[list[tuple]]]) -> bytes:
+    """
+    Assemble plusieurs tailles en un seul `.ico`.
+
+    Les images y sont en DIB — le BMP amputé de son en-tête de fichier — et non
+    en PNG. Le PNG dans un ICO n'est lu qu'à partir de Vista, et l'intérêt d'un
+    `.ico` est précisément d'être le format que tout comprend : ce serait
+    reprendre d'une main ce qu'on donne de l'autre. À ces tailles, la
+    compression ne pèse rien.
+
+    Un DIB d'icône a deux particularités : sa hauteur déclarée vaut le double de
+    la vraie, parce que le masque de transparence suit l'image, et ses lignes se
+    lisent de bas en haut.
+    """
+    directory = b''
+    payloads = []
+    # 6 octets d'en-tête, puis une entrée de 16 octets par image.
+    offset = 6 + 16 * len(images)
+
+    for rows in images:
+        size = len(rows)
+        pixels = b''.join(
+            # BGRA, et non RVBA : c'est l'ordre des octets d'un DIB 32 bits.
+            bytes([blue, green, red, 0xFF])
+            for line in reversed(rows)
+            for red, green, blue in line
+        )
+        # Le masque : une ligne de bits par ligne d'image, complétée à un
+        # multiple de quatre octets. Tout à zéro, donc rien de transparent —
+        # la couche alpha ci-dessus, opaque partout, fait déjà foi.
+        mask = bytes(((size + 31) // 32) * 4 * size)
+
+        header = struct.pack(
+            '<IiiHHIIiiII',
+            40,  # taille de l'en-tête
+            size,
+            size * 2,  # image + masque
+            1,  # plans
+            32,  # bits par pixel
+            0,  # sans compression
+            len(pixels) + len(mask),
+            0,
+            0,
+            0,
+            0,
+        )
+        payload = header + pixels + mask
+        payloads.append(payload)
+
+        directory += struct.pack(
+            '<BBBBHHII',
+            size if size < 256 else 0,  # 0 vaut 256, un octet ne va pas plus loin
+            size if size < 256 else 0,
+            0,  # palette : aucune
+            0,  # réservé
+            1,  # plans
+            32,  # bits par pixel
+            len(payload),
+            offset,
+        )
+        offset += len(payload)
+
+    # 0 réservé, type 1 = icône (2 serait un curseur).
+    return struct.pack('<HHH', 0, 1, len(images)) + directory + b''.join(payloads)
+
+
 def main() -> None:
-    out = Path(__file__).resolve().parent.parent / 'public' / 'icons'
+    public = Path(__file__).resolve().parent.parent / 'public'
+    out = public / 'icons'
     out.mkdir(parents=True, exist_ok=True)
 
     # Toutes les icônes sont pleines et opaques, fond encre et houle claire,
@@ -130,8 +207,22 @@ def main() -> None:
     ]
 
     for name, size, scale in targets:
-        (out / name).write_bytes(render(size, INK, PAPER, scale=scale))
+        (out / name).write_bytes(encode_png(rasterise(size, INK, PAPER, scale=scale)))
         print(f'{name} {size}x{size}')
+
+    # Le `.ico`, à la racine et non dans `icons/` : c'est `/favicon.ico` que les
+    # navigateurs vont chercher d'eux-mêmes quand le document ne leur donne rien
+    # qu'ils sachent lire, et ce chemin-là n'est pas négociable. Sans lui, la
+    # réponse est un 404 et l'onglet retombe sur l'initiale du titre.
+    #
+    # Trois tailles, parce que les usages diffèrent : 16 pour un onglet en
+    # densité simple, 32 pour la même chose en densité double et pour les
+    # vignettes de Safari, 48 pour les raccourcis.
+    sizes = (16, 32, 48)
+    (public / 'favicon.ico').write_bytes(
+        encode_ico([rasterise(size, INK, PAPER, scale=1.0) for size in sizes])
+    )
+    print('favicon.ico ' + ' '.join(f'{size}x{size}' for size in sizes))
 
 
 if __name__ == '__main__':

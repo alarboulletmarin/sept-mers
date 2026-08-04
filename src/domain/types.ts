@@ -21,9 +21,16 @@ export interface GameOptions {
   advancedPirates: boolean
 }
 
-/** Le score classique, sans aucune variante : le réglage de toujours. */
+/**
+ * Rien d'allumé. Une option qu'on n'a pas choisie ne doit pas être en jeu :
+ * on ouvre sur les règles les plus simples, et chacune se réclame.
+ *
+ * À ne pas confondre avec la valeur qu'une partie *déjà enregistrée* prend
+ * quand la clé manque de son fichier — celle-là est historique, et vaut vrai
+ * pour `bonusIfBidMissed`. Voir `readGameOptions` dans `store/storage.ts`.
+ */
 export const DEFAULT_OPTIONS: GameOptions = {
-  bonusIfBidMissed: true,
+  bonusIfBidMissed: false,
   seaMonsters: false,
   advancedPirates: false,
 }
@@ -80,7 +87,19 @@ export interface Game {
 export interface Settings {
   locale: Locale
   theme: Theme
-  lastOptions: GameOptions
+  /**
+   * Les options dont part une nouvelle partie. Modifiables dans les réglages,
+   * et remises à jour par la dernière partie lancée — on rejoue le plus
+   * souvent avec les règles de la fois d'avant.
+   *
+   * La clé s'appelait `lastOptions`, du temps où `bonusIfBidMissed` valait vrai
+   * par défaut. La renommer est ce qui remet ce vrai-là à zéro sur les
+   * installations existantes : la liste blanche de `normalise` ne lit plus
+   * l'ancienne clé, et le réglage repart de `DEFAULT_OPTIONS`. Un export d'une
+   * version à l'autre reste lisible dans les deux sens — c'est une préférence
+   * qui se reprend en deux touches, pas une partie.
+   */
+  defaultOptions: GameOptions
 }
 
 /** Saisie en cours, non encore validée. Permet de reprendre à la manche exacte. */

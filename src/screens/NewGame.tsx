@@ -19,9 +19,9 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
   const [seated, setSeated] = useState<Id[]>([])
   const [name, setName] = useState('')
   const [optionsOpen, setOptionsOpen] = useState(false)
-  // Les options de la dernière partie servent de départ : on rejoue le plus
-  // souvent avec les mêmes règles que la fois d'avant.
-  const [options, setOptions] = useState<GameOptions>(() => ({ ...store.settings.lastOptions }))
+  // Le réglage par défaut sert de départ : tout éteint à l'installation, puis
+  // ce qu'on a choisi dans les réglages ou joué la fois d'avant.
+  const [options, setOptions] = useState<GameOptions>(() => ({ ...store.settings.defaultOptions }))
   const toggleOption = (key: keyof GameOptions) => () =>
     setOptions((current) => ({ ...current, [key]: !current[key] }))
   const [nameError, setNameError] = useState<string | null>(null)

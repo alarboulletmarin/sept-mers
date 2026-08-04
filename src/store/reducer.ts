@@ -175,7 +175,7 @@ export function reducer(store: Store, action: Action): Store {
       return { ...store, settings: { ...store.settings, theme: action.theme } }
 
     case 'settings/defaultOptions':
-      return { ...store, settings: { ...store.settings, lastOptions: action.options } }
+      return { ...store, settings: { ...store.settings, defaultOptions: action.options } }
 
     case 'players/add': {
       const name = action.name.trim()
@@ -228,7 +228,7 @@ export function reducer(store: Store, action: Action): Store {
         ...store,
         // Une seule partie en cours : les traînantes sont closes.
         games: [...store.games.map((old) => (old.endedAt ? old : { ...old, endedAt: now })), game],
-        settings: { ...store.settings, lastOptions: action.options },
+        settings: { ...store.settings, defaultOptions: action.options },
         draft: emptyDraft(game, 1),
         liveDraft: undefined,
       }

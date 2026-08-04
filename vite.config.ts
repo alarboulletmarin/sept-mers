@@ -61,7 +61,7 @@ export default defineConfig({
       workbox: {
         // Tout le shell, fontes et icônes comprises : l'app ne fait aucun appel
         // réseau après le chargement, ce précache est la totalité du hors ligne.
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,webmanifest}'],
         // L'app vit sur le hash : une seule page, et toute navigation y retombe,
         // y compris en mode avion.
         navigateFallback: 'index.html',

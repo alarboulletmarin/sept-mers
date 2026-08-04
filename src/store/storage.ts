@@ -31,7 +31,7 @@ export function emptyStore(): Store {
     settings: {
       locale: defaultLocale(),
       theme: 'system',
-      lastOptions: { ...DEFAULT_OPTIONS },
+      defaultOptions: { ...DEFAULT_OPTIONS },
     },
   }
 }
@@ -50,14 +50,32 @@ const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isInteger(value) && value >= 0
 
 /**
- * Les options d'une partie, relues en liste blanche : ce qui n'est pas nommé
- * ici est effacé au chargement. L'option historique vaut vrai par défaut, les
- * variantes valent faux — un fichier d'avant n'a jamais joué les monstres.
+ * Les options d'une partie enregistrée, relues en liste blanche : ce qui n'est
+ * pas nommé ici est effacé au chargement.
+ *
+ * La valeur prise quand la clé manque est historique, pas préférentielle : une
+ * partie d'avant l'option comptait les bonus d'une mise ratée, et n'a jamais
+ * joué les monstres. Elle doit être relue comme elle a été jouée, sinon les
+ * totaux de l'historique bougent sous les pieds de ceux qui les ont marqués.
+ * C'est pour ça qu'elle ne suit pas `DEFAULT_OPTIONS`, qui n'allume plus rien.
  */
-const readOptions = (value: unknown): GameOptions =>
+const readGameOptions = (value: unknown): GameOptions => {
+  const source = isObject(value) ? value : {}
+  return {
+    bonusIfBidMissed: source.bonusIfBidMissed !== false,
+    seaMonsters: source.seaMonsters === true,
+    advancedPirates: source.advancedPirates === true,
+  }
+}
+
+/**
+ * Les options dont partiront les prochaines parties. Là, rien d'implicite :
+ * une option absente du fichier est une option qu'on n'a pas allumée.
+ */
+const readDefaultOptions = (value: unknown): GameOptions =>
   isObject(value)
     ? {
-        bonusIfBidMissed: value.bonusIfBidMissed !== false,
+        bonusIfBidMissed: value.bonusIfBidMissed === true,
         seaMonsters: value.seaMonsters === true,
         advancedPirates: value.advancedPirates === true,
       }
@@ -146,7 +164,7 @@ export function normalise(input: unknown): Store {
         )
         if (playerIds.length < MIN_PLAYERS || playerIds.length > MAX_PLAYERS) return []
 
-        const options = readOptions(game.options)
+        const options = readGameOptions(game.options)
 
         const rounds = (Array.isArray(game.rounds) ? game.rounds : []).flatMap(
           (round): Store['games'][number]['rounds'] => {
@@ -227,7 +245,7 @@ export function normalise(input: unknown): Store {
     themeValue === 'light' || themeValue === 'dark' || themeValue === 'system'
       ? themeValue
       : 'system'
-  const lastOptions = readOptions(settingsSource.lastOptions)
+  const defaultOptions = readDefaultOptions(settingsSource.defaultOptions)
 
   // Une seule partie en cours à la fois : on garde la plus récente et on
   // clôt les autres, un fichier bricolé à la main ne doit pas bloquer l'app.
@@ -245,7 +263,7 @@ export function normalise(input: unknown): Store {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     players,
     games,
-    settings: { locale, theme, lastOptions },
+    settings: { locale, theme, defaultOptions },
   }
 
   /** Une saisie relue depuis le fichier, valeur par valeur. */

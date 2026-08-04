@@ -92,6 +92,9 @@ describe('vercel.json', () => {
       '/assets/index-abc123.css',
       '/icons/favicon.svg',
       '/icons/icon-192.png',
+      // Le chemin que les navigateurs vont chercher d'eux-mêmes : redirigé, il
+      // ramènerait le document HTML et l'onglet retomberait sur l'initiale.
+      '/favicon.ico',
     ]) {
       expect(pattern.test(real), `${real} serait redirigé`).toBe(false)
     }
