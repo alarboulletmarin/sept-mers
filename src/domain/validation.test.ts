@@ -7,6 +7,7 @@ import {
   sumBids,
   validateBids,
   validateBonuses,
+  validateHarry,
   validateRascal,
   validateTricks,
   validateVoided,
@@ -326,5 +327,38 @@ describe('le fantôme de Barbe Grise', () => {
     expect(codes(validateTricks({ a: 2, b: 2, [GREY_BEARD]: 2 }, 6, holders, 1))).toEqual([
       'tricks.sum',
     ])
+  })
+})
+
+describe('le pas d Harry le Géant', () => {
+  const bids = { a: 3, b: 0, c: 5 }
+
+  it('accepte un seul pas, dans un sens ou dans l autre', () => {
+    expect(validateHarry({ a: 1, b: 0, c: 0 }, bids, 5, players)).toEqual([])
+    expect(validateHarry({ a: -1, b: 0, c: 0 }, bids, 5, players)).toEqual([])
+    expect(validateHarry({}, bids, 5, players)).toEqual([])
+  })
+
+  it('refuse deux Harry dans la même manche', () => {
+    expect(codes(validateHarry({ a: 1, b: 1, c: 0 }, bids, 5, players))).toEqual([
+      'harry.multiple',
+    ])
+  })
+
+  it('refuse un pas de plus d un pli', () => {
+    expect(codes(validateHarry({ a: 2, b: 0, c: 0 }, bids, 5, players))).toEqual(['harry.value'])
+  })
+
+  it('garde la mise déplacée dans les bornes de la manche', () => {
+    // Mise 0 : on ne descend pas à −1.
+    expect(validateHarry({ a: 0, b: -1, c: 0 }, bids, 5, players)[0]).toMatchObject({
+      code: 'harry.range',
+      playerId: 'b',
+    })
+    // Mise 5 sur 5 cartes : on ne monte pas à 6.
+    expect(validateHarry({ a: 0, b: 0, c: 1 }, bids, 5, players)[0]).toMatchObject({
+      code: 'harry.range',
+      playerId: 'c',
+    })
   })
 })

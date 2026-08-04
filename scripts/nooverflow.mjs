@@ -97,13 +97,19 @@ for (const width of WIDTHS) {
     await page.getByPlaceholder('Nom du joueur').fill(n)
     await page.getByRole('button', { name: 'Ajouter', exact: true }).click()
   }
-  // Les variantes activées : elles ajoutent quatre surfaces à auditer — le
-  // panneau à quatre bascules, le compteur de plis écartés dans la mosaïque, le
-  // pari du Rascal dans la feuille des primes, et la pastille de charge sur
-  // chacune des huit tuiles. Le Score Rascal chasse au passage le réglage des
-  // primes d'une mise ratée, qui n'a plus d'objet sous lui.
+  // Les variantes activées : elles ajoutent cinq surfaces à auditer — le
+  // panneau à cinq bascules et ses deux compteurs de format, le compteur de
+  // plis écartés dans la mosaïque, le pari du Rascal et le pas d'Harry dans la
+  // feuille des primes, et la pastille de charge sur chacune des huit tuiles.
+  // Le Score Rascal chasse au passage le réglage des primes d'une mise ratée,
+  // qui n'a plus d'objet sous lui.
+  //
+  // Les deux monstres, et pas seulement le Kraken : c'est ce qui fait 72
+  // cartes, donc une manche 9 à 9 cartes à huit joueurs — la valeur la plus
+  // haute que la grille ait à tenir.
   await page.getByRole('button', { name: 'Options' }).click()
   await page.getByRole('switch', { name: /Kraken/ }).click()
+  await page.getByRole('switch', { name: /Baleine blanche/ }).click()
   await page.getByRole('switch', { name: /Pouvoirs/ }).click()
   await page.getByRole('switch', { name: /Score Rascal/ }).click()
   await page.getByRole('switch', { name: /Boulet de canon/ }).click()

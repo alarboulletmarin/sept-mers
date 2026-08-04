@@ -1,4 +1,4 @@
-import { scoreRound, type ScoreResult } from './scoring.ts'
+import { finalBid, scoreRound, type ScoreResult } from './scoring.ts'
 import {
   BONUS_KEYS,
   type Game,
@@ -16,6 +16,7 @@ export function entryScore(entry: RoundEntry, round: Round, game: Game): ScoreRe
     cards: round.cards,
     bonus: entry.bonus,
     rascal: entry.rascal,
+    harry: entry.harry,
     cannonball: entry.cannonball,
     options: game.options,
   })
@@ -133,7 +134,9 @@ export function accuracy(game: Game): Accuracy[] {
       if (!entry) continue
       const { outcome } = entryScore(entry, round, game)
       row[outcome] += 1
-      if (entry.bid === 0) {
+      // La mise à zéro qui compte est celle qu'on a défendue : Harry le Géant
+      // a pu en faire une mise à 1, ou en créer une à partir d'une mise à 1.
+      if (finalBid(entry.bid, entry.harry) === 0) {
         row.zeroBids += 1
         if (outcome === 'exact') row.zeroBidsKept += 1
       }

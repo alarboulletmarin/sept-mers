@@ -1,4 +1,5 @@
 import {
+  DEFAULT_FORMAT,
   GREY_BEARD,
   RASCAL_VALUES,
   hasGreyBeard,
@@ -16,8 +17,13 @@ import { parseSpectatorPayload, type SpectatorPayload } from './protocol.ts'
  * objets : des tableaux de position, sans clés ni identifiants, puis le
  * deflate natif du navigateur, puis du base64 d'URL. Une partie pleine tient
  * en quelques centaines de caractères.
+ *
+ * La version 2 ajoute trois choses qui n'existaient pas : le format de la
+ * partie, le pas d'Harry le Géant, et la coupe des deux monstres marins en deux
+ * bascules. Un lien de version 1 se relit encore — c'est tout l'intérêt d'avoir
+ * numéroté —, avec le format du livret et un seul bit pour les deux monstres.
  */
-export const SNAPSHOT_VERSION = 1
+export const SNAPSHOT_VERSION = 2
 export const SNAPSHOT_PARAM = 's'
 
 /** Au-delà, un nom n'apporte plus rien au résumé et gonfle le QR. */
@@ -25,6 +31,19 @@ const NAME_MAX = 24
 
 /** L'ordre des bits du masque d'options. À ne jamais réordonner : il est écrit. */
 const OPTION_KEYS = [
+  'bonusIfBidMissed',
+  'kraken',
+  'advancedPirates',
+  'rascalScoring',
+  'cannonball',
+  'whiteWhale',
+] as const
+
+/**
+ * Le même masque, tel que la version 1 l'écrivait. Son bit 1 nommait les deux
+ * monstres à la fois : on le rend aux deux clés d'aujourd'hui.
+ */
+const OPTION_KEYS_V1 = [
   'bonusIfBidMissed',
   'seaMonsters',
   'advancedPirates',
@@ -41,11 +60,13 @@ const BONUS_ORDER = [
   'skullKingTakenByMermaid',
 ] as const satisfies readonly (keyof RoundBonus)[]
 
-/** bid, plis, les cinq bonus, l'indice du pari, le boulet. */
-const ENTRY_STRIDE = 9
+/** bid, plis, les cinq bonus, l'indice du pari, le boulet, le pas d'Harry. */
+const ENTRY_STRIDE = 10
+/** La même ligne avant qu'Harry existe : tout sauf son pas. */
+const ENTRY_STRIDE_V1 = 9
 /** index, cartes, plis écartés, plis du fantôme — puis les sièges. */
 const ROUND_HEAD = 4
-/** manche, phase, plis écartés — puis les mises, puis les plis. */
+/** manche, phase, plis écartés — puis les mises, les plis, les pas d'Harry. */
 const DRAFT_HEAD = 3
 
 const RASCAL_NONE = RASCAL_VALUES.indexOf(0)
@@ -125,13 +146,13 @@ const packEntries = (game: Game, round: Game['rounds'][number]): number[] => {
     const entry = round.entries.find((candidate) => candidate.playerId === id)
     if (!entry) {
       // Pas de ligne pour ce siège : une mise à -1 le dit, le reste se tait.
-      flat.push(-1, 0, 0, 0, 0, 0, 0, RASCAL_NONE, 0)
+      flat.push(-1, 0, 0, 0, 0, 0, 0, RASCAL_NONE, 0, 0)
       continue
     }
     flat.push(entry.bid, entry.tricks)
     for (const key of BONUS_ORDER) flat.push(entry.bonus[key])
     const rascal = (RASCAL_VALUES as readonly number[]).indexOf(entry.rascal ?? 0)
-    flat.push(rascal >= 0 ? rascal : RASCAL_NONE, entry.cannonball ? 1 : 0)
+    flat.push(rascal >= 0 ? rascal : RASCAL_NONE, entry.cannonball ? 1 : 0, entry.harry ?? 0)
   }
   return flat
 }
@@ -144,6 +165,7 @@ const packDraft = (payload: SpectatorPayload): number[] | 0 => {
   for (const id of seats) flat.push(draft.bids[id] ?? -1)
   for (const id of seats) flat.push(draft.tricks[id] ?? -1)
   if (hasGreyBeard(seats.length)) flat.push(draft.tricks[GREY_BEARD] ?? -1)
+  for (const id of seats) flat.push(draft.harry[id] ?? 0)
   return flat
 }
 
@@ -167,6 +189,9 @@ export async function encodeSnapshot(payload: SpectatorPayload): Promise<string>
       ...packEntries(game, round),
     ]),
     packDraft(payload),
+    // Le format en queue d'enveloppe : c'est ce qui laisse un résumé de
+    // version 1 se relire sur ses sept cases, sans décaler quoi que ce soit.
+    [game.format.rounds, game.format.firstRoundCards],
   ]
   const bytes = new TextEncoder().encode(JSON.stringify(packed))
   return `${SNAPSHOT_VERSION}.${toBase64Url(await deflate(bytes))}`
@@ -192,39 +217,56 @@ const format = (message: string): SnapshotError => new SnapshotError('format', m
  * du jeu lui-même : les valeurs repassent ensuite par `normalise`, comme tout
  * ce qui vient d'ailleurs. Ici on ne vérifie que la géométrie.
  */
-const unpack = (packed: unknown): { game: unknown; draft: unknown } => {
-  if (!Array.isArray(packed) || packed.length !== 7) throw format('enveloppe inattendue')
-  const [version, startedAt, endedAt, optionsMask, names, rounds, draft] = packed as unknown[]
+const unpack = (packed: unknown, wire: number): { game: unknown; draft: unknown } => {
+  const legacy = wire === 1
+  const envelope = legacy ? 7 : 8
+  if (!Array.isArray(packed) || packed.length !== envelope) throw format('enveloppe inattendue')
+  const [version, startedAt, endedAt, optionsMask, names, rounds, draft, packedFormat] =
+    packed as unknown[]
 
-  if (version !== SNAPSHOT_VERSION) throw format('auto-contrôle en défaut')
+  if (version !== wire) throw format('auto-contrôle en défaut')
   if (!isEpoch(startedAt) || !isEpoch(endedAt)) throw format('dates illisibles')
   if (typeof optionsMask !== 'number') throw format('options illisibles')
   if (!Array.isArray(names) || names.length === 0) throw format('table vide')
   if (!names.every((name) => typeof name === 'string')) throw format('noms illisibles')
   if (!Array.isArray(rounds)) throw format('manches illisibles')
 
+  const stride = legacy ? ENTRY_STRIDE_V1 : ENTRY_STRIDE
   const seats = names.length
   const playerIds = names.map((_, seat) => `p${seat + 1}`)
   const nameSnapshot = Object.fromEntries(
     names.map((name, seat) => [`p${seat + 1}`, name] as const),
   )
+  // Le masque de la version 1 nommait les deux monstres d'un seul bit :
+  // `normalise` sait rendre `seaMonsters` aux deux clés d'aujourd'hui.
+  const keys = legacy ? OPTION_KEYS_V1 : OPTION_KEYS
   const options = Object.fromEntries(
-    OPTION_KEYS.map((key, bit) => [key, (optionsMask & (1 << bit)) !== 0] as const),
+    keys.map((key, bit) => [key, (optionsMask & (1 << bit)) !== 0] as const),
   )
 
+  // Le format n'existe qu'à partir de la version 2 ; avant, toute partie était
+  // au format du livret.
+  if (!legacy && (!isNumberList(packedFormat) || packedFormat.length !== 2)) {
+    throw format('format illisible')
+  }
+  const gameFormat = isNumberList(packedFormat)
+    ? { rounds: packedFormat[0], firstRoundCards: packedFormat[1] }
+    : { ...DEFAULT_FORMAT }
+
   const gameRounds = rounds.map((flat) => {
-    if (!isNumberList(flat) || flat.length !== ROUND_HEAD + seats * ENTRY_STRIDE) {
+    if (!isNumberList(flat) || flat.length !== ROUND_HEAD + seats * stride) {
       throw format('manche tronquée')
     }
     const [index, cards, voided, greyBeard] = flat
     const entries = playerIds.flatMap((playerId, seat) => {
-      const at = ROUND_HEAD + seat * ENTRY_STRIDE
+      const at = ROUND_HEAD + seat * stride
       const bid = flat[at]
       if (bid < 0) return []
       const bonus = Object.fromEntries(
         BONUS_ORDER.map((key, offset) => [key, flat[at + 2 + offset]] as const),
       )
       const rascal = RASCAL_VALUES[flat[at + 7]] ?? 0
+      const harry = legacy ? 0 : flat[at + 9]
       return [
         {
           playerId,
@@ -232,6 +274,7 @@ const unpack = (packed: unknown): { game: unknown; draft: unknown } => {
           tricks: flat[at + 1],
           bonus,
           ...(rascal !== 0 ? { rascal } : {}),
+          ...(harry !== 0 ? { harry } : {}),
           ...(flat[at + 8] === 1 ? { cannonball: true } : {}),
         },
       ]
@@ -251,13 +294,15 @@ const unpack = (packed: unknown): { game: unknown; draft: unknown } => {
     ...(endedAt > 0 ? { endedAt: new Date(endedAt * 1000).toISOString() } : {}),
     playerIds,
     options,
+    format: gameFormat,
     rounds: gameRounds,
     nameSnapshot,
   }
 
   if (draft === 0) return { game, draft: undefined }
   const holders = seats + (hasGreyBeard(seats) ? 1 : 0)
-  if (!isNumberList(draft) || draft.length !== DRAFT_HEAD + seats + holders) {
+  const draftLength = DRAFT_HEAD + seats + holders + (legacy ? 0 : seats)
+  if (!isNumberList(draft) || draft.length !== draftLength) {
     throw format('saisie tronquée')
   }
   const [roundIndex, phase, draftVoided] = draft
@@ -274,6 +319,12 @@ const unpack = (packed: unknown): { game: unknown; draft: unknown } => {
       return [id, value < 0 ? null : value] as const
     }),
   )
+  const harry = Object.fromEntries(
+    playerIds.map((id, seat) => {
+      const value = legacy ? 0 : draft[DRAFT_HEAD + seats + holders + seat]
+      return [id, value] as const
+    }),
+  )
   return {
     game,
     draft: {
@@ -282,6 +333,7 @@ const unpack = (packed: unknown): { game: unknown; draft: unknown } => {
       phase: phase === 1 ? 'results' : 'bids',
       bids,
       tricks,
+      harry,
       voided: draftVoided,
     },
   }
@@ -300,10 +352,13 @@ export async function decodeSnapshot(hash: string): Promise<SpectatorPayload> {
   if (dot < 1) throw format('préfixe absent')
   const version = text.slice(0, dot)
   if (!/^\d+$/.test(version)) throw format('préfixe illisible')
-  if (Number(version) > SNAPSHOT_VERSION) {
+  const wire = Number(version)
+  if (wire > SNAPSHOT_VERSION) {
     throw new SnapshotError('version', `résumé de version ${version}`)
   }
-  if (Number(version) !== SNAPSHOT_VERSION) throw format('version nulle')
+  // Les versions d'avant se relisent tant qu'on sait les lire : un lien envoyé
+  // dans une conversation de groupe survit à la mise à jour de l'app.
+  if (wire < 1) throw format('version nulle')
 
   let packed: unknown
   try {
@@ -314,7 +369,7 @@ export async function decodeSnapshot(hash: string): Promise<SpectatorPayload> {
     throw format('contenu illisible')
   }
 
-  const { game, draft } = unpack(packed)
+  const { game, draft } = unpack(packed, wire)
   const payload = parseSpectatorPayload(game, draft)
   if (!payload) throw new SnapshotError('data', 'partie irrecevable')
   return payload

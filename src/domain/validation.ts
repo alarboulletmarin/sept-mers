@@ -3,6 +3,7 @@ import {
   BONUS_LIMITS,
   EMPTY_BONUS,
   GREY_BEARD,
+  HARRY_VALUES,
   RASCAL_VALUES,
   type Id,
   type RoundBonus,
@@ -24,6 +25,9 @@ export type IssueCode =
   | 'voided.range'
   | 'rascal.multiple'
   | 'rascal.value'
+  | 'harry.multiple'
+  | 'harry.value'
+  | 'harry.range'
 
 export interface Issue {
   code: IssueCode
@@ -168,6 +172,38 @@ export function validateRascal(rascal: Record<Id, number>, playerIds: Id[]): Iss
     if (value !== 0) placed += 1
   }
   if (placed > 1) issues.push({ code: 'rascal.multiple' })
+  return issues
+}
+
+/**
+ * Le pas d'Harry le Géant.
+ *
+ * Trois bornes, et une par raison : la valeur est un pas de ±1 ; il n'y a qu'un
+ * Harry dans le paquet, donc au plus un joueur l'a joué ; et la mise déplacée
+ * reste une mise, entre 0 et le nombre de cartes de la manche.
+ */
+export function validateHarry(
+  harry: Record<Id, number>,
+  bids: BidMap,
+  cards: number,
+  playerIds: Id[],
+): Issue[] {
+  const issues: Issue[] = []
+  let placed = 0
+  for (const id of playerIds) {
+    const step = harry[id] ?? 0
+    if (!(HARRY_VALUES as readonly number[]).includes(step)) {
+      issues.push({ code: 'harry.value', playerId: id })
+      continue
+    }
+    if (step === 0) continue
+    placed += 1
+    const moved = (bids[id] ?? 0) + step
+    if (moved < 0 || moved > cards) {
+      issues.push({ code: 'harry.range', playerId: id, data: { max: cards } })
+    }
+  }
+  if (placed > 1) issues.push({ code: 'harry.multiple' })
   return issues
 }
 
@@ -354,12 +390,14 @@ export function validateRound(
   playerIds: Id[],
   holders: Id[] = playerIds,
   voided = 0,
+  harry: Record<Id, number> = {},
 ): Issue[] {
   return [
     ...validateBids(bids, cards, playerIds),
     ...validateVoided(voided, cards),
     ...validateTricks(tricks, cards, holders, voided),
     ...validateBonuses(bonuses, tricks, playerIds),
+    ...validateHarry(harry, bids, cards, playerIds),
   ]
 }
 

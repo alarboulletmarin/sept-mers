@@ -65,6 +65,10 @@ export const rulesFr: RuleSection[] = [
       },
       {
         kind: 'p',
+        text: "Ces deux chiffres se règlent : le panneau des options, au moment de composer la table, laisse choisir le nombre de manches et le nombre de cartes de la première. La donne monte toujours d'une carte par manche à partir de là. Une partie garde le format avec lequel elle a été lancée, même si le réglage change ensuite.",
+      },
+      {
+        kind: 'p',
         text: "Une fois les cartes distribuées, tout le monde annonce en même temps combien de plis il compte remporter. On peut annoncer 0. Ce chiffre est ferme pour toute la manche.",
       },
       {
@@ -186,22 +190,22 @@ export const rulesFr: RuleSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: "Trois réglages se choisissent au moment de composer la table, et l'app s'en souvient d'une partie à l'autre. Rien n'est imposé : une table qui les laisse fermés joue le score classique, à l'identique.",
+        text: "Les réglages se choisissent au moment de composer la table, et l'app s'en souvient d'une partie à l'autre. Rien n'est imposé : une table qui les laisse fermés joue le score classique, à l'identique.",
       },
       {
         kind: 'p',
-        text: 'Kraken et Baleine blanche : 2 cartes de plus dans le paquet, soit 72.',
+        text: "Le Kraken et la Baleine blanche : 2 cartes, 2 bascules. Elles ne font pas la même chose, et on peut n'en glisser qu'une au paquet — qui compte alors 71 cartes.",
       },
       {
         kind: 'ul',
         items: [
           "Le Kraken écarte le pli. Personne ne le remporte et il ne compte pour personne : les plis de la manche font alors moins que le nombre de cartes distribuées.",
-          "La Baleine blanche prive toutes les cartes spéciales de leur pouvoir, le temps de ce pli : c'est le plus grand numéro qui l'emporte, quelle que soit la couleur. Si personne n'a posé de numéro, le pli est écarté lui aussi.",
+          "La Baleine blanche prive toutes les cartes spéciales de leur pouvoir, le temps de ce pli : c'est le plus grand numéro qui l'emporte, quelle que soit la couleur. Elle n'écarte donc rien la plupart du temps — sauf dans le cas où personne n'a posé de numéro, où le pli est écarté lui aussi.",
         ],
       },
       {
         kind: 'p',
-        text: "L'app demande donc, à chaque manche, combien de plis ont été écartés. C'est tout ce qu'elle a besoin d'en savoir.",
+        text: "L'app demande donc, à chaque manche, combien de plis ont été écartés, et nomme sous le compteur le monstre qui est au paquet. Avec la seule Baleine, le compteur reste ouvert mais dira presque toujours zéro : c'est le cas rare qu'il attend. C'est tout ce que l'app a besoin d'en savoir.",
       },
       {
         kind: 'p',
@@ -210,7 +214,7 @@ export const rulesFr: RuleSection[] = [
       {
         kind: 'ul',
         items: [
-          "Harry le Géant permet de changer sa propre mise de 1 pli, vers le haut ou vers le bas. Pour la corriger dans l'app, revenir à l'étape des mises : la saisie de la manche n'est pas perdue.",
+          "Harry le Géant permet de changer sa propre mise de 1 pli, vers le haut ou vers le bas.",
           'Rosie D’Laney désigne qui entame le pli suivant.',
           'Bendt le Bandit pioche 2 cartes dans le talon, puis en défausse 2.',
           "Juanita Jade permet de regarder les cartes non distribuées et d'en échanger une contre une carte de sa main.",
@@ -223,7 +227,11 @@ export const rulesFr: RuleSection[] = [
       },
       {
         kind: 'p',
-        text: "L'app ne suit pas les cartes jouées. De ces 7 nouveautés, elle ne demande que les 2 qui changent le score : les plis écartés, et le pari du Rascal.",
+        text: "Harry le Géant se saisit dans la même feuille, et à la même étape : il se joue une fois les cartes en main, donc les résultats sont le bon moment pour le dire. Le pas choisi montre la mise qu'il donne — la mise annoncée reste écrite sur la tuile, suivie de celle qu'on a réellement défendue. Un seul Harry dans le paquet, donc un seul joueur par manche, et jamais plus d'un pli d'écart quel que soit le nombre de corrections.",
+      },
+      {
+        kind: 'p',
+        text: "L'app ne suit pas les cartes jouées. De ces 7 nouveautés, elle ne demande que les 3 qui changent le score : les plis écartés, le pari du Rascal, et la mise déplacée par Harry.",
       },
       {
         kind: 'p',

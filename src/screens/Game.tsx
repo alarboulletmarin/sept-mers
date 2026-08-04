@@ -17,10 +17,11 @@ import { scoreRound, type ScoreInput } from '../domain/scoring.ts'
 import { totals } from '../domain/stats.ts'
 import {
   GREY_BEARD,
-  TOTAL_ROUNDS,
   bonusIsEmpty,
   hasGreyBeard,
   trickHolders,
+  voidedBy,
+  voidsTricks,
   type Id,
   type RoundBonus,
 } from '../domain/types.ts'
@@ -32,12 +33,14 @@ import {
   trickTarget,
   validateBids,
   validateBonuses,
+  validateHarry,
   validateRascal,
   validateTricks,
   validateVoided,
   type Issue,
 } from '../domain/validation.ts'
 import { useT } from '../i18n/index.ts'
+import { bidRecall } from '../i18n/recall.ts'
 import { useShare } from '../share/ShareProvider.tsx'
 import { ShareSheet } from '../share/ShareSheet.tsx'
 import { draftFor, isEditingRound, runningGame } from '../store/reducer.ts'
@@ -63,16 +66,20 @@ export function Game({ go }: { go: (route: Route) => void }) {
   // Une partie terminée pendant qu'on est sur l'écran renvoie au résultat.
   useEffect(() => {
     if (!game) go({ name: 'home' })
-    else if (game.rounds.length >= TOTAL_ROUNDS) go({ name: 'summary' })
+    else if (game.rounds.length >= game.format.rounds) go({ name: 'summary' })
   }, [game, go])
 
   const draft = useMemo(() => (game ? draftFor(store, game) : null), [store, game])
 
   if (!game || !draft) return null
 
+  // La longueur de la partie et sa première donne sont celles qu'on a choisies
+  // au lancement : tout ce qui compte des manches part d'ici.
+  const totalRounds = game.format.rounds
+  const first = game.format.firstRoundCards
   const deck = deckSize(game.options)
-  const cards = cardsForRound(draft.roundIndex, game.playerIds.length, deck)
-  const capped = isCapped(draft.roundIndex, game.playerIds.length, deck)
+  const cards = cardsForRound(draft.roundIndex, game.playerIds.length, deck, first)
+  const capped = isCapped(draft.roundIndex, game.playerIds.length, deck, first)
   // Les monstres marins écartent des plis : il y a alors moins à distribuer
   // que de cartes distribuées.
   const target = trickTarget(cards, draft.voided)
@@ -94,6 +101,9 @@ export function Game({ go }: { go: (route: Route) => void }) {
   const bonusIssues = [
     ...validateBonuses(draft.bonus, draft.tricks, game.playerIds),
     ...validateRascal(draft.rascal, game.playerIds),
+    // Harry se pose aux résultats, dans la même feuille que le pari : ses
+    // anomalies bloquent la manche au même titre.
+    ...validateHarry(draft.harry, draft.bids, cards, game.playerIds),
   ]
 
   const bidsReady = bidIssues.length === 0
@@ -149,9 +159,9 @@ export function Game({ go }: { go: (route: Route) => void }) {
               lire, ce qui compte quand le téléphone passe de main en main.
             */}
             <RoundRail
-              total={TOTAL_ROUNDS}
+              total={totalRounds}
               current={draft.roundIndex}
-              label={t('game.round', { round: draft.roundIndex, total: TOTAL_ROUNDS })}
+              label={t('game.round', { round: draft.roundIndex, total: totalRounds })}
             />
 
             <div className={styles.roundTop}>
@@ -206,7 +216,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
               <h1 className={styles.roundFigure} data-round={draft.roundIndex}>
                 <span className={styles.roundNumber}>{draft.roundIndex}</span>
                 <span className={styles.roundTotal}>
-                  {t('game.roundOf', { total: TOTAL_ROUNDS })}
+                  {t('game.roundOf', { total: totalRounds })}
                 </span>
               </h1>
 
@@ -298,6 +308,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
               tricks={draft.tricks[playerId] ?? null}
               bonus={draft.bonus[playerId]}
               rascal={draft.rascal[playerId] ?? 0}
+              harry={draft.harry[playerId] ?? 0}
               cannonball={draft.cannonball[playerId] ?? false}
               showCharge={showCharge}
               onCannonball={(loaded) =>
@@ -352,10 +363,16 @@ export function Game({ go }: { go: (route: Route) => void }) {
             </Widget>
           )}
 
-          {/* Le Kraken et la Baleine blanche écartent des plis : la somme des
-              plis remportés vaut alors moins que le nombre de cartes, et il
-              faut bien dire à l'app combien il en manque. */}
-          {!isBids && game.options.seaMonsters && (
+          {/* Un pli peut n'aller à personne : la somme des plis remportés vaut
+              alors moins que le nombre de cartes, et il faut bien dire à l'app
+              combien il en manque.
+
+              La tuile nomme le monstre qui est au paquet, et lui seul. Le
+              Kraken écarte le pli à chaque fois ; la Baleine blanche ne
+              l'écarte que quand personne n'a posé de numéro — c'est rare, mais
+              c'est le même compteur, et la table ne doit pas avoir à choisir
+              entre saisir un pli disparu et croire l'app en défaut. */}
+          {!isBids && voidsTricks(game.options) && (
             <Widget surface="sunken" span="sm" tight marker="voided">
               <h2 className={styles.name}>{t('game.voided')}</h2>
               <Stepper
@@ -367,7 +384,9 @@ export function Game({ go }: { go: (route: Route) => void }) {
                 increaseLabel={t('a11y.voided.increase')}
               />
               <div className={styles.tileMeta}>
-                <span className={styles.bidRecall}>{t('game.voided.help')}</span>
+                <span className={styles.bidRecall}>
+                  {t(`game.voided.help.${voidedBy(game.options)}`)}
+                </span>
               </div>
             </Widget>
           )}
@@ -444,6 +463,17 @@ export function Game({ go }: { go: (route: Route) => void }) {
               onRascalChange={(value) =>
                 dispatch({ type: 'game/setRascal', playerId: openPlayer.id, value })
               }
+              harry={game.options.advancedPirates ? draft.harry : null}
+              harryHeldBy={
+                game.playerIds
+                  .filter((id) => id !== openPlayer.id && (draft.harry[id] ?? 0) !== 0)
+                  .map((id) => game.nameSnapshot[id] ?? '')[0] ?? null
+              }
+              bid={draft.bids[openPlayer.id] ?? 0}
+              cards={cards}
+              onHarryChange={(step) =>
+                dispatch({ type: 'game/setHarry', playerId: openPlayer.id, step })
+              }
             />
             <Button variant="primary" onClick={() => setOpenBonus(null)}>
               {t('action.done')}
@@ -497,6 +527,8 @@ interface PlayerTileProps {
   bonus: RoundBonus
   /** Pari de Rascal Jack, signé. */
   rascal: number
+  /** Pas d'Harry le Géant : la mise défendue vaut `bid + harry`. */
+  harry: number
   /** Boulet de canon chargé pour la manche. */
   cannonball: boolean
   /** La table joue-t-elle le Boulet ? Sinon la pastille de charge n'a rien à dire. */
@@ -527,6 +559,7 @@ function PlayerTile(props: PlayerTileProps) {
     tricks,
     bonus,
     rascal,
+    harry,
     cannonball,
     showCharge,
     onCannonball,
@@ -547,7 +580,7 @@ function PlayerTile(props: PlayerTileProps) {
   // Le total s'affiche en direct dès que la ligne est complète.
   const score =
     !isBids && complete
-      ? scoreRound({ bid, tricks, cards, bonus, rascal, cannonball, options })
+      ? scoreRound({ bid, tricks, cards, bonus, rascal, harry, cannonball, options })
       : null
   const bonusCount = Object.values(bonus).reduce((total, count) => total + count, 0)
 
@@ -599,11 +632,7 @@ function PlayerTile(props: PlayerTileProps) {
               ? t('game.results.autofilled')
               : bid === null
                 ? ''
-                : halved
-                  ? t('game.bidHalf', { bid })
-                  : showCharge && cannonball
-                    ? t('game.bidCannonball', { bid })
-                    : t('game.bid', { bid })}
+                : bidRecall(t, { bid, harry, halved, cannonball: showCharge && cannonball })}
           </span>
           {score && <span className={styles.tileScore}>{signed(score.total)}</span>}
         </div>

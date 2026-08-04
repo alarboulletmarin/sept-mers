@@ -1,4 +1,4 @@
-import { TOTAL_ROUNDS, type Draft, type Game } from '../domain/types.ts'
+import type { Draft, Game } from '../domain/types.ts'
 import { normalise } from '../store/storage.ts'
 
 /**
@@ -72,7 +72,8 @@ export function parseSpectatorPayload(game: unknown, draft?: unknown): Spectator
   const safeDraft = store.draft
   // `normalise` a déjà vérifié que la saisie vise cette partie et que la
   // partie court toujours ; reste sa manche, qu'il laisse passer hors bornes.
-  if (!safeDraft || safeDraft.roundIndex < 1 || safeDraft.roundIndex > TOTAL_ROUNDS) {
+  // La borne est celle du format de la partie reçue, pas une constante.
+  if (!safeDraft || safeDraft.roundIndex < 1 || safeDraft.roundIndex > safeGame.format.rounds) {
     return { game: safeGame }
   }
   return { game: safeGame, draft: safeDraft }

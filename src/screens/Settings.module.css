@@ -44,3 +44,17 @@
   font-weight: 600;
   color: var(--surface-on);
 }
+
+/* Le format par défaut : un nom, un compteur, la même largeur de commande que
+   partout ailleurs. */
+.formatLabel {
+  font-size: var(--size-label);
+  font-weight: 600;
+  min-width: 0;
+}
+
+.formatStepper {
+  flex: none;
+  width: 132px;
+  max-width: 45%;
+}

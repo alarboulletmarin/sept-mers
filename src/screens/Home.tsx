@@ -3,7 +3,6 @@ import { Icon, Logo } from '../components/Icon.tsx'
 import { RoundRail } from '../components/Rail.tsx'
 import { Caption, Figure, Tag, Widget, WidgetTitle } from '../components/Widget.tsx'
 import { standings, totals } from '../domain/stats.ts'
-import { TOTAL_ROUNDS } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import { draftFor, runningGame } from '../store/reducer.ts'
 import { useStore } from '../app/StoreProvider.tsx'
@@ -149,7 +148,8 @@ function ResumeSection({ go }: { go: (route: Route) => void }) {
   if (!game) return null
 
   const draft = draftFor(store, game)
-  const roundIndex = Math.min(draft.roundIndex, TOTAL_ROUNDS)
+  const rounds = game.format.rounds
+  const roundIndex = Math.min(draft.roundIndex, rounds)
   const scores = totals(game)
   const ordered = [...game.playerIds].sort((a, b) => scores[b] - scores[a])
 
@@ -166,13 +166,13 @@ function ResumeSection({ go }: { go: (route: Route) => void }) {
 
         <p className={styles.resumeFigure}>
           <span className={styles.resumeNumber}>{roundIndex}</span>
-          <span className={styles.resumeTotal}>{t('home.resume.of', { total: TOTAL_ROUNDS })}</span>
+          <span className={styles.resumeTotal}>{t('home.resume.of', { total: rounds })}</span>
         </p>
 
         <RoundRail
-          total={TOTAL_ROUNDS}
+          total={rounds}
           current={roundIndex}
-          label={t('home.resume.detail', { round: roundIndex, total: TOTAL_ROUNDS })}
+          label={t('home.resume.detail', { round: roundIndex, total: rounds })}
         />
 
         <Caption>

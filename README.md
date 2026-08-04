@@ -11,10 +11,18 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 ## Ce qu'elle fait
 
 - **Score classique**, 2 à 8 joueurs, 10 manches, tout calculé par l'app.
-- **Trois variantes en option**, choisies au lancement d'une partie et
-  expliquées dans les règles : le Kraken et la Baleine blanche, qui font qu'un
-  pli peut n'être remporté par personne ; les pouvoirs des pirates, dont seul le
-  pari de Rascal Jack change le score ; le **Score Rascal**, second barème où
+- **Format réglable** : le nombre de manches, et les cartes de la première. La
+  donne monte toujours d'une carte par manche à partir de là, et le panneau dit
+  ce que ça donnera à cette table avant de distribuer. Le format se fige avec la
+  partie : une partie de 6 manches relue dans l'historique se relit en 6
+  manches, même si le réglage a changé depuis.
+- **Les variantes en option**, choisies au lancement d'une partie et expliquées
+  dans les règles : le Kraken et la Baleine blanche, deux cartes et **deux
+  bascules** — le Kraken écarte le pli où il tombe, la Baleine ne l'écarte que
+  dans le cas rare où personne n'a posé de numéro, et n'en glisser qu'une au
+  paquet fait 71 cartes et non 72 ; les pouvoirs des pirates, dont deux changent
+  le score — le pari de Rascal Jack, et **Harry le Géant**, qui déplace une mise
+  d'un pli une fois les cartes en main ; le **Score Rascal**, second barème où
   chaque manche vaut 10 points par carte pour tout le monde — tout, la moitié,
   ou rien selon l'écart à la mise, et jamais de points négatifs. Il ouvre à son
   tour le **Boulet de canon**, que chacun charge après avoir misé : 15 points
@@ -31,10 +39,12 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
   mise se valide sans un geste.
 - **Les cinq bonus** derrière un bouton nommé sur chaque tuile, avec leurs
   bornes matérielles : on ne peut pas attribuer trois sirènes ni faire capturer
-  le Skull King deux fois.
-- **Plafond du paquet** appliqué automatiquement : à 8 joueurs, les manches 9 et
-  10 se jouent à 8 cartes — 9 avec les monstres marins, que les 2 cartes de plus
-  suffisent à faire tenir la manche 9.
+  le Skull King deux fois. La même feuille porte le pari de Rascal Jack et le
+  pas d'Harry le Géant, qui se posent aux résultats : la mise annoncée reste
+  écrite sur la tuile, suivie de celle qu'on a réellement défendue.
+- **Plafond du paquet** appliqué automatiquement : à 8 joueurs et au format du
+  livret, les manches 9 et 10 se jouent à 8 cartes — 9 avec les deux monstres
+  marins, que les 2 cartes de plus suffisent à faire tenir la manche 9.
 - **Reprise exacte** de la manche et de la phase après fermeture de l'app.
 - **Partage de table** : les autres joueurs suivent la partie en direct sur
   leur propre téléphone, en lecture seule — mises, plis, totaux, la manche et

@@ -10,7 +10,6 @@ import { Recap } from '../screens/Recap.tsx'
 import { Rules } from '../screens/Rules.tsx'
 import { Settings } from '../screens/Settings.tsx'
 import { Watch } from '../screens/Watch.tsx'
-import { TOTAL_ROUNDS } from '../domain/types.ts'
 import { runningGame } from '../store/reducer.ts'
 import { ShareProvider } from '../share/ShareProvider.tsx'
 import { useRoute, useScrollReset, type Route } from './Router.tsx'
@@ -53,13 +52,6 @@ function Screens() {
   useEffect(() => {
     if (route.name === 'game' && !running) navigate({ name: 'home' })
   }, [route.name, running, navigate])
-
-  // Reprise à la manche et à la phase exactes : c'est le store qui les porte,
-  // l'écran s'y remet tout seul au lancement.
-  useEffect(() => {
-    if (route.name !== 'home' || !running) return
-    if (running.rounds.length >= TOTAL_ROUNDS) return
-  }, [route.name, running])
 
   return (
     <>

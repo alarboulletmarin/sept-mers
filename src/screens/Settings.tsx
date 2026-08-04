@@ -6,8 +6,17 @@ import { Button } from '../components/Button.tsx'
 import { Icon } from '../components/Icon.tsx'
 import { OptionSwitch, visibleOptions } from '../components/OptionSwitch.tsx'
 import { Sheet } from '../components/Sheet.tsx'
+import { Stepper } from '../components/Stepper.tsx'
 import { useToast } from '../components/Toast.tsx'
-import type { Locale, Store, Theme } from '../domain/types.ts'
+import {
+  MAX_FIRST_CARDS,
+  MAX_ROUNDS,
+  MIN_FIRST_CARDS,
+  MIN_ROUNDS,
+  type Locale,
+  type Store,
+  type Theme,
+} from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import styles from './Settings.module.css'
 import {
@@ -131,6 +140,54 @@ export function Settings({ go }: { go: (route: Route) => void }) {
               />
             )
           })}
+        </div>
+      </section>
+
+      {/* Le format des prochaines parties. Il se règle aussi au lancement
+          d'une partie, qui est là où on le change vraiment ; ici, c'est pour
+          une table qui joue toujours en six manches et ne veut plus y penser. */}
+      <section className="stack-tight">
+        <h2 className="section-title">{t('settings.format')}</h2>
+        <div className={styles.panel}>
+          <div className="row-between">
+            <span className={styles.formatLabel}>{t('newGame.rounds')}</span>
+            <span className={styles.formatStepper}>
+              <Stepper
+                min={MIN_ROUNDS}
+                max={MAX_ROUNDS}
+                value={store.settings.defaultFormat.rounds}
+                onChange={(rounds) =>
+                  dispatch({
+                    type: 'settings/defaultFormat',
+                    format: { ...store.settings.defaultFormat, rounds },
+                  })
+                }
+                label={t('newGame.rounds')}
+                decreaseLabel={t('a11y.rounds.decrease')}
+                increaseLabel={t('a11y.rounds.increase')}
+              />
+            </span>
+          </div>
+          <hr className={styles.divider} />
+          <div className="row-between">
+            <span className={styles.formatLabel}>{t('newGame.firstRoundCards')}</span>
+            <span className={styles.formatStepper}>
+              <Stepper
+                min={MIN_FIRST_CARDS}
+                max={MAX_FIRST_CARDS}
+                value={store.settings.defaultFormat.firstRoundCards}
+                onChange={(firstRoundCards) =>
+                  dispatch({
+                    type: 'settings/defaultFormat',
+                    format: { ...store.settings.defaultFormat, firstRoundCards },
+                  })
+                }
+                label={t('newGame.firstRoundCards')}
+                decreaseLabel={t('a11y.firstCards.decrease')}
+                increaseLabel={t('a11y.firstCards.increase')}
+              />
+            </span>
+          </div>
         </div>
       </section>
 

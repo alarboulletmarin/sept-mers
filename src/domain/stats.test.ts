@@ -9,7 +9,7 @@ import {
   totals,
   winnerIds,
 } from './stats.ts'
-import { DEFAULT_OPTIONS, makeBonus, type Game, type Player, type RoundBonus } from './types.ts'
+import { DEFAULT_FORMAT, DEFAULT_OPTIONS, makeBonus, type Game, type Player, type RoundBonus } from './types.ts'
 
 type Line = [string, number, number, Partial<RoundBonus>?]
 
@@ -21,6 +21,7 @@ function game(rounds: { cards: number; lines: Line[] }[], bonusIfBidMissed = tru
     endedAt: '2026-01-01T21:00:00.000Z',
     playerIds,
     options: { ...DEFAULT_OPTIONS, bonusIfBidMissed },
+    format: { ...DEFAULT_FORMAT },
     nameSnapshot: Object.fromEntries(playerIds.map((id) => [id, id.toUpperCase()])),
     rounds: rounds.map((round, index) => ({
       index: index + 1,
@@ -234,6 +235,7 @@ describe('une tablée à deux joueurs', () => {
     endedAt: '2026-01-01T21:00:00.000Z',
     playerIds: ['a', 'b'],
     options: { ...DEFAULT_OPTIONS },
+    format: { ...DEFAULT_FORMAT },
     nameSnapshot: { a: 'A', b: 'B' },
     rounds: [
       {
@@ -258,5 +260,38 @@ describe('une tablée à deux joueurs', () => {
     // a tient sa mise d'un pli, b en annonçait zéro et en a fait un.
     expect(totals(twoPlayers)).toEqual({ a: 20, b: -40 })
     expect(winnerIds(twoPlayers)).toEqual(['a'])
+  })
+})
+
+describe('quand Harry le Géant a déplacé une mise', () => {
+  /** Manche à 3 cartes : a annonce 1 puis descend à 0, et ne prend rien. */
+  const moved: Game = {
+    id: 'g3',
+    startedAt: '2026-01-01T20:00:00.000Z',
+    endedAt: '2026-01-01T21:00:00.000Z',
+    playerIds: ['a', 'b'],
+    options: { ...DEFAULT_OPTIONS },
+    format: { ...DEFAULT_FORMAT },
+    nameSnapshot: { a: 'A', b: 'B' },
+    rounds: [
+      {
+        index: 1,
+        cards: 3,
+        entries: [
+          { playerId: 'a', bid: 1, tricks: 0, bonus: makeBonus(), harry: -1 },
+          { playerId: 'b', bid: 3, tricks: 3, bonus: makeBonus() },
+        ],
+      },
+    ],
+  }
+
+  it('marque sur la mise défendue', () => {
+    // Mise 1 devenue 0, aucun pli : la prime de mise à zéro, 10 par carte.
+    expect(totals(moved)).toEqual({ a: 30, b: 60 })
+  })
+
+  it('compte la manche comme une mise à zéro tenue', () => {
+    const row = accuracy(moved).find((candidate) => candidate.playerId === 'a')
+    expect(row).toMatchObject({ exact: 1, zeroBids: 1, zeroBidsKept: 1 })
   })
 })

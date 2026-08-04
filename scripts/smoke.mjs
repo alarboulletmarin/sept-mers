@@ -403,6 +403,104 @@ check(
   }),
 )
 
+// ------------------------------------------------------------ Harry le Géant
+
+/*
+ * Le panneau d'options part du réglage laissé par la partie d'avant : la
+ * section du Score Rascal vient de l'allumer, on l'éteint donc avant de
+ * demander autre chose. C'est le prix d'un réglage qui se souvient, et il vaut
+ * mieux l'écrire ici que de faire dépendre trois sections de leur ordre.
+ */
+await freshTable(['Ana', 'Bo', 'Cy'])
+await page.getByRole('button', { name: 'Options' }).click()
+await page.getByRole('switch', { name: /Score Rascal/ }).click()
+await page.getByRole('switch', { name: /Pouvoirs/ }).click()
+await page.getByRole('button', { name: 'Commencer la partie' }).click()
+await page.waitForSelector('[data-round="1"]')
+
+// Manche 1, 1 carte. Tout le monde mise zéro, puis Ana joue Harry le Géant et
+// monte la sienne à 1 — sans repasser par l'étape des mises.
+await page.getByRole('button', { name: 'Valider les mises' }).click()
+const harryTiles = page.locator('[data-player-tile]')
+await harryTiles.nth(0).getByRole('button', { name: /^(Bonus|\+ ?Bonus)/ }).click()
+await page.waitForSelector('text=Harry le Géant')
+await page.getByRole('radio', { name: 'Mise 1', exact: true }).click()
+await page.getByRole('button', { name: 'Terminé' }).click()
+check(
+  'la tuile garde la mise annoncée et dit celle qu on défend',
+  await harryTiles.nth(0).getByText('Mise 0 devenue 1').isVisible(),
+)
+await setValue(harryTiles.nth(0), 1)
+check(
+  'le score de la manche suit la mise déplacée',
+  await harryTiles.nth(0).getByText('+20').isVisible(),
+)
+await shot('harry-le-geant')
+await page.getByRole('button', { name: 'Valider la manche' }).click()
+await page.waitForSelector('[data-round="2"]')
+// L'écriture est debouncée à 300 ms : on la laisse passer avant de relire.
+await page.waitForTimeout(500)
+check(
+  'le pas d Harry est enregistré à côté de la mise, pas à sa place',
+  await page.evaluate(() => {
+    const store = JSON.parse(localStorage.getItem('sept-mers'))
+    const game = store.games.find((candidate) => !candidate.endedAt)
+    const entry = game.rounds[0].entries[0]
+    return entry.bid === 0 && entry.harry === 1
+  }),
+)
+
+// -------------------------------------------------- la Baleine blanche seule
+
+await freshTable(['Ana', 'Bo', 'Cy'])
+await page.getByRole('button', { name: 'Options' }).click()
+await page.getByRole('switch', { name: /Pouvoirs/ }).click()
+await page.getByRole('switch', { name: /Baleine blanche/ }).click()
+await page.getByRole('button', { name: 'Commencer la partie' }).click()
+await page.waitForSelector('[data-round="1"]')
+await page.getByRole('button', { name: 'Valider les mises' }).click()
+const voidedTile = page.locator('[data-voided]')
+check('le compteur de plis écartés paraît avec la seule Baleine', await voidedTile.isVisible())
+check(
+  'et il nomme la Baleine plutôt que le Kraken',
+  await voidedTile.getByText(/Baleine blanche/).isVisible(),
+)
+
+// --------------------------------------------------------- une partie courte
+
+await freshTable(['Ana', 'Bo', 'Cy'])
+await page.getByRole('button', { name: 'Options' }).click()
+await page.getByRole('switch', { name: /Baleine blanche/ }).click()
+// Trois manches, trois cartes à la première : le format du livret n'est qu'un
+// défaut.
+for (let i = 0; i < 7; i += 1) {
+  await page.getByRole('button', { name: 'Une manche de moins' }).click()
+}
+for (let i = 0; i < 2; i += 1) {
+  await page.getByRole('button', { name: 'Une carte de plus à la première manche' }).click()
+}
+check(
+  'le panneau annonce le plan de la partie avant de distribuer',
+  await page.getByText('3 manches, de 3 à 5 cartes.').isVisible(),
+)
+await shot('format-de-partie')
+await page.getByRole('button', { name: 'Commencer la partie' }).click()
+await page.waitForSelector('[data-round="1"]')
+check(
+  'la première manche distribue les cartes du format',
+  await page.getByText('3 cartes').first().isVisible(),
+)
+check('la partie se compte en trois manches', await page.getByText('sur 3').first().isVisible())
+
+await playRound(1, [3, 0, 0], [3, 0, 0])
+await playRound(2, [4, 0, 0], [4, 0, 0])
+await playRound(3, [5, 0, 0], [5, 0, 0])
+await page.waitForSelector('text=Fin de partie', { timeout: 10000 })
+check(
+  'l écran de fin s ouvre à la dernière manche du format',
+  await page.getByText('Fin de partie').isVisible(),
+)
+
 // ------------------------------------------------------------- thème et langue
 
 await page.goto(`${base}/settings`)

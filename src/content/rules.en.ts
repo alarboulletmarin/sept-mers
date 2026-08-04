@@ -65,6 +65,10 @@ export const rulesEn: RuleSection[] = [
       },
       {
         kind: 'p',
+        text: 'Both numbers can be set: the options panel, as the table is composed, lets you choose how many rounds the game runs and how many cards the first one deals. The deal always climbs by one card per round from there. A game keeps the format it was started with, even if the setting changes later.',
+      },
+      {
+        kind: 'p',
         text: 'Once the cards are dealt, everyone announces at the same time how many tricks they expect to take. 0 is allowed. That number is locked for the whole round.',
       },
       {
@@ -186,22 +190,22 @@ export const rulesEn: RuleSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: "Three settings are chosen as the table is set, and the app remembers them from one game to the next. Nothing is forced: a table that leaves them off plays the classic score, unchanged.",
+        text: "The settings are chosen as the table is set, and the app remembers them from one game to the next. Nothing is forced: a table that leaves them off plays the classic score, unchanged.",
       },
       {
         kind: 'p',
-        text: 'Kraken and White Whale: 2 more cards in the deck, so 72.',
+        text: 'The Kraken and the White Whale: 2 cards, 2 switches. They do not do the same thing, and you can slip just one into the deck — which then holds 71 cards.',
       },
       {
         kind: 'ul',
         items: [
           'The Kraken voids the trick. Nobody takes it and it counts for nobody: the tricks of the round then add up to less than the number of cards dealt.',
-          "The White Whale strips every special card of its power for that trick: the highest number wins, whatever the suit. If nobody played a number, that trick is voided too.",
+          "The White Whale strips every special card of its power for that trick: the highest number wins, whatever the suit. So most of the time it voids nothing — except in the one case where nobody played a number, where that trick is voided too.",
         ],
       },
       {
         kind: 'p',
-        text: 'So the app asks, each round, how many tricks were voided. That is all it needs to know about them.',
+        text: 'So the app asks, each round, how many tricks were voided, and names under the counter whichever monster is in the deck. With the Whale alone the counter stays open but will almost always read zero: that rare case is what it is waiting for. That is all the app needs to know about them.',
       },
       {
         kind: 'p',
@@ -210,7 +214,7 @@ export const rulesEn: RuleSection[] = [
       {
         kind: 'ul',
         items: [
-          'Harry the Giant lets you change your own bid by 1 trick, up or down. To correct it in the app, step back to the bids: the round entry is not lost.',
+          'Harry the Giant lets you change your own bid by 1 trick, up or down.',
           'Rosie D’Laney names who leads the next trick.',
           'Bendt the Bandit draws 2 cards from the stock, then discards 2.',
           'Juanita Jade lets you look through the undealt cards and swap one for a card in your hand.',
@@ -223,7 +227,11 @@ export const rulesEn: RuleSection[] = [
       },
       {
         kind: 'p',
-        text: "The app does not track the cards played. Of those 7 additions it only asks for the 2 that change the score: the voided tricks, and the Rascal's wager.",
+        text: "Harry the Giant is entered in the same sheet, at the same step: he is played once the cards are in hand, so the results are the right moment to say so. Each step shows the bid it produces — the announced bid stays written on the tile, followed by the one actually defended. One Harry in the deck, so one player per round, and never more than one trick of shift however many times the round is corrected.",
+      },
+      {
+        kind: 'p',
+        text: "The app does not track the cards played. Of those 7 additions it only asks for the 3 that change the score: the voided tricks, the Rascal's wager, and the bid Harry moved.",
       },
       {
         kind: 'p',

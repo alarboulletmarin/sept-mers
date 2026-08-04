@@ -1,6 +1,6 @@
-import { cardsForRound } from '../domain/deck.ts'
+import { cardsForRound, deckSize } from '../domain/deck.ts'
 import { roundScores, totals } from '../domain/stats.ts'
-import { TOTAL_ROUNDS, type Game, type Id } from '../domain/types.ts'
+import type { Game, Id } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import styles from './ScoreTable.module.css'
 
@@ -24,10 +24,19 @@ export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps)
   const running: Record<Id, number> = {}
   for (const id of game.playerIds) running[id] = 0
 
-  const rows = Array.from({ length: TOTAL_ROUNDS }, (_, index) => {
+  // Autant de lignes que la partie compte de manches : c'est son format qui le
+  // dit, et une partie de six manches n'a pas quatre lignes vides en bas.
+  const rows = Array.from({ length: game.format.rounds }, (_, index) => {
     const roundIndex = index + 1
     const round = game.rounds.find((candidate) => candidate.index === roundIndex)
-    const cards = round?.cards ?? cardsForRound(roundIndex, game.playerIds.length)
+    const cards =
+      round?.cards ??
+      cardsForRound(
+        roundIndex,
+        game.playerIds.length,
+        deckSize(game.options),
+        game.format.firstRoundCards,
+      )
     const scores = round ? roundScores(round, game) : null
 
     const cells = game.playerIds.map((playerId) => {

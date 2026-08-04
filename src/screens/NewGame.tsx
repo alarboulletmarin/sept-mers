@@ -6,7 +6,19 @@ import { Button } from '../components/Button.tsx'
 import { Icon } from '../components/Icon.tsx'
 import { OptionSwitch, visibleOptions } from '../components/OptionSwitch.tsx'
 import { ChipGrid, PlayerChip } from '../components/PlayerChip.tsx'
-import { MAX_PLAYERS, MIN_PLAYERS, type GameOptions, type Id } from '../domain/types.ts'
+import { Stepper } from '../components/Stepper.tsx'
+import { deckSize, lastRoundCards } from '../domain/deck.ts'
+import {
+  MAX_FIRST_CARDS,
+  MAX_PLAYERS,
+  MAX_ROUNDS,
+  MIN_FIRST_CARDS,
+  MIN_PLAYERS,
+  MIN_ROUNDS,
+  type GameFormat,
+  type GameOptions,
+  type Id,
+} from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import { runningGame } from '../store/reducer.ts'
 import { newId } from '../store/storage.ts'
@@ -24,6 +36,10 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
   const [options, setOptions] = useState<GameOptions>(() => ({ ...store.settings.defaultOptions }))
   const toggleOption = (key: keyof GameOptions) => () =>
     setOptions((current) => ({ ...current, [key]: !current[key] }))
+  // Le format part lui aussi du réglage, et se fige avec la partie.
+  const [format, setFormat] = useState<GameFormat>(() => ({ ...store.settings.defaultFormat }))
+  const setFormatKey = (key: keyof GameFormat) => (value: number) =>
+    setFormat((current) => ({ ...current, [key]: value }))
   const [nameError, setNameError] = useState<string | null>(null)
   const dragFrom = useRef<number | null>(null)
 
@@ -79,9 +95,18 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
       type: 'game/start',
       playerIds: seated,
       options,
+      format,
     })
     go({ name: 'game' })
   }
+
+  // Ce que le format donnera vraiment à cette table : le paquet peut mordre
+  // avant la dernière manche, et c'est là qu'il faut le dire — pas au milieu
+  // de la partie.
+  const seats = Math.max(seated.length, MIN_PLAYERS)
+  const deck = deckSize(options)
+  const lastCards = lastRoundCards(seats, deck, format)
+  const wanted = format.firstRoundCards + format.rounds - 1
 
   return (
     <Screen
@@ -244,9 +269,90 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
                 onToggle={toggleOption(key)}
               />
             ))}
+
+            {/* La longueur de la partie et sa première donne. Deux compteurs
+                plutôt qu'une liste de formats tout faits : une table qui veut
+                six manches à partir de trois cartes n'a pas à trouver son cas
+                dans un menu. */}
+            <div className={styles.format}>
+              <FormatRow
+                label={t('newGame.rounds')}
+                help={t('newGame.rounds.help')}
+                value={format.rounds}
+                min={MIN_ROUNDS}
+                max={MAX_ROUNDS}
+                onChange={setFormatKey('rounds')}
+                decreaseLabel={t('a11y.rounds.decrease')}
+                increaseLabel={t('a11y.rounds.increase')}
+              />
+              <FormatRow
+                label={t('newGame.firstRoundCards')}
+                help={t('newGame.firstRoundCards.help')}
+                value={format.firstRoundCards}
+                min={MIN_FIRST_CARDS}
+                max={MAX_FIRST_CARDS}
+                onChange={setFormatKey('firstRoundCards')}
+                decreaseLabel={t('a11y.firstCards.decrease')}
+                increaseLabel={t('a11y.firstCards.increase')}
+              />
+              <p className={styles.formatNote}>
+                {t('newGame.format.plan', {
+                  first: format.firstRoundCards,
+                  rounds: format.rounds,
+                  last: lastCards,
+                })}
+                {lastCards < wanted && ` ${t('newGame.format.capped', { count: lastCards })}`}
+              </p>
+            </div>
           </div>
         )}
       </section>
     </Screen>
+  )
+}
+
+/**
+ * Une ligne de format : son nom, sa phrase, son compteur.
+ *
+ * La même anatomie que la bascule d'option juste au-dessus — texte à gauche,
+ * commande à droite —, pour que le panneau se lise d'un seul mouvement.
+ */
+function FormatRow({
+  label,
+  help,
+  value,
+  min,
+  max,
+  onChange,
+  decreaseLabel,
+  increaseLabel,
+}: {
+  label: string
+  help: string
+  value: number
+  min: number
+  max: number
+  onChange: (value: number) => void
+  decreaseLabel: string
+  increaseLabel: string
+}) {
+  return (
+    <div className={styles.formatRow}>
+      <span className={styles.formatText}>
+        <span className={styles.formatLabel}>{label}</span>
+        <span className={styles.formatHelp}>{help}</span>
+      </span>
+      <span className={styles.formatStepper}>
+        <Stepper
+          min={min}
+          max={max}
+          value={value}
+          onChange={onChange}
+          label={label}
+          decreaseLabel={decreaseLabel}
+          increaseLabel={increaseLabel}
+        />
+      </span>
+    </div>
   )
 }

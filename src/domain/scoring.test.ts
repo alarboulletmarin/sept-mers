@@ -331,3 +331,48 @@ describe('Boulet de canon', () => {
     expect(classic.total).toBe(60)
   })
 })
+
+describe('Harry le Géant', () => {
+  const withHarry = (bid: number, harry: number, tricks: number, cards: number) =>
+    scoreRound({
+      bid,
+      tricks,
+      cards,
+      harry,
+      bonus: makeBonus(),
+      options: { bonusIfBidMissed: true },
+    })
+
+  it('compte la mise déplacée, pas celle qu on avait annoncée', () => {
+    // Mise 3 devenue 4, quatre plis remportés : tenue, et payée sur 4.
+    expect(withHarry(3, 1, 4, 6).total).toBe(80)
+    // La même manche sans Harry : un pli d'écart, donc −10.
+    expect(withHarry(3, 0, 4, 6).total).toBe(-10)
+  })
+
+  it('fabrique une mise à zéro, et son barème avec', () => {
+    // Mise 1 descendue à 0, aucun pli : la prime de mise à zéro, 10 par carte.
+    expect(withHarry(1, -1, 0, 6).total).toBe(60)
+    expect(withHarry(1, -1, 1, 6).total).toBe(-60)
+  })
+
+  it('défait une mise à zéro', () => {
+    // Mise 0 montée à 1 : ce n'est plus une mise à zéro, c'est une mise à 1.
+    expect(withHarry(0, 1, 1, 6).total).toBe(20)
+  })
+
+  it('déplace aussi l écart du Score Rascal', () => {
+    const rascal = (bid: number, harry: number, tricks: number) =>
+      scoreRound({
+        bid,
+        tricks,
+        cards: 6,
+        harry,
+        bonus: makeBonus(),
+        options: { bonusIfBidMissed: false, rascalScoring: true },
+      })
+    // 6 cartes : 60 points la manche tenue, 30 à un pli près.
+    expect(rascal(3, 1, 4).total).toBe(60)
+    expect(rascal(3, 0, 4).total).toBe(30)
+  })
+})

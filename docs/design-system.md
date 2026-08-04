@@ -286,9 +286,10 @@ formulaire ; une suite de filets se lit comme un sommaire.
 
 ### La houle — repère de partie
 
-Dix traits pour dix manches, du geste de la maison. Les manches jouées
-sont pleines mais posées, celle en cours est plus haute et plus longue, celles à
-venir sont à 22 % d'opacité.
+Un trait par manche — dix au format du livret, autant que la partie en compte
+sinon —, du geste de la maison. Les manches jouées sont pleines mais posées,
+celle en cours est plus haute et plus longue, celles à venir sont à 22 %
+d'opacité.
 
 Elle ne décore pas, **elle situe** : on voit où on en est sans lire un chiffre,
 ce qui compte quand le téléphone passe de main en main au milieu d'une partie.

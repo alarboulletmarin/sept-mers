@@ -47,6 +47,8 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
       type: 'game/start',
       playerIds: game.playerIds,
       options: game.options,
+      // Une revanche se rejoue au même format que la partie qu'on refait.
+      format: game.format,
     })
     go({ name: 'game' })
   }
