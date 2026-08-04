@@ -10,13 +10,18 @@ import styles from './OptionSwitch.module.css'
  * suppose le Score Rascal, et les primes d'une mise ratée n'ont plus d'objet
  * sous lui, puisque le barème les met déjà à l'échelle. On les masque plutôt
  * que de les griser — une bascule sans effet est pire qu'une bascule absente.
+ *
+ * Le Kraken et la Baleine blanche sont deux cartes, donc deux bascules : elles
+ * ne font pas la même chose au pli, et une table qui n'en glisse qu'une au
+ * paquet doit compter 71 cartes, pas 72.
  */
 export const OPTIONS: {
   key: keyof GameOptions
   showIf?: (options: GameOptions) => boolean
 }[] = [
   { key: 'bonusIfBidMissed', showIf: (options) => !options.rascalScoring },
-  { key: 'seaMonsters' },
+  { key: 'kraken' },
+  { key: 'whiteWhale' },
   { key: 'advancedPirates' },
   { key: 'rascalScoring' },
   { key: 'cannonball', showIf: (options) => options.rascalScoring },

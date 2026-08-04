@@ -1,13 +1,17 @@
 import { cardsForRound, deckSize } from '../domain/deck.ts'
 import {
+  DEFAULT_FORMAT,
   EMPTY_BONUS,
   GREY_BEARD,
+  HARRY_VALUES,
   RASCAL_VALUES,
-  TOTAL_ROUNDS,
+  clampFormat,
   hasGreyBeard,
   trickHolders,
+  voidsTricks,
   type Draft,
   type Game,
+  type GameFormat,
   type GameOptions,
   type Id,
   type Locale,
@@ -16,6 +20,7 @@ import {
   type Store,
   type Theme,
 } from '../domain/types.ts'
+import { finalBid } from '../domain/scoring.ts'
 import { deducedHolder, trickTarget } from '../domain/validation.ts'
 import { newId } from './storage.ts'
 
@@ -23,15 +28,25 @@ export type Action =
   | { type: 'settings/locale'; locale: Locale }
   | { type: 'settings/theme'; theme: Theme }
   | { type: 'settings/defaultOptions'; options: GameOptions }
+  | { type: 'settings/defaultFormat'; format: GameFormat }
   | { type: 'players/add'; name: string; id?: Id; now?: string }
   | { type: 'players/rename'; id: Id; name: string }
   | { type: 'players/remove'; id: Id }
-  | { type: 'game/start'; playerIds: Id[]; options: GameOptions; id?: Id; now?: string }
+  | {
+      type: 'game/start'
+      playerIds: Id[]
+      options: GameOptions
+      /** Absent : le format du livret, dix manches d'une carte à dix. */
+      format?: GameFormat
+      id?: Id
+      now?: string
+    }
   | { type: 'game/setBid'; playerId: Id; bid: number | null }
   | { type: 'game/setTricks'; playerId: Id; tricks: number | null }
   | { type: 'game/setBonus'; playerId: Id; key: keyof RoundBonus; value: number }
   | { type: 'game/setVoided'; voided: number }
   | { type: 'game/setRascal'; playerId: Id; value: number }
+  | { type: 'game/setHarry'; playerId: Id; step: number }
   | { type: 'game/setCannonball'; playerId: Id; loaded: boolean }
   | { type: 'game/phase'; phase: Draft['phase'] }
   | { type: 'game/commitRound' }
@@ -60,6 +75,7 @@ function emptyDraft(game: Game, roundIndex: number): Draft {
   const tricks: Record<Id, number | null> = {}
   const bonus: Record<Id, RoundBonus> = {}
   const rascal: Record<Id, number> = {}
+  const harry: Record<Id, number> = {}
   const cannonball: Record<Id, boolean> = {}
   for (const id of game.playerIds) {
     // Les compteurs partent à zéro plutôt qu'à vide : une manche où personne
@@ -68,6 +84,7 @@ function emptyDraft(game: Game, roundIndex: number): Draft {
     tricks[id] = 0
     bonus[id] = { ...EMPTY_BONUS }
     rascal[id] = 0
+    harry[id] = 0
     cannonball[id] = false
   }
   // Le fantôme part à zéro pour la même raison, et n'a que des plis : ni mise,
@@ -81,6 +98,7 @@ function emptyDraft(game: Game, roundIndex: number): Draft {
     tricks,
     bonus,
     rascal,
+    harry,
     cannonball,
     voided: 0,
     touchedTricks: [],
@@ -99,6 +117,7 @@ function draftFromRound(game: Game, round: Round): Draft {
     draft.tricks[entry.playerId] = entry.tricks
     draft.bonus[entry.playerId] = { ...entry.bonus }
     draft.rascal[entry.playerId] = entry.rascal ?? 0
+    draft.harry[entry.playerId] = entry.harry ?? 0
     draft.cannonball[entry.playerId] = entry.cannonball ?? false
   }
   if (hasGreyBeard(game.playerIds.length)) draft.tricks[GREY_BEARD] = round.greyBeard ?? 0
@@ -113,12 +132,16 @@ function draftFromRound(game: Game, round: Round): Draft {
  * Les plis repartent de la mise de chacun : c'est la valeur la plus probable,
  * et une manche où tout le monde tient sa mise se valide alors sans un geste.
  * On ne touche pas à ceux qui ont déjà été posés à la main.
+ *
+ * La mise semée est celle qu'on défend, pas celle qu'on a annoncée : un joueur
+ * qui a déplacé la sienne avec Harry le Géant puis fait un aller-retour par les
+ * mises repart de son chiffre déplacé.
  */
 function seedTricks(draft: Draft, playerIds: Id[]): Record<Id, number | null> {
   const tricks = { ...draft.tricks }
   for (const id of playerIds) {
     if (draft.touchedTricks.includes(id)) continue
-    tricks[id] = draft.bids[id] ?? 0
+    tricks[id] = finalBid(draft.bids[id] ?? 0, draft.harry[id] ?? 0)
   }
   return tricks
 }
@@ -148,9 +171,14 @@ function withDeduction(
 
 const marked = (list: Id[], id: Id): Id[] => (list.includes(id) ? list : [...list, id])
 
-/** Cartes distribuées à la manche du brouillon, paquet de la partie compris. */
+/** Cartes distribuées à la manche du brouillon, paquet et format compris. */
 function cardsOf(game: Game, draft: Draft): number {
-  return cardsForRound(draft.roundIndex, game.playerIds.length, deckSize(game.options))
+  return cardsForRound(
+    draft.roundIndex,
+    game.playerIds.length,
+    deckSize(game.options),
+    game.format.firstRoundCards,
+  )
 }
 
 /** Les porteurs de plis de la partie : les joueurs, et le fantôme à 2. */
@@ -195,6 +223,12 @@ export function reducer(store: Store, action: Action): Store {
     case 'settings/defaultOptions':
       return { ...store, settings: { ...store.settings, defaultOptions: action.options } }
 
+    case 'settings/defaultFormat':
+      return {
+        ...store,
+        settings: { ...store.settings, defaultFormat: clampFormat(action.format) },
+      }
+
     case 'players/add': {
       const name = action.name.trim()
       if (!name) return store
@@ -234,11 +268,15 @@ export function reducer(store: Store, action: Action): Store {
       for (const id of action.playerIds) {
         nameSnapshot[id] = store.players.find((player) => player.id === id)?.name ?? 'Joueur'
       }
+      // Le format se fige ici, avec la partie : le changer dans les réglages
+      // plus tard ne doit pas rallonger une partie déjà commencée.
+      const format = clampFormat(action.format ?? DEFAULT_FORMAT)
       const game: Game = {
         id: action.id ?? newId(),
         startedAt: now,
         playerIds: action.playerIds,
         options: action.options,
+        format,
         rounds: [],
         nameSnapshot,
       }
@@ -246,7 +284,7 @@ export function reducer(store: Store, action: Action): Store {
         ...store,
         // Une seule partie en cours : les traînantes sont closes.
         games: [...store.games.map((old) => (old.endedAt ? old : { ...old, endedAt: now })), game],
-        settings: { ...store.settings, defaultOptions: action.options },
+        settings: { ...store.settings, defaultOptions: action.options, defaultFormat: format },
         draft: emptyDraft(game, 1),
         liveDraft: undefined,
       }
@@ -286,7 +324,9 @@ export function reducer(store: Store, action: Action): Store {
 
     case 'game/setVoided': {
       const game = runningGame(store)
-      if (!game || !game.options.seaMonsters) return store
+      // Sans monstre au paquet, aucun pli ne s'écarte : le compteur n'existe
+      // pas, et une action qui l'écrirait viendrait d'ailleurs.
+      if (!game || !voidsTricks(game.options)) return store
       const draft = draftFor(store, game)
       const cards = cardsOf(game, draft)
       const voided = Math.min(cards, Math.max(0, action.voided))
@@ -308,6 +348,19 @@ export function reducer(store: Store, action: Action): Store {
       return {
         ...store,
         draft: { ...draft, rascal: { ...draft.rascal, [action.playerId]: action.value } },
+      }
+    }
+
+    case 'game/setHarry': {
+      const game = runningGame(store)
+      // Harry est un pouvoir de pirate : sans la variante, il n'a pas été joué.
+      if (!game || !game.options.advancedPirates) return store
+      if (!game.playerIds.includes(action.playerId)) return store
+      if (!(HARRY_VALUES as readonly number[]).includes(action.step)) return store
+      const draft = draftFor(store, game)
+      return {
+        ...store,
+        draft: { ...draft, harry: { ...draft.harry, [action.playerId]: action.step } },
       }
     }
 
@@ -388,6 +441,7 @@ export function reducer(store: Store, action: Action): Store {
         ...(greyBeard > 0 ? { greyBeard } : {}),
         entries: game.playerIds.map((playerId) => {
           const rascal = draft.rascal[playerId] ?? 0
+          const harry = draft.harry[playerId] ?? 0
           const cannonball = draft.cannonball[playerId] ?? false
           return {
             playerId,
@@ -395,6 +449,7 @@ export function reducer(store: Store, action: Action): Store {
             tricks: draft.tricks[playerId] ?? 0,
             bonus: { ...(draft.bonus[playerId] ?? EMPTY_BONUS) },
             ...(rascal !== 0 ? { rascal } : {}),
+            ...(harry !== 0 ? { harry } : {}),
             ...(cannonball ? { cannonball } : {}),
           }
         }),
@@ -420,7 +475,7 @@ export function reducer(store: Store, action: Action): Store {
       const following = nextRoundIndex(updated)
       return {
         ...next,
-        draft: following > TOTAL_ROUNDS ? undefined : emptyDraft(updated, following),
+        draft: following > updated.format.rounds ? undefined : emptyDraft(updated, following),
         liveDraft: undefined,
       }
     }
@@ -463,7 +518,7 @@ export function reducer(store: Store, action: Action): Store {
       const following = nextRoundIndex(game)
       return {
         ...store,
-        draft: following > TOTAL_ROUNDS ? undefined : emptyDraft(game, following),
+        draft: following > game.format.rounds ? undefined : emptyDraft(game, following),
         liveDraft: undefined,
       }
     }
@@ -510,6 +565,8 @@ export function reducer(store: Store, action: Action): Store {
         type: 'game/start',
         playerIds: previous.playerIds,
         options: previous.options,
+        // Une revanche se rejoue au même format : même longueur, même donne.
+        format: previous.format,
         ...(action.id ? { id: action.id } : {}),
         ...(action.now ? { now: action.now } : {}),
       })

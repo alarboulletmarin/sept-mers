@@ -1,15 +1,18 @@
 import {
   BONUS_KEYS,
+  DEFAULT_FORMAT,
   DEFAULT_OPTIONS,
   EMPTY_BONUS,
   GREY_BEARD,
+  HARRY_VALUES,
   MAX_PLAYERS,
   MIN_PLAYERS,
   RASCAL_VALUES,
-  TOTAL_ROUNDS,
+  clampFormat,
   hasGreyBeard,
   trickHolders,
   type Draft,
+  type GameFormat,
   type GameOptions,
   type Locale,
   type Store,
@@ -35,6 +38,7 @@ export function emptyStore(): Store {
       locale: defaultLocale(),
       theme: 'system',
       defaultOptions: { ...DEFAULT_OPTIONS },
+      defaultFormat: { ...DEFAULT_FORMAT },
     },
   }
 }
@@ -64,9 +68,14 @@ const isCount = (value: unknown): value is number =>
  */
 const readGameOptions = (value: unknown): GameOptions => {
   const source = isObject(value) ? value : {}
+  // Les deux monstres marins tenaient dans une seule clé : une partie écrite
+  // avant la coupe les jouait tous les deux ou aucun des deux, et se relit
+  // comme elle a été jouée.
+  const seaMonsters = source.seaMonsters === true
   return {
     bonusIfBidMissed: source.bonusIfBidMissed !== false,
-    seaMonsters: source.seaMonsters === true,
+    kraken: source.kraken === true || seaMonsters,
+    whiteWhale: source.whiteWhale === true || seaMonsters,
     advancedPirates: source.advancedPirates === true,
     // Aucune partie enregistrée n'a jamais été jouée au Score Rascal : ici la
     // valeur historique est « non », et pas « comme avant ».
@@ -83,12 +92,32 @@ const readDefaultOptions = (value: unknown): GameOptions =>
   isObject(value)
     ? {
         bonusIfBidMissed: value.bonusIfBidMissed === true,
-        seaMonsters: value.seaMonsters === true,
+        kraken: value.kraken === true || value.seaMonsters === true,
+        whiteWhale: value.whiteWhale === true || value.seaMonsters === true,
         advancedPirates: value.advancedPirates === true,
         rascalScoring: value.rascalScoring === true,
         cannonball: value.cannonball === true,
       }
     : { ...DEFAULT_OPTIONS }
+
+/**
+ * Le format d'une partie ou d'un réglage. Absent, c'est celui du livret : une
+ * partie écrite avant que le format se règle a été jouée en dix manches d'une
+ * carte à dix, et doit se relire ainsi.
+ */
+const readFormat = (value: unknown): GameFormat => {
+  if (!isObject(value)) return { ...DEFAULT_FORMAT }
+  return clampFormat({
+    rounds: isCount(value.rounds) ? value.rounds : DEFAULT_FORMAT.rounds,
+    firstRoundCards: isCount(value.firstRoundCards)
+      ? value.firstRoundCards
+      : DEFAULT_FORMAT.firstRoundCards,
+  })
+}
+
+/** Le pas d'Harry le Géant, signé lui aussi : `isCount` le raboterait à zéro. */
+const readHarry = (value: unknown): number =>
+  typeof value === 'number' && (HARRY_VALUES as readonly number[]).includes(value) ? value : 0
 
 /**
  * Le pari de Rascal Jack. Il est signé, donc il ne passe pas par `isCount`,
@@ -176,12 +205,15 @@ export function normalise(input: unknown): Store {
         if (playerIds.length < MIN_PLAYERS || playerIds.length > MAX_PLAYERS) return []
 
         const options = readGameOptions(game.options)
+        const format = readFormat(game.format)
 
         const rounds = (Array.isArray(game.rounds) ? game.rounds : []).flatMap(
           (round): Store['games'][number]['rounds'] => {
             if (!isObject(round)) return []
             if (!isCount(round.index) || !isCount(round.cards)) return []
-            if (round.index < 1 || round.index > TOTAL_ROUNDS) return []
+            // La borne haute est celle de la partie, pas une constante : c'est
+            // le format qui dit combien de manches elle compte.
+            if (round.index < 1 || round.index > format.rounds) return []
 
             const entries = (Array.isArray(round.entries) ? round.entries : []).flatMap(
               (entry): Store['games'][number]['rounds'][number]['entries'] => {
@@ -198,6 +230,7 @@ export function normalise(input: unknown): Store {
                 // Le pari du Rascal peut être négatif : il ne passe surtout
                 // pas par `isCount`, qui le ramènerait à zéro en silence.
                 const rascal = readRascal(entry.rascal)
+                const harry = readHarry(entry.harry)
                 const cannonball = entry.cannonball === true
                 return [
                   {
@@ -206,6 +239,7 @@ export function normalise(input: unknown): Store {
                     tricks: entry.tricks,
                     bonus,
                     ...(rascal !== 0 ? { rascal } : {}),
+                    ...(harry !== 0 ? { harry } : {}),
                     ...(cannonball ? { cannonball } : {}),
                   },
                 ]
@@ -250,6 +284,7 @@ export function normalise(input: unknown): Store {
             ...(typeof game.endedAt === 'string' ? { endedAt: game.endedAt } : {}),
             playerIds,
             options,
+            format,
             rounds: rounds.sort((a, b) => a.index - b.index),
             nameSnapshot: snapshot,
           },
@@ -265,6 +300,7 @@ export function normalise(input: unknown): Store {
       ? themeValue
       : 'system'
   const defaultOptions = readDefaultOptions(settingsSource.defaultOptions)
+  const defaultFormat = readFormat(settingsSource.defaultFormat)
 
   // Une seule partie en cours à la fois : on garde la plus récente et on
   // clôt les autres, un fichier bricolé à la main ne doit pas bloquer l'app.
@@ -282,7 +318,7 @@ export function normalise(input: unknown): Store {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     players,
     games,
-    settings: { locale, theme, defaultOptions },
+    settings: { locale, theme, defaultOptions, defaultFormat },
   }
 
   /** Une saisie relue depuis le fichier, valeur par valeur. */
@@ -295,6 +331,7 @@ export function normalise(input: unknown): Store {
     const tricks: Record<string, number | null> = {}
     const bonus: Record<string, typeof EMPTY_BONUS> = {}
     const rascal: Record<string, number> = {}
+    const harry: Record<string, number> = {}
     const cannonball: Record<string, boolean> = {}
     const readMap = (value: unknown): Record<string, unknown> => (isObject(value) ? value : {})
 
@@ -311,10 +348,16 @@ export function normalise(input: unknown): Store {
       }
       bonus[id] = entry
       rascal[id] = readRascal(readMap(source.rascal)[id])
+      harry[id] = readHarry(readMap(source.harry)[id])
       cannonball[id] = readMap(source.cannonball)[id] === true
     }
 
-    const cards = cardsForRound(source.roundIndex, game.playerIds.length, deckSize(game.options))
+    const cards = cardsForRound(
+      source.roundIndex,
+      game.playerIds.length,
+      deckSize(game.options),
+      game.format.firstRoundCards,
+    )
     const voided = isCount(source.voided) ? Math.min(cards, source.voided) : 0
 
     // Le fantôme se relit après la boucle : il n'est pas dans `playerIds`. Sa
@@ -346,6 +389,7 @@ export function normalise(input: unknown): Store {
       tricks,
       bonus,
       rascal,
+      harry,
       cannonball,
       voided,
       touchedTricks,

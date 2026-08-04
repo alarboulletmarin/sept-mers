@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { GREY_BEARD, type Game } from '../domain/types.ts'
+import { DEFAULT_FORMAT, GREY_BEARD, type Game } from '../domain/types.ts'
 import { createLoopbackTransport } from './loopback.ts'
 import { parseWireMessage, type SpectatorPayload } from './protocol.ts'
 import {
@@ -46,11 +46,13 @@ function makeGame(): Game {
     playerIds: ['p1', 'p2'],
     options: {
       bonusIfBidMissed: false,
-      seaMonsters: false,
+      kraken: false,
+      whiteWhale: false,
       advancedPirates: false,
       rascalScoring: false,
       cannonball: false,
     },
+    format: { ...DEFAULT_FORMAT },
     rounds: [],
     nameSnapshot: { p1: 'Ana', p2: 'Bo' },
   }
@@ -66,6 +68,7 @@ const payloadWithBid = (bid: number): SpectatorPayload => ({
     tricks: { p1: null, p2: null, [GREY_BEARD]: 0 },
     bonus: {},
     rascal: {},
+    harry: {},
     cannonball: {},
     voided: 0,
     touchedTricks: [],

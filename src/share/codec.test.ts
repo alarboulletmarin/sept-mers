@@ -1,6 +1,13 @@
 import { Buffer } from 'node:buffer'
 import { describe, expect, it } from 'vitest'
-import { EMPTY_BONUS, GREY_BEARD, type Draft, type Game } from '../domain/types.ts'
+import {
+  DEFAULT_FORMAT,
+  DEFAULT_OPTIONS,
+  EMPTY_BONUS,
+  GREY_BEARD,
+  type Draft,
+  type Game,
+} from '../domain/types.ts'
 import {
   SNAPSHOT_VERSION,
   SnapshotError,
@@ -24,11 +31,13 @@ function makeGame(count: number, overrides: Partial<Game> = {}): Game {
     playerIds,
     options: {
       bonusIfBidMissed: false,
-      seaMonsters: false,
+      kraken: false,
+      whiteWhale: false,
       advancedPirates: false,
       rascalScoring: false,
       cannonball: false,
     },
+    format: { ...DEFAULT_FORMAT },
     rounds: [],
     nameSnapshot: Object.fromEntries(playerIds.map((id, i) => [id, `Joueur ${i + 1}`] as const)),
     ...overrides,
@@ -42,8 +51,10 @@ const deflateRaw = async (text: string): Promise<Uint8Array> => {
   return new Uint8Array(await new Response(stream).arrayBuffer())
 }
 
-const wrap = async (json: string): Promise<string> =>
-  `${SNAPSHOT_VERSION}.${Buffer.from(await deflateRaw(json)).toString('base64url')}`
+const wrapAs = async (version: number, json: string): Promise<string> =>
+  `${version}.${Buffer.from(await deflateRaw(json)).toString('base64url')}`
+
+const wrap = async (json: string): Promise<string> => wrapAs(SNAPSHOT_VERSION, json)
 
 const reasonOf = async (hash: string): Promise<string> => {
   try {
@@ -60,7 +71,8 @@ describe('aller-retour du lien-résumé', () => {
       endedAt: '2026-02-03T22:30:00.000Z',
       options: {
         bonusIfBidMissed: true,
-        seaMonsters: true,
+        kraken: true,
+        whiteWhale: true,
         advancedPirates: false,
         rascalScoring: true,
         cannonball: false,
@@ -110,6 +122,7 @@ describe('aller-retour du lien-résumé', () => {
       tricks: { p1: 1, p2: null, [GREY_BEARD]: 1 },
       bonus: { p1: { ...EMPTY_BONUS }, p2: { ...EMPTY_BONUS } },
       rascal: { p1: 0, p2: 0 },
+      harry: { p1: 0, p2: 0 },
       cannonball: { p1: false, p2: false },
       voided: 1,
       touchedTricks: ['p1'],
@@ -125,6 +138,7 @@ describe('aller-retour du lien-résumé', () => {
       tricks: { p1: 1, p2: null, [GREY_BEARD]: 1 },
       bonus: { p1: { ...EMPTY_BONUS }, p2: { ...EMPTY_BONUS } },
       rascal: { p1: 0, p2: 0 },
+      harry: { p1: 0, p2: 0 },
       cannonball: { p1: false, p2: false },
       voided: 1,
       // La main posée et la déduction ne se transportent pas : un spectateur
@@ -144,6 +158,7 @@ describe('aller-retour du lien-résumé', () => {
       tricks: { p1: null, p2: null, p3: null },
       bonus: { p1: { ...EMPTY_BONUS }, p2: { ...EMPTY_BONUS }, p3: { ...EMPTY_BONUS } },
       rascal: { p1: 0, p2: 0, p3: 0 },
+      harry: { p1: 0, p2: 0, p3: 0 },
       cannonball: { p1: false, p2: false, p3: false },
       voided: 0,
       touchedTricks: [],
@@ -185,7 +200,8 @@ describe('taille du lien-résumé', () => {
     const game = makeGame(8, {
       options: {
         bonusIfBidMissed: true,
-        seaMonsters: true,
+        kraken: true,
+        whiteWhale: true,
         advancedPirates: true,
         rascalScoring: true,
         cannonball: true,
@@ -221,6 +237,7 @@ describe('taille du lien-résumé', () => {
       tricks: Object.fromEntries(ids.map((id, seat) => [id, (seat + 3) % 9] as const)),
       bonus: Object.fromEntries(ids.map((id) => [id, { ...EMPTY_BONUS }] as const)),
       rascal: Object.fromEntries(ids.map((id) => [id, 0] as const)),
+      harry: Object.fromEntries(ids.map((id) => [id, 0] as const)),
       cannonball: Object.fromEntries(ids.map((id) => [id, false] as const)),
       voided: 1,
       touchedTricks: [],
@@ -233,6 +250,47 @@ describe('taille du lien-résumé', () => {
     const decoded = await decodeSnapshot(encoded)
     expect(decoded.game.rounds).toHaveLength(10)
     expect(decoded.draft?.roundIndex).toBe(10)
+  })
+})
+
+describe('le format et Harry voyagent', () => {
+  it('refait une partie courte, première donne comprise', async () => {
+    const game = makeGame(3, {
+      format: { rounds: 4, firstRoundCards: 3 },
+      rounds: [
+        {
+          index: 1,
+          cards: 3,
+          entries: [
+            { playerId: 'p1', bid: 2, tricks: 3, bonus: { ...EMPTY_BONUS }, harry: 1 },
+            { playerId: 'p2', bid: 1, tricks: 0, bonus: { ...EMPTY_BONUS } },
+            { playerId: 'p3', bid: 0, tricks: 0, bonus: { ...EMPTY_BONUS } },
+          ],
+        },
+      ],
+    })
+    const decoded = await decodeSnapshot(await encodeSnapshot({ game }))
+    expect(decoded.game).toEqual({ ...game, id: 'snapshot' })
+  })
+
+  it('garde le pas d Harry de la saisie en cours', async () => {
+    const game = makeGame(3, { options: { ...DEFAULT_OPTIONS, advancedPirates: true } })
+    const draft: Draft = {
+      gameId: 'g1',
+      roundIndex: 2,
+      phase: 'results',
+      bids: { p1: 1, p2: 0, p3: 1 },
+      tricks: { p1: 2, p2: 0, p3: 0 },
+      bonus: { p1: { ...EMPTY_BONUS }, p2: { ...EMPTY_BONUS }, p3: { ...EMPTY_BONUS } },
+      rascal: { p1: 0, p2: 0, p3: 0 },
+      harry: { p1: 1, p2: 0, p3: 0 },
+      cannonball: { p1: false, p2: false, p3: false },
+      voided: 0,
+      touchedTricks: [],
+      autoTricks: null,
+    }
+    const decoded = await decodeSnapshot(await encodeSnapshot({ game, draft }))
+    expect(decoded.draft?.harry).toEqual({ p1: 1, p2: 0, p3: 0 })
   })
 })
 
@@ -261,12 +319,56 @@ describe('liens abîmés ou hostiles', () => {
   })
 
   it('nomme une géométrie de manche qui ne colle pas à la table', async () => {
-    const packed = [1, 0, 0, 0, ['Ana', 'Bo'], [[1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 2, 0]], 0]
+    const packed = [
+      SNAPSHOT_VERSION,
+      0,
+      0,
+      0,
+      ['Ana', 'Bo'],
+      [[1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 2, 0]],
+      0,
+      [10, 1],
+    ]
     expect(await reasonOf(await wrap(JSON.stringify(packed)))).toBe('format')
   })
 
   it('nomme une partie irrecevable une fois durcie', async () => {
-    const solo = [1, 0, 0, 0, ['Solo'], [], 0]
+    const solo = [SNAPSHOT_VERSION, 0, 0, 0, ['Solo'], [], 0, [10, 1]]
     expect(await reasonOf(await wrap(JSON.stringify(solo)))).toBe('data')
+  })
+
+  it('nomme un format absent de la version courante', async () => {
+    const noFormat = [SNAPSHOT_VERSION, 0, 0, 0, ['Ana', 'Bo'], [], 0]
+    expect(await reasonOf(await wrap(JSON.stringify(noFormat)))).toBe('format')
+  })
+})
+
+describe('les résumés de la version 1', () => {
+  /** Une manche à 1 carte, deux sièges, à la géométrie de la version 1. */
+  const legacyRound = [
+    1, 1, 0, 0,
+    // p1 : mise 1, 1 pli, aucune prime, aucun pari, aucune charge.
+    1, 1, 0, 0, 0, 0, 0, 2, 0,
+    // p2 : mise 0, aucun pli.
+    0, 0, 0, 0, 0, 0, 0, 2, 0,
+  ]
+
+  it('se relit encore, au format du livret et avec les deux monstres', async () => {
+    // Le bit 1 de la version 1 nommait les deux monstres à la fois : un lien
+    // envoyé avant la coupe doit rendre une table qui joue les deux.
+    const packed = [1, 1770000000, 1770003600, 0b000010, ['Ana', 'Bo'], [legacyRound], 0]
+    const decoded = await decodeSnapshot(await wrapAs(1, JSON.stringify(packed)))
+    expect(decoded.game.options.kraken).toBe(true)
+    expect(decoded.game.options.whiteWhale).toBe(true)
+    expect(decoded.game.format).toEqual(DEFAULT_FORMAT)
+    expect(decoded.game.rounds[0].entries).toHaveLength(2)
+    expect(decoded.game.rounds[0].entries[0].bid).toBe(1)
+    // Harry n'existait pas : personne n'a déplacé sa mise.
+    expect(decoded.game.rounds[0].entries[0].harry).toBeUndefined()
+  })
+
+  it('refuse la géométrie d aujourd hui sous le préfixe d hier', async () => {
+    const packed = [1, 0, 0, 0, ['Ana', 'Bo'], [legacyRound], 0, [10, 1]]
+    expect(await reasonOf(await wrapAs(1, JSON.stringify(packed)))).toBe('format')
   })
 })

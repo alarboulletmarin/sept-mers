@@ -1,12 +1,15 @@
 import { BONUS_VALUES, type RoundBonus } from './types.ts'
 
 export interface ScoreInput {
+  /** La mise annoncée. Le pas d'Harry s'y ajoute avant tout calcul. */
   bid: number
   tricks: number
   cards: number
   bonus: RoundBonus
   /** Pari de Rascal Jack, signé. */
   rascal?: number
+  /** Pas d'Harry le Géant, −1 ou +1. */
+  harry?: number
   /** Boulet de canon chargé. Lu seulement sous le Score Rascal, option ouverte. */
   cannonball?: boolean
   options: {
@@ -31,6 +34,18 @@ export interface ScoreResult {
   outcome: 'exact' | 'over' | 'under'
   /** Écart absolu entre la mise et les plis. Le Score Rascal en fait 3 paliers. */
   gap: number
+}
+
+/**
+ * La mise réellement défendue : celle qu'on a annoncée, déplacée du pas
+ * d'Harry le Géant.
+ *
+ * Tout le reste du jeu se compte sur celle-ci — le barème, l'écart, la mise à
+ * zéro et sa prime de fin de partie. La mise annoncée, elle, ne sert plus qu'à
+ * l'afficher : « 3 devenue 4 ».
+ */
+export function finalBid(bid: number, harry = 0): number {
+  return bid + harry
 }
 
 /** Somme brute des bonus, avant application de l'option de mise ratée. */
@@ -92,14 +107,17 @@ function rascalScale(input: ScoreInput, gap: number) {
  * second barème est une branche à côté du premier, pas une réécriture.
  */
 export function scoreRound(input: ScoreInput): ScoreResult {
-  const { bid, tricks, options } = input
+  const { tricks, options } = input
+  // Harry le Géant a pu déplacer la mise d'un pli une fois les cartes en main :
+  // c'est celle-là qu'on a défendue, et donc la seule que le barème regarde.
+  const bid = finalBid(input.bid, input.harry)
   const gap = Math.abs(tricks - bid)
   const bidMet = gap === 0
   const rascalPoints = input.rascal ?? 0
 
   const { bidPoints, bonusPoints } = options.rascalScoring
     ? rascalScale(input, gap)
-    : classic(input, bidMet, gap)
+    : classic({ ...input, bid }, bidMet, gap)
 
   return {
     bidPoints,

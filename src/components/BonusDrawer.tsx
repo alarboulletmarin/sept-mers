@@ -7,6 +7,7 @@ import {
 import {
   BONUS_KEYS,
   BONUS_VALUES,
+  HARRY_VALUES,
   RASCAL_VALUES,
   type Id,
   type RoundBonus,
@@ -25,6 +26,15 @@ interface BonusDrawerProps {
   /** Nom du joueur qui a déjà posé le pari, s'il y en a un autre. */
   rascalHeldBy?: string | null
   onRascalChange?: (value: number) => void
+  /** Pas d'Harry le Géant, ou `null` quand les pouvoirs ne sont pas en jeu. */
+  harry?: Record<Id, number> | null
+  /** Nom du joueur qui a déjà joué Harry, s'il y en a un autre. */
+  harryHeldBy?: string | null
+  /** La mise annoncée du joueur : c'est elle qu'Harry déplace. */
+  bid?: number
+  /** Cartes de la manche : une mise déplacée reste entre 0 et ce chiffre. */
+  cards?: number
+  onHarryChange?: (step: number) => void
 }
 
 /**
@@ -56,10 +66,16 @@ export function BonusDrawer({
   rascal = null,
   rascalHeldBy = null,
   onRascalChange,
+  harry = null,
+  harryHeldBy = null,
+  bid = 0,
+  cards = 0,
+  onHarryChange,
 }: BonusDrawerProps) {
   const { t, signed } = useT()
   const bonus = bonuses[playerId]
   const wager = rascal?.[playerId] ?? 0
+  const step = harry?.[playerId] ?? 0
 
   const total = BONUS_KEYS.reduce((sum, key) => sum + BONUS_VALUES[key] * bonus[key], 0)
   const count = BONUS_KEYS.reduce((sum, key) => sum + bonus[key], 0)
@@ -131,6 +147,51 @@ export function BonusDrawer({
         d'où un choix exclusif plutôt qu'un compteur — on ne parie pas deux
         fois, on parie une somme.
       */}
+      {/*
+        Harry le Géant déplace la mise d'un pli une fois les cartes en main. Il
+        se pose donc ici, aux résultats, et pas à l'étape des mises : la mise
+        annoncée reste écrite, le pas se lit à côté d'elle, et la tuile affiche
+        « 3 devenue 4 ». Revenir à la phase d'avant pour corriger un chiffre
+        n'était pas faux, mais ça effaçait ce qui s'était passé.
+      */}
+      {harry && (
+        <section className={styles.rascal}>
+          <p className={styles.rascalHead}>
+            <span className={styles.name}>{t('bonus.harry')}</span>
+            <span className={styles.help}>
+              {harryHeldBy ? t('bonus.harry.taken', { name: harryHeldBy }) : t('bonus.harry.help')}
+            </span>
+          </p>
+          <div className="segmented" role="radiogroup" aria-label={t('bonus.harry')}>
+            {HARRY_VALUES.map((value) => {
+              const moved = bid + value
+              // Un pas qui sortirait de la manche — sous zéro, ou au-delà des
+              // cartes — se nomme plutôt que d'annoncer une mise qui n'existe
+              // pas. Celui qu'un autre Harry occupe se ferme sans se renommer :
+              // la phrase au-dessus dit déjà qui l'a joué.
+              const outOfRange = value !== 0 && (moved < 0 || moved > cards)
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={step === value}
+                  className="segmented-option"
+                  disabled={outOfRange || (value !== 0 && Boolean(harryHeldBy))}
+                  onClick={() => onHarryChange?.(value)}
+                >
+                  {value === 0
+                    ? t('bonus.harry.none')
+                    : outOfRange
+                      ? t('bonus.harry.blocked')
+                      : t('bonus.harry.moved', { bid: moved })}
+                </button>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
       {rascal && (
         <section className={styles.rascal}>
           <p className={styles.rascalHead}>

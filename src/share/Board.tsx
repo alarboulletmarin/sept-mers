@@ -8,14 +8,16 @@ import { scoreRound } from '../domain/scoring.ts'
 import { standings, totals, winnerIds } from '../domain/stats.ts'
 import {
   GREY_BEARD,
-  TOTAL_ROUNDS,
   hasGreyBeard,
+  voidedBy,
+  voidsTricks,
   type Draft,
   type Game,
   type Id,
   type RoundBonus,
 } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
+import { bidRecall } from '../i18n/recall.ts'
 import { isEditingRound } from '../store/reducer.ts'
 import type { SpectatorPayload } from './protocol.ts'
 import styles from './Board.module.css'
@@ -29,10 +31,10 @@ import styles from './Board.module.css'
  */
 export function Board({ payload }: { payload: SpectatorPayload }) {
   const { game, draft } = payload
-  // Dix manches jouées sans saisie rouverte : le résultat, même si la table
-  // n'a pas encore touché « Terminer ». Une correction en cours ramène au
+  // Toutes les manches jouées sans saisie rouverte : le résultat, même si la
+  // table n'a pas encore touché « Terminer ». Une correction en cours ramène au
   // tableau de manche, avis compris.
-  const complete = Boolean(game.endedAt) || (game.rounds.length >= TOTAL_ROUNDS && !draft)
+  const complete = Boolean(game.endedAt) || (game.rounds.length >= game.format.rounds && !draft)
   if (complete) return <FinishedBoard game={game} />
   return <RunningBoard game={game} draft={draft} />
 }
@@ -43,11 +45,13 @@ function RunningBoard({ game, draft }: { game: Game; draft?: Draft }) {
   const { t, number, signed } = useT()
 
   const running = totals(game)
+  const totalRounds = game.format.rounds
+  const first = game.format.firstRoundCards
   const lastRound = game.rounds.reduce((last, round) => Math.max(last, round.index), 0)
-  const roundIndex = draft?.roundIndex ?? Math.min(lastRound + 1, TOTAL_ROUNDS)
+  const roundIndex = draft?.roundIndex ?? Math.min(lastRound + 1, totalRounds)
   const deck = deckSize(game.options)
-  const cards = cardsForRound(roundIndex, game.playerIds.length, deck)
-  const capped = isCapped(roundIndex, game.playerIds.length, deck)
+  const cards = cardsForRound(roundIndex, game.playerIds.length, deck, first)
+  const capped = isCapped(roundIndex, game.playerIds.length, deck, first)
   const isBids = draft?.phase !== 'results'
   const greyBeard = hasGreyBeard(game.playerIds.length)
   const showCharge = game.options.rascalScoring && game.options.cannonball
@@ -57,9 +61,9 @@ function RunningBoard({ game, draft }: { game: Game; draft?: Draft }) {
     <div className="stack">
       <div className={styles.board}>
         <RoundRail
-          total={TOTAL_ROUNDS}
+          total={totalRounds}
           current={roundIndex}
-          label={t('game.round', { round: roundIndex, total: TOTAL_ROUNDS })}
+          label={t('game.round', { round: roundIndex, total: totalRounds })}
         />
 
         <div className={styles.tags}>
@@ -69,7 +73,7 @@ function RunningBoard({ game, draft }: { game: Game; draft?: Draft }) {
 
         <h2 className={styles.roundFigure}>
           <span className={styles.roundNumber}>{roundIndex}</span>
-          <span className={styles.roundTotal}>{t('game.roundOf', { total: TOTAL_ROUNDS })}</span>
+          <span className={styles.roundTotal}>{t('game.roundOf', { total: totalRounds })}</span>
         </h2>
 
         {draft && (
@@ -130,12 +134,14 @@ function RunningBoard({ game, draft }: { game: Game; draft?: Draft }) {
             </Widget>
           )}
 
-          {!isBids && game.options.seaMonsters && (
+          {!isBids && voidsTricks(game.options) && (
             <Widget surface="sunken" span="sm" tight marker="watch-voided">
               <h3 className={styles.name}>{t('game.voided')}</h3>
               <ReadOnlyValue value={draft.voided} />
               <div className={styles.tileMeta}>
-                <span className={styles.bidRecall}>{t('game.voided.help')}</span>
+                <span className={styles.bidRecall}>
+                  {t(`game.voided.help.${voidedBy(game.options)}`)}
+                </span>
               </div>
             </Widget>
           )}
@@ -233,13 +239,14 @@ function WatchTile({ game, draft, playerId, cards, isBids, showCharge, signed, t
   const tricks = draft.tricks[playerId] ?? null
   const bonus = draft.bonus[playerId]
   const rascal = draft.rascal[playerId] ?? 0
+  const harry = draft.harry[playerId] ?? 0
   const cannonball = draft.cannonball[playerId] ?? false
   const value = isBids ? bid : tricks
   const complete = bid !== null && tricks !== null
 
   const score =
     !isBids && complete
-      ? scoreRound({ bid, tricks, cards, bonus, rascal, cannonball, options: game.options })
+      ? scoreRound({ bid, tricks, cards, bonus, rascal, harry, cannonball, options: game.options })
       : null
   const halved = Boolean(
     score &&
@@ -270,11 +277,7 @@ function WatchTile({ game, draft, playerId, cards, isBids, showCharge, signed, t
           <span className={styles.bidRecall}>
             {bid === null
               ? ''
-              : halved
-                ? t('game.bidHalf', { bid })
-                : showCharge && cannonball
-                  ? t('game.bidCannonball', { bid })
-                  : t('game.bid', { bid })}
+              : bidRecall(t, { bid, harry, halved, cannonball: showCharge && cannonball })}
           </span>
           {score && <span className={styles.tileScore}>{signed(score.total)}</span>}
         </div>

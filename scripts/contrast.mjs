@@ -122,6 +122,7 @@ for (const theme of ['light', 'dark']) {
   // pastille de charge n'apparaissent qu'avec elles, et sont à contrôler comme
   // le reste.
   await page.getByRole('switch', { name: /Kraken/ }).click()
+  await page.getByRole('switch', { name: /Baleine blanche/ }).click()
   await page.getByRole('switch', { name: /Pouvoirs/ }).click()
   await page.getByRole('switch', { name: /Score Rascal/ }).click()
   await page.getByRole('switch', { name: /Boulet de canon/ }).click()

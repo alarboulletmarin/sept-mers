@@ -207,7 +207,9 @@ check(
 await host.getByRole('button', { name: 'Partager le résumé' }).click()
 await host.waitForSelector('[data-recap-url]')
 const recapUrl = await host.locator('[data-recap-url]').getAttribute('data-recap-url')
-check('le lien-résumé est prêt', Boolean(recapUrl && recapUrl.includes('/recap#s=1.')))
+// Le numéro de version du résumé monte quand sa forme change : on vérifie
+// qu'il y en a un, pas lequel.
+check('le lien-résumé est prêt', Boolean(recapUrl && /\/recap#s=\d+\./.test(recapUrl)))
 check(
   'le QR du résumé est rendu',
   await host.getByRole('img', { name: 'Code à scanner pour ouvrir le résumé' }).isVisible(),

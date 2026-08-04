@@ -15,8 +15,26 @@ export interface RoundBonus {
 export interface GameOptions {
   /** Un joueur qui rate sa mise garde-t-il ses bonus ? */
   bonusIfBidMissed: boolean
-  /** Kraken et Baleine blanche dans le paquet : un pli peut n'aller à personne. */
-  seaMonsters: boolean
+  /**
+   * Le Kraken dans le paquet. Il écarte le pli où il tombe : personne ne le
+   * remporte, et la manche distribue alors plus de cartes qu'elle n'attribue de
+   * plis.
+   *
+   * Une carte, une bascule : la Baleine blanche vit sous `whiteWhale`. Les deux
+   * voyageaient sous une seule clé `seaMonsters`, ce qui donnait un paquet de
+   * 72 cartes à une table qui n'en jouait qu'une, et un compteur de plis
+   * écartés qui nommait un monstre absent.
+   */
+  kraken: boolean
+  /**
+   * La Baleine blanche dans le paquet. Elle prive les cartes spéciales de leur
+   * pouvoir le temps du pli, et c'est le plus grand numéro qui l'emporte.
+   *
+   * Elle écarte donc un pli beaucoup plus rarement que le Kraken — seulement
+   * quand personne n'a posé de numéro —, mais elle l'écarte : le compteur de
+   * plis écartés lui reste ouvert, en le disant.
+   */
+  whiteWhale: boolean
   /** Pouvoirs des pirates. Seul le pari de Rascal Jack compte des points. */
   advancedPirates: boolean
   /**
@@ -47,10 +65,71 @@ export interface GameOptions {
  */
 export const DEFAULT_OPTIONS: GameOptions = {
   bonusIfBidMissed: false,
-  seaMonsters: false,
+  kraken: false,
+  whiteWhale: false,
   advancedPirates: false,
   rascalScoring: false,
   cannonball: false,
+}
+
+/** Vrai quand un pli peut n'être remporté par personne, et donc être écarté. */
+export function voidsTricks(options: Pick<GameOptions, 'kraken' | 'whiteWhale'>): boolean {
+  return options.kraken || options.whiteWhale
+}
+
+/**
+ * Qui, à cette table, peut écarter un pli. C'est ce que le compteur de plis
+ * écartés nomme sous lui : on ne cite pas un monstre qui n'est pas au paquet, et
+ * on ne fait pas croire que la Baleine écarte aussi souvent que le Kraken.
+ */
+export function voidedBy(
+  options: Pick<GameOptions, 'kraken' | 'whiteWhale'>,
+): 'both' | 'kraken' | 'whiteWhale' | 'none' {
+  if (options.kraken && options.whiteWhale) return 'both'
+  if (options.kraken) return 'kraken'
+  if (options.whiteWhale) return 'whiteWhale'
+  return 'none'
+}
+
+/**
+ * Le format d'une partie : sa longueur, et sa première donne.
+ *
+ * Dix manches de 1 à 10 cartes est le format du livret, et reste le défaut.
+ * Mais une table qui a une heure devant elle, ou qui veut des mains pleines dès
+ * la première manche, n'a pas à changer de jeu pour ça : elle change ces deux
+ * chiffres, et le reste — plafond du paquet, houle, tableau des scores,
+ * résumé partagé — suit.
+ *
+ * Le format se fige au lancement de la partie et voyage avec elle : une partie
+ * en 6 manches relue dans l'historique doit se relire en 6 manches, même si le
+ * réglage a changé depuis.
+ */
+export interface GameFormat {
+  /** Nombre de manches de la partie. */
+  rounds: number
+  /**
+   * Cartes distribuées à la première manche. Chaque manche en ajoute une, tant
+   * que le paquet suit.
+   */
+  firstRoundCards: number
+}
+
+export const MIN_ROUNDS = 1
+export const MAX_ROUNDS = 20
+export const MIN_FIRST_CARDS = 1
+export const MAX_FIRST_CARDS = 10
+
+/** Le format du livret : dix manches, une carte à la première. */
+export const DEFAULT_FORMAT: GameFormat = { rounds: 10, firstRoundCards: 1 }
+
+/** Ramène un format dans ses bornes. Un réglage bricolé ne casse pas la partie. */
+export function clampFormat(format: GameFormat): GameFormat {
+  const bound = (value: number, min: number, max: number) =>
+    Number.isInteger(value) ? Math.min(max, Math.max(min, value)) : min
+  return {
+    rounds: bound(format.rounds, MIN_ROUNDS, MAX_ROUNDS),
+    firstRoundCards: bound(format.firstRoundCards, MIN_FIRST_CARDS, MAX_FIRST_CARDS),
+  }
 }
 
 /**
@@ -58,6 +137,17 @@ export const DEFAULT_OPTIONS: GameOptions = {
  * compte quoi qu'il arrive à la mise, d'où sa place hors des primes.
  */
 export const RASCAL_VALUES = [-20, -10, 0, 10, 20] as const
+
+/**
+ * Le pas d'Harry le Géant : un pli de plus, un pli de moins, ou rien.
+ *
+ * C'est un déplacement de la mise et non une mise : on garde le chiffre
+ * annoncé et le pas séparément, ce qui permet de dire « 3 devenue 4 » sur la
+ * tuile, de tenir la borne du ±1 quelle que soit le nombre d'allers-retours
+ * dans la manche, et de relire une manche corrigée sans que la mise dérive
+ * d'un pli à chaque visite.
+ */
+export const HARRY_VALUES = [-1, 0, 1] as const
 
 export interface Player {
   id: Id
@@ -67,11 +157,17 @@ export interface Player {
 
 export interface RoundEntry {
   playerId: Id
+  /** La mise annoncée. Celle qui est défendue vaut `bid + harry`. */
   bid: number
   tricks: number
   bonus: RoundBonus
   /** Pari de Rascal Jack. Absent quand il n'y en a pas eu. */
   rascal?: number
+  /**
+   * Pas d'Harry le Géant, −1 ou +1. Absent quand la mise annoncée est restée
+   * celle qu'on a défendue.
+   */
+  harry?: number
   /**
    * Boulet de canon chargé pour la manche. Absent quand le joueur a tiré à la
    * mitraille — un défaut ne s'écrit pas, comme un zéro ne s'écrit pas.
@@ -80,7 +176,7 @@ export interface RoundEntry {
 }
 
 export interface Round {
-  index: number // 1..10
+  index: number // 1..format.rounds
   cards: number // cartesDeLaManche
   /**
    * Plis écartés par le Kraken ou la Baleine blanche, que personne ne remporte.
@@ -104,6 +200,8 @@ export interface Game {
   /** Ordre à table. */
   playerIds: Id[]
   options: GameOptions
+  /** Longueur de la partie et première donne, figées au lancement. */
+  format: GameFormat
   /** Manches validées uniquement. */
   rounds: Round[]
   /**
@@ -129,6 +227,8 @@ export interface Settings {
    * qui se reprend en deux touches, pas une partie.
    */
   defaultOptions: GameOptions
+  /** Le format dont part une nouvelle partie. Même règle que les options. */
+  defaultFormat: GameFormat
 }
 
 /** Saisie en cours, non encore validée. Permet de reprendre à la manche exacte. */
@@ -147,6 +247,14 @@ export interface Draft {
   bonus: Record<Id, RoundBonus>
   /** Pari de Rascal Jack, par joueur. Zéro quand il n'y en a pas. */
   rascal: Record<Id, number>
+  /**
+   * Pas d'Harry le Géant, par joueur. Zéro quand la mise n'a pas bougé.
+   *
+   * Il vit dans la saisie et pas dans les mises : Harry se joue une fois les
+   * cartes en main, donc après la phase des mises. C'est ce qui permet de le
+   * poser depuis les résultats sans rouvrir la phase d'avant.
+   */
+  harry: Record<Id, number>
   /** Boulet de canon chargé, par joueur. Faux vaut mitraille. */
   cannonball: Record<Id, boolean>
   /** Plis écartés de la manche par le Kraken ou la Baleine blanche. */
@@ -178,7 +286,6 @@ export interface Store {
   liveDraft?: Draft
 }
 
-export const TOTAL_ROUNDS = 10
 export const MIN_PLAYERS = 2
 export const MAX_PLAYERS = 8
 

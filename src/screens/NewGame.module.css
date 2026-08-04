@@ -123,3 +123,62 @@
   line-height: 1.45;
   color: var(--card-muted);
 }
+
+/* ------------------------------------------------------------- le format */
+
+/* Le format vient après les bascules, dans le même panneau : un filet l'en
+   sépare, comme les options se séparent entre elles. */
+.format {
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--space-3);
+  margin-top: var(--space-3);
+  min-width: 0;
+}
+
+.formatRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  min-width: 0;
+}
+
+.formatRow + .formatRow {
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.formatText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.formatLabel {
+  font-size: var(--size-label);
+  font-weight: 600;
+}
+
+.formatHelp {
+  font-size: var(--size-caption);
+  line-height: 1.45;
+  color: var(--card-muted);
+}
+
+/* Le compteur ne s'étire pas : il garde sa largeur de commande, le texte
+   prend ce qui reste et se replie tout seul. */
+.formatStepper {
+  flex: none;
+  width: 132px;
+  max-width: 45%;
+}
+
+.formatNote {
+  font-size: var(--size-caption);
+  line-height: 1.45;
+  color: var(--card-muted);
+  margin-top: var(--space-3);
+}

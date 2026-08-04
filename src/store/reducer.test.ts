@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { draftFor, reducer, runningGame, type Action } from './reducer.ts'
 import { emptyStore, normalise, parseStore, serialiseStore } from './storage.ts'
-import { DEFAULT_OPTIONS, GREY_BEARD, makeBonus, type Store } from '../domain/types.ts'
+import {
+  DEFAULT_FORMAT,
+  DEFAULT_OPTIONS,
+  GREY_BEARD,
+  MAX_ROUNDS,
+  MIN_FIRST_CARDS,
+  makeBonus,
+  type Store,
+} from '../domain/types.ts'
 
 const run = (store: Store, ...actions: Action[]): Store =>
   actions.reduce((current, action) => reducer(current, action), store)
@@ -341,7 +349,8 @@ describe('options par défaut', () => {
     // personne ne les a touchées, et l'écran part de ce réglage.
     expect(DEFAULT_OPTIONS).toEqual({
       bonusIfBidMissed: false,
-      seaMonsters: false,
+      kraken: false,
+      whiteWhale: false,
       advancedPirates: false,
       rascalScoring: false,
       cannonball: false,
@@ -363,7 +372,7 @@ describe('options par défaut', () => {
       settings: {
         locale: 'fr',
         theme: 'system',
-        lastOptions: { bonusIfBidMissed: true, seaMonsters: false, advancedPirates: false },
+        lastOptions: { bonusIfBidMissed: true, kraken: false, advancedPirates: false },
       },
     })
     expect(store.settings.defaultOptions).toEqual(DEFAULT_OPTIONS)
@@ -374,9 +383,9 @@ describe('options par défaut', () => {
       schemaVersion: 1,
       players: [],
       games: [],
-      settings: { locale: 'fr', theme: 'system', defaultOptions: { seaMonsters: true } },
+      settings: { locale: 'fr', theme: 'system', defaultOptions: { kraken: true } },
     })
-    expect(store.settings.defaultOptions).toEqual({ ...DEFAULT_OPTIONS, seaMonsters: true })
+    expect(store.settings.defaultOptions).toEqual({ ...DEFAULT_OPTIONS, kraken: true })
   })
 })
 
@@ -608,7 +617,7 @@ describe('variantes', () => {
     run(seeded(), {
       type: 'game/start',
       playerIds: ['p1', 'p2', 'p3'],
-      options: { ...DEFAULT_OPTIONS, seaMonsters: true, advancedPirates: true },
+      options: { ...DEFAULT_OPTIONS, kraken: true, advancedPirates: true },
       id: 'g1',
       now: '2026-01-01T20:00:00.000Z',
     })
@@ -714,7 +723,8 @@ describe('variantes', () => {
     // jamais joué, donc son « comme avant » est « non ».
     expect(store.games[0].options).toEqual({
       bonusIfBidMissed: true,
-      seaMonsters: false,
+      kraken: false,
+      whiteWhale: false,
       advancedPirates: false,
       rascalScoring: false,
       cannonball: false,
@@ -817,7 +827,7 @@ describe('le fantôme de Barbe Grise', () => {
   })
 
   it('se recalcule quand un pli est écarté par un monstre marin', () => {
-    let store = twoPlayers({ seaMonsters: true })
+    let store = twoPlayers({ kraken: true })
     store = playRound(store, [
       ['p1', 0, 0],
       ['p2', 0, 0],
@@ -1034,5 +1044,277 @@ describe('Boulet de canon', () => {
       ['p3', 0, 0],
     ])
     expect(parseStore(serialiseStore(store)).store).toEqual(store)
+  })
+})
+
+describe('format de partie', () => {
+  /** Une table à trois, au format demandé. */
+  const table = (format: { rounds: number; firstRoundCards: number }) =>
+    run(seeded(), {
+      type: 'game/start',
+      playerIds: ['p1', 'p2', 'p3'],
+      options: { ...DEFAULT_OPTIONS },
+      format,
+      id: 'g1',
+      now: '2026-01-01T20:00:00.000Z',
+    })
+
+  it('part du livret quand personne ne demande rien', () => {
+    expect(started().games[0].format).toEqual(DEFAULT_FORMAT)
+  })
+
+  it('fige le format demandé sur la partie', () => {
+    const store = table({ rounds: 6, firstRoundCards: 3 })
+    expect(store.games[0].format).toEqual({ rounds: 6, firstRoundCards: 3 })
+  })
+
+  it('le retient comme réglage des prochaines parties', () => {
+    const store = table({ rounds: 6, firstRoundCards: 3 })
+    expect(store.settings.defaultFormat).toEqual({ rounds: 6, firstRoundCards: 3 })
+  })
+
+  it('ramène un format hors bornes plutôt que de le refuser', () => {
+    const store = table({ rounds: 99, firstRoundCards: 0 })
+    expect(store.games[0].format).toEqual({ rounds: MAX_ROUNDS, firstRoundCards: MIN_FIRST_CARDS })
+  })
+
+  it('distribue la première manche selon le format', () => {
+    let store = table({ rounds: 3, firstRoundCards: 4 })
+    store = playRound(store, [
+      ['p1', 4, 4],
+      ['p2', 0, 0],
+      ['p3', 0, 0],
+    ])
+    expect(store.games[0].rounds[0].cards).toBe(4)
+    // La manche suivante monte d'une carte, comme au format du livret.
+    expect(draftFor(store, runningGame(store)!).roundIndex).toBe(2)
+    store = playRound(store, [
+      ['p1', 5, 5],
+      ['p2', 0, 0],
+      ['p3', 0, 0],
+    ])
+    expect(store.games[0].rounds[1].cards).toBe(5)
+  })
+
+  it('ferme le brouillon à la dernière manche du format, pas à la dixième', () => {
+    let store = table({ rounds: 2, firstRoundCards: 1 })
+    store = playRound(store, [
+      ['p1', 1, 1],
+      ['p2', 0, 0],
+      ['p3', 0, 0],
+    ])
+    expect(store.draft).toBeDefined()
+    store = playRound(store, [
+      ['p1', 2, 2],
+      ['p2', 0, 0],
+      ['p3', 0, 0],
+    ])
+    expect(store.draft).toBeUndefined()
+  })
+
+  it('rejoue la revanche au même format', () => {
+    let store = table({ rounds: 4, firstRoundCards: 2 })
+    store = run(store, { type: 'game/finish', now: '2026-01-01T21:00:00.000Z' })
+    store = run(store, { type: 'game/rematch', id: 'g2', now: '2026-01-01T21:05:00.000Z' })
+    expect(runningGame(store)?.format).toEqual({ rounds: 4, firstRoundCards: 2 })
+  })
+
+  it('relit une partie d avant le format réglable au format du livret', () => {
+    const store = normalise({
+      schemaVersion: 1,
+      players: [{ id: 'p1', name: 'Ana' }],
+      games: [{ id: 'g', playerIds: ['p1', 'p2'], options: {}, rounds: [] }],
+    })
+    expect(store.games[0].format).toEqual(DEFAULT_FORMAT)
+  })
+
+  it('jette les manches qui débordent du format de leur partie', () => {
+    const store = normalise({
+      schemaVersion: 1,
+      players: [],
+      games: [
+        {
+          id: 'g',
+          playerIds: ['p1', 'p2'],
+          options: {},
+          format: { rounds: 3, firstRoundCards: 1 },
+          rounds: [
+            { index: 3, cards: 3, entries: [] },
+            { index: 4, cards: 4, entries: [] },
+          ],
+        },
+      ],
+    })
+    expect(store.games[0].rounds.map((round) => round.index)).toEqual([3])
+  })
+
+  it('traverse l aller-retour export/import', () => {
+    const store = table({ rounds: 6, firstRoundCards: 3 })
+    expect(parseStore(serialiseStore(store)).store).toEqual(store)
+  })
+})
+
+describe('les deux monstres marins', () => {
+  const table = (options: Partial<typeof DEFAULT_OPTIONS>) =>
+    run(seeded(), {
+      type: 'game/start',
+      playerIds: ['p1', 'p2', 'p3'],
+      options: { ...DEFAULT_OPTIONS, ...options },
+      id: 'g1',
+      now: '2026-01-01T20:00:00.000Z',
+    })
+
+  it('rend une partie d avant la coupe aux deux clés', () => {
+    // `seaMonsters` nommait les deux : la partie les a joués tous les deux.
+    const store = normalise({
+      schemaVersion: 1,
+      players: [],
+      games: [
+        { id: 'g', playerIds: ['p1', 'p2'], options: { seaMonsters: true }, rounds: [] },
+      ],
+    })
+    expect(store.games[0].options.kraken).toBe(true)
+    expect(store.games[0].options.whiteWhale).toBe(true)
+  })
+
+  it('ouvre le compteur de plis écartés dès qu un des deux est au paquet', () => {
+    for (const options of [{ kraken: true }, { whiteWhale: true }]) {
+      const store = run(table(options), { type: 'game/setVoided', voided: 1 })
+      expect(store.draft?.voided).toBe(1)
+    }
+  })
+
+  it('le ferme quand aucun des deux n est au paquet', () => {
+    const store = run(table({}), { type: 'game/setVoided', voided: 1 })
+    expect(store.draft?.voided).toBe(0)
+  })
+})
+
+describe('Harry le Géant', () => {
+  const pirates = () =>
+    run(seeded(), {
+      type: 'game/start',
+      playerIds: ['p1', 'p2', 'p3'],
+      options: { ...DEFAULT_OPTIONS, advancedPirates: true },
+      id: 'g1',
+      now: '2026-01-01T20:00:00.000Z',
+    })
+
+  it('se pose depuis les résultats, sans revenir aux mises', () => {
+    const store = run(
+      pirates(),
+      { type: 'game/setBid', playerId: 'p1', bid: 1 },
+      { type: 'game/phase', phase: 'results' },
+      { type: 'game/setHarry', playerId: 'p1', step: 1 },
+    )
+    expect(store.draft?.phase).toBe('results')
+    // La mise annoncée ne bouge pas : c'est le pas qui porte le déplacement.
+    expect(store.draft?.bids.p1).toBe(1)
+    expect(store.draft?.harry.p1).toBe(1)
+  })
+
+  it('reste fermé sans les pouvoirs des pirates', () => {
+    const store = run(started(), { type: 'game/setHarry', playerId: 'p1', step: 1 })
+    expect(store.draft?.harry.p1).toBe(0)
+  })
+
+  it('refuse un pas de plus d un pli', () => {
+    const store = run(pirates(), { type: 'game/setHarry', playerId: 'p1', step: 2 })
+    expect(store.draft?.harry.p1).toBe(0)
+  })
+
+  it('n écrit le pas dans la manche que si quelqu un l a joué', () => {
+    let store = run(pirates(), { type: 'game/setHarry', playerId: 'p1', step: -1 })
+    store = playRound(store, [
+      ['p1', 1, 0],
+      ['p2', 0, 0],
+      ['p3', 0, 1],
+    ])
+    const entries = store.games[0].rounds[0].entries
+    expect(entries[0].harry).toBe(-1)
+    expect(entries[1].harry).toBeUndefined()
+  })
+
+  it('revient quand on rouvre la manche pour la corriger', () => {
+    let store = run(pirates(), { type: 'game/setHarry', playerId: 'p1', step: 1 })
+    store = playRound(store, [
+      ['p1', 0, 1],
+      ['p2', 0, 0],
+      ['p3', 0, 0],
+    ])
+    store = run(store, { type: 'game/editRound', index: 1 })
+    expect(store.draft?.harry.p1).toBe(1)
+    expect(store.draft?.harry.p2).toBe(0)
+  })
+
+  it('traverse l aller-retour export/import', () => {
+    let store = run(pirates(), { type: 'game/setHarry', playerId: 'p1', step: 1 })
+    store = playRound(store, [
+      ['p1', 0, 1],
+      ['p2', 0, 0],
+      ['p3', 0, 0],
+    ])
+    expect(parseStore(serialiseStore(store)).store).toEqual(store)
+  })
+})
+
+describe('les plis partent de la mise', () => {
+  it('sème chaque tuile sur la mise de son joueur en entrant aux résultats', () => {
+    // Personne n'a été repris en main : la valeur la plus probable est la mise,
+    // et une manche où tout le monde la tient se valide sans un geste.
+    let store = started()
+    store = playRound(store, [
+      ['p1', 1, 1],
+      ['p2', 0, 0],
+      ['p3', 0, 0],
+    ])
+    store = playRound(store, [
+      ['p1', 2, 2],
+      ['p2', 0, 0],
+      ['p3', 0, 0],
+    ])
+    // Manche 3, 3 cartes : 2 pour p1, 1 pour p2, rien pour p3.
+    store = run(
+      store,
+      { type: 'game/setBid', playerId: 'p1', bid: 2 },
+      { type: 'game/setBid', playerId: 'p2', bid: 1 },
+      { type: 'game/setBid', playerId: 'p3', bid: 0 },
+      { type: 'game/phase', phase: 'results' },
+    )
+    expect(store.draft?.tricks).toMatchObject({ p1: 2, p2: 1, p3: 0 })
+    expect(store.draft?.autoTricks).toBeNull()
+  })
+
+  it('resème après une correction de mise', () => {
+    const store = run(
+      started(),
+      { type: 'game/setBid', playerId: 'p1', bid: 1 },
+      { type: 'game/phase', phase: 'results' },
+      { type: 'game/phase', phase: 'bids' },
+      { type: 'game/setBid', playerId: 'p1', bid: 0 },
+      { type: 'game/setBid', playerId: 'p2', bid: 1 },
+      { type: 'game/phase', phase: 'results' },
+    )
+    expect(store.draft?.tricks).toMatchObject({ p1: 0, p2: 1, p3: 0 })
+  })
+
+  it('sème la mise déplacée par Harry, pas celle qu on avait annoncée', () => {
+    const store = run(
+      run(seeded(), {
+        type: 'game/start',
+        playerIds: ['p1', 'p2', 'p3'],
+        options: { ...DEFAULT_OPTIONS, advancedPirates: true },
+        id: 'g1',
+        now: '2026-01-01T20:00:00.000Z',
+      }),
+      { type: 'game/setBid', playerId: 'p1', bid: 1 },
+      { type: 'game/phase', phase: 'results' },
+      { type: 'game/setHarry', playerId: 'p1', step: -1 },
+      // Un aller-retour par les mises : les tuiles non reprises en main se
+      // resèment, et p1 repart de sa mise déplacée.
+      { type: 'game/phase', phase: 'bids' },
+      { type: 'game/phase', phase: 'results' },
+    )
+    expect(store.draft?.tricks.p1).toBe(0)
   })
 })
