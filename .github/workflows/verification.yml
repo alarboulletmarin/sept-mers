@@ -21,7 +21,9 @@ concurrency:
 jobs:
   verifier:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Six vérifications dont cinq parcours navigateur : le budget d'avant, 15,
+    # était taillé pour quatre.
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v4
