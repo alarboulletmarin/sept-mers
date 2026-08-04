@@ -9,7 +9,7 @@ import {
   totals,
   winnerIds,
 } from './stats.ts'
-import { makeBonus, type Game, type Player, type RoundBonus } from './types.ts'
+import { DEFAULT_OPTIONS, makeBonus, type Game, type Player, type RoundBonus } from './types.ts'
 
 type Line = [string, number, number, Partial<RoundBonus>?]
 
@@ -20,7 +20,7 @@ function game(rounds: { cards: number; lines: Line[] }[], bonusIfBidMissed = tru
     startedAt: '2026-01-01T20:00:00.000Z',
     endedAt: '2026-01-01T21:00:00.000Z',
     playerIds,
-    options: { bonusIfBidMissed },
+    options: { ...DEFAULT_OPTIONS, bonusIfBidMissed },
     nameSnapshot: Object.fromEntries(playerIds.map((id) => [id, id.toUpperCase()])),
     rounds: rounds.map((round, index) => ({
       index: index + 1,

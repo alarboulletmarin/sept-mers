@@ -4,7 +4,13 @@ import {
   type BonusMap,
   type TrickMap,
 } from '../domain/validation.ts'
-import { BONUS_KEYS, BONUS_VALUES, type Id, type RoundBonus } from '../domain/types.ts'
+import {
+  BONUS_KEYS,
+  BONUS_VALUES,
+  RASCAL_VALUES,
+  type Id,
+  type RoundBonus,
+} from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import styles from './BonusDrawer.module.css'
 
@@ -14,6 +20,11 @@ interface BonusDrawerProps {
   bonuses: BonusMap
   tricks: TrickMap
   onChange: (key: keyof RoundBonus, value: number) => void
+  /** Paris de Rascal Jack, ou `null` quand la variante n'est pas en jeu. */
+  rascal?: Record<Id, number> | null
+  /** Nom du joueur qui a déjà posé le pari, s'il y en a un autre. */
+  rascalHeldBy?: string | null
+  onRascalChange?: (value: number) => void
 }
 
 /**
@@ -42,9 +53,13 @@ export function BonusDrawer({
   bonuses,
   tricks,
   onChange,
+  rascal = null,
+  rascalHeldBy = null,
+  onRascalChange,
 }: BonusDrawerProps) {
   const { t, signed } = useT()
   const bonus = bonuses[playerId]
+  const wager = rascal?.[playerId] ?? 0
 
   const total = BONUS_KEYS.reduce((sum, key) => sum + BONUS_VALUES[key] * bonus[key], 0)
   const count = BONUS_KEYS.reduce((sum, key) => sum + bonus[key], 0)
@@ -109,6 +124,38 @@ export function BonusDrawer({
           )
         })}
       </ul>
+
+      {/*
+        Le pari de Rascal Jack n'est pas une prime : il se compte même quand la
+        mise est ratée, et il peut coûter des points. D'où sa place à part, et
+        d'où un choix exclusif plutôt qu'un compteur — on ne parie pas deux
+        fois, on parie une somme.
+      */}
+      {rascal && (
+        <section className={styles.rascal}>
+          <p className={styles.rascalHead}>
+            <span className={styles.name}>{t('bonus.rascal')}</span>
+            <span className={styles.help}>
+              {rascalHeldBy ? t('bonus.rascal.taken', { name: rascalHeldBy }) : t('bonus.rascal.help')}
+            </span>
+          </p>
+          <div className="segmented" role="radiogroup" aria-label={t('bonus.rascal')}>
+            {RASCAL_VALUES.map((value) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={wager === value}
+                className="segmented-option"
+                disabled={Boolean(rascalHeldBy) && value !== 0}
+                onClick={() => onRascalChange?.(value)}
+              >
+                {value === 0 ? t('bonus.rascal.none') : signed(value)}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

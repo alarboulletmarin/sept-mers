@@ -103,7 +103,13 @@ for (const width of WIDTHS) {
     await page.getByPlaceholder('Nom du joueur').fill(n)
     await page.getByRole('button', { name: 'Ajouter', exact: true }).click()
   }
-  await audit('nouvelle partie, huit joueurs')
+  // Les variantes activées : elles ajoutent trois surfaces à auditer — le
+  // panneau à trois bascules, le compteur de plis écartés dans la mosaïque, et
+  // le pari du Rascal dans la feuille des primes.
+  await page.getByRole('button', { name: 'Options' }).click()
+  await page.getByRole('switch', { name: /Kraken/ }).click()
+  await page.getByRole('switch', { name: /Pouvoirs/ }).click()
+  await audit('nouvelle partie, huit joueurs, options dépliées')
 
   await page.getByRole('button', { name: 'Commencer la partie' }).click()
   await page.waitForSelector('[data-player-tile]')
@@ -111,7 +117,8 @@ for (const width of WIDTHS) {
 
   const tiles = page.locator('[data-player-tile]')
   const play = async (round) => {
-    const cards = Math.min(round, 8)
+    // 72 cartes avec les monstres : à huit joueurs, la manche 9 tient encore.
+    const cards = Math.min(round, 9)
     for (let i = 0; i < 8; i += 1) await setValue(tiles.nth(i), i === 0 ? cards : 0)
     await page.getByRole('button', { name: 'Valider les mises' }).click()
     for (let i = 0; i < 7; i += 1) await setValue(tiles.nth(i), i === 0 ? cards : 0)
@@ -123,9 +130,9 @@ for (const width of WIDTHS) {
   await audit('manche 10, valeur la plus haute')
 
   // La feuille de bonus ouverte.
-  for (let i = 0; i < 8; i += 1) await setValue(tiles.nth(i), i === 0 ? 8 : 0)
+  for (let i = 0; i < 8; i += 1) await setValue(tiles.nth(i), i === 0 ? 9 : 0)
   await page.getByRole('button', { name: 'Valider les mises' }).click()
-  for (let i = 0; i < 7; i += 1) await setValue(tiles.nth(i), i === 0 ? 8 : 0)
+  for (let i = 0; i < 7; i += 1) await setValue(tiles.nth(i), i === 0 ? 9 : 0)
   await tiles.nth(0).getByRole('button', { name: /^(Bonus|\+ ?Bonus)/ }).click()
   await page.waitForSelector('text=14 noir')
   await audit('feuille de bonus ouverte')
@@ -143,7 +150,7 @@ for (const width of WIDTHS) {
   await audit('règles en feuille')
   await page.keyboard.press('Escape')
 
-  // Fin de partie : classement, trois graphiques, tableau complet.
+  // Fin de partie : classement, deux graphiques, tableau complet.
   await page.getByRole('button', { name: 'Valider la manche' }).click()
   await page.waitForSelector('text=Fin de partie')
   await audit('fin de partie, graphiques compris')

@@ -2,6 +2,7 @@ import {
   BONUS_KEYS,
   BONUS_LIMITS,
   EMPTY_BONUS,
+  RASCAL_VALUES,
   type Id,
   type RoundBonus,
 } from './types.ts'
@@ -19,6 +20,9 @@ export type IssueCode =
   | 'bonus.mermaidBudget'
   | 'bonus.skullKingCaptured'
   | 'bonus.moreCapturesThanTricks'
+  | 'voided.range'
+  | 'rascal.multiple'
+  | 'rascal.value'
 
 export interface Issue {
   code: IssueCode
@@ -81,11 +85,23 @@ export function sumBids(bids: BidMap, playerIds: Id[]): number {
 // ------------------------------------------------------------ Phase résultats
 
 /**
- * Sans Kraken ni Baleine blanche, aucun pli ne disparaît : la somme des plis
- * vaut exactement le nombre de cartes de la manche.
+ * Plis réellement attribuables. Sans Kraken ni Baleine blanche, aucun pli ne
+ * disparaît et c'est le nombre de cartes ; avec eux, un pli peut n'être
+ * remporté par personne, et il faut le retirer du compte.
  */
-export function validateTricks(tricks: TrickMap, cards: number, playerIds: Id[]): Issue[] {
+export function trickTarget(cards: number, voided = 0): number {
+  return Math.max(0, cards - voided)
+}
+
+/** La somme des plis vaut exactement le nombre de plis attribuables. */
+export function validateTricks(
+  tricks: TrickMap,
+  cards: number,
+  playerIds: Id[],
+  voided = 0,
+): Issue[] {
   const issues: Issue[] = []
+  const target = trickTarget(cards, voided)
   let assigned = 0
   let complete = true
 
@@ -96,33 +112,69 @@ export function validateTricks(tricks: TrickMap, cards: number, playerIds: Id[])
       complete = false
       continue
     }
-    if (!Number.isInteger(value) || value < 0 || value > cards) {
-      issues.push({ code: 'tricks.range', playerId: id, data: { max: cards } })
+    if (!Number.isInteger(value) || value < 0 || value > target) {
+      issues.push({ code: 'tricks.range', playerId: id, data: { max: target } })
       complete = false
       continue
     }
     assigned += value
   }
 
-  if (complete && assigned !== cards) {
-    issues.push({ code: 'tricks.sum', data: { assigned, cards, diff: cards - assigned } })
+  if (complete && assigned !== target) {
+    issues.push({ code: 'tricks.sum', data: { assigned, cards: target, diff: target - assigned } })
   }
   return issues
 }
 
 /** Plis restant à attribuer, pour le compteur de pied d'écran. */
-export function remainingTricks(tricks: TrickMap, cards: number, playerIds: Id[]): number {
+export function remainingTricks(
+  tricks: TrickMap,
+  cards: number,
+  playerIds: Id[],
+  voided = 0,
+): number {
   const assigned = playerIds.reduce((total, id) => total + (tricks[id] ?? 0), 0)
-  return cards - assigned
+  return trickTarget(cards, voided) - assigned
+}
+
+/** On ne peut pas écarter plus de plis que la manche n'en distribue. */
+export function validateVoided(voided: number, cards: number): Issue[] {
+  if (!Number.isInteger(voided) || voided < 0 || voided > cards) {
+    return [{ code: 'voided.range', data: { max: cards } }]
+  }
+  return []
 }
 
 /**
- * Le joueur dont la valeur se déduit des autres, ou `null` s'il en manque
- * plusieurs. La phase résultats le complète automatiquement.
+ * Le paquet ne contient qu'un seul Rascal Jack : au plus un joueur peut avoir
+ * parié dans la manche.
  */
-export function soleMissingPlayer(tricks: TrickMap, playerIds: Id[]): Id | null {
-  const missing = playerIds.filter((id) => tricks[id] === null || tricks[id] === undefined)
-  return missing.length === 1 ? missing[0] : null
+export function validateRascal(rascal: Record<Id, number>, playerIds: Id[]): Issue[] {
+  const issues: Issue[] = []
+  let placed = 0
+  for (const id of playerIds) {
+    const value = rascal[id] ?? 0
+    if (!(RASCAL_VALUES as readonly number[]).includes(value)) {
+      issues.push({ code: 'rascal.value', playerId: id })
+      continue
+    }
+    if (value !== 0) placed += 1
+  }
+  if (placed > 1) issues.push({ code: 'rascal.multiple' })
+  return issues
+}
+
+/**
+ * Le joueur dont la valeur se déduit des autres, ou `null` s'il y en a
+ * plusieurs. La phase résultats le complète automatiquement.
+ *
+ * Les plis partent semés sur les mises : plus personne n'est « non renseigné »,
+ * et c'est donc le fait d'avoir été repris en main, et lui seul, qui distingue
+ * celui qu'on déduit de ceux qu'on a posés.
+ */
+export function soleUntouchedPlayer(touched: Id[], playerIds: Id[]): Id | null {
+  const untouched = playerIds.filter((id) => !touched.includes(id))
+  return untouched.length === 1 ? untouched[0] : null
 }
 
 // -------------------------------------------------------------------- Bonus
@@ -268,10 +320,12 @@ export function validateRound(
   bonuses: BonusMap,
   cards: number,
   playerIds: Id[],
+  voided = 0,
 ): Issue[] {
   return [
     ...validateBids(bids, cards, playerIds),
-    ...validateTricks(tricks, cards, playerIds),
+    ...validateVoided(voided, cards),
+    ...validateTricks(tricks, cards, playerIds, voided),
     ...validateBonuses(bonuses, tricks, playerIds),
   ]
 }

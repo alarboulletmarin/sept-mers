@@ -4,8 +4,9 @@ import { useStore } from '../app/StoreProvider.tsx'
 import type { Route } from '../app/Router.tsx'
 import { Button } from '../components/Button.tsx'
 import { Icon } from '../components/Icon.tsx'
+import { OPTIONS, OptionSwitch } from '../components/OptionSwitch.tsx'
 import { ChipGrid, PlayerChip } from '../components/PlayerChip.tsx'
-import { MAX_PLAYERS, MIN_PLAYERS, type Id } from '../domain/types.ts'
+import { MAX_PLAYERS, MIN_PLAYERS, type GameOptions, type Id } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import { runningGame } from '../store/reducer.ts'
 import { newId } from '../store/storage.ts'
@@ -18,9 +19,11 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
   const [seated, setSeated] = useState<Id[]>([])
   const [name, setName] = useState('')
   const [optionsOpen, setOptionsOpen] = useState(false)
-  const [bonusIfBidMissed, setBonusIfBidMissed] = useState(
-    store.settings.lastOptions.bonusIfBidMissed,
-  )
+  // Les options de la dernière partie servent de départ : on rejoue le plus
+  // souvent avec les mêmes règles que la fois d'avant.
+  const [options, setOptions] = useState<GameOptions>(() => ({ ...store.settings.lastOptions }))
+  const toggleOption = (key: keyof GameOptions) => () =>
+    setOptions((current) => ({ ...current, [key]: !current[key] }))
   const [nameError, setNameError] = useState<string | null>(null)
   const dragFrom = useRef<number | null>(null)
 
@@ -75,7 +78,7 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
     dispatch({
       type: 'game/start',
       playerIds: seated,
-      options: { bonusIfBidMissed },
+      options,
     })
     go({ name: 'game' })
   }
@@ -232,25 +235,15 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
         </button>
         {optionsOpen && (
           <div className={styles.optionPanel}>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={bonusIfBidMissed}
-              className="switch"
-              onClick={() => setBonusIfBidMissed((value) => !value)}
-            >
-              <span className="stack-tight" style={{ gap: 2 }}>
-                <span className={styles.optionLabel}>{t('newGame.bonusIfBidMissed')}</span>
-                <span className={styles.optionHelp}>
-                  {bonusIfBidMissed
-                    ? t('newGame.bonusIfBidMissed.on')
-                    : t('newGame.bonusIfBidMissed.off')}
-                </span>
-              </span>
-              <span className="switch-track">
-                <span className="switch-knob" />
-              </span>
-            </button>
+            {OPTIONS.map(({ key }) => (
+              <OptionSwitch
+                key={key}
+                label={t(`newGame.${key}`)}
+                help={t(`newGame.${key}.${options[key] ? 'on' : 'off'}`)}
+                checked={options[key]}
+                onToggle={toggleOption(key)}
+              />
+            ))}
           </div>
         )}
       </section>

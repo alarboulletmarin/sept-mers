@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest'
 import {
   bonusCeiling,
   remainingTricks,
-  soleMissingPlayer,
+  soleUntouchedPlayer,
   sumBids,
   validateBids,
   validateBonuses,
+  validateRascal,
   validateTricks,
+  validateVoided,
 } from './validation.ts'
 import { makeBonus, type RoundBonus } from './types.ts'
 
@@ -69,10 +71,14 @@ describe('plis', () => {
     expect(remainingTricks({ a: 2, b: null, c: 1 }, 5, players)).toBe(2)
   })
 
-  it('désigne le dernier joueur non renseigné', () => {
-    expect(soleMissingPlayer({ a: 2, b: null, c: 1 }, players)).toBe('b')
-    expect(soleMissingPlayer({ a: 2, b: null, c: null }, players)).toBeNull()
-    expect(soleMissingPlayer({ a: 2, b: 2, c: 1 }, players)).toBeNull()
+  it('désigne le dernier joueur non repris en main', () => {
+    expect(soleUntouchedPlayer(['a', 'c'], players)).toBe('b')
+    expect(soleUntouchedPlayer(['a'], players)).toBeNull()
+    expect(soleUntouchedPlayer(['a', 'b', 'c'], players)).toBeNull()
+  })
+
+  it('ignore un joueur inconnu dans la liste des repris en main', () => {
+    expect(soleUntouchedPlayer(['a', 'c', 'fantôme'], players)).toBe('b')
   })
 })
 
@@ -210,5 +216,54 @@ describe('plafond d un compteur de bonus', () => {
   it('ne descend jamais sous zéro', () => {
     const map = { ...noBonus(), b: makeBonus({ colorFourteens: 3 }) }
     expect(bonusCeiling('colorFourteens', 'a', map, tricks, players).max).toBe(0)
+  })
+})
+
+describe('plis écartés par les monstres marins', () => {
+  it('accepte une somme amputée des plis écartés', () => {
+    expect(validateTricks({ a: 2, b: 1, c: 0 }, 5, players, 2)).toEqual([])
+  })
+
+  it('refuse une somme qui ignore les plis écartés', () => {
+    const issues = validateTricks({ a: 2, b: 2, c: 1 }, 5, players, 2)
+    expect(codes(issues)).toEqual(['tricks.sum'])
+  })
+
+  it('rabaisse la borne de chaque joueur', () => {
+    expect(codes(validateTricks({ a: 4, b: 0, c: 0 }, 5, players, 2))).toContain('tricks.range')
+  })
+
+  it('compte les plis restants sur ce qui reste à distribuer', () => {
+    expect(remainingTricks({ a: 1, b: 0, c: 0 }, 5, players, 2)).toBe(2)
+  })
+
+  it('accepte une manche entièrement écartée', () => {
+    expect(validateVoided(1, 1)).toEqual([])
+    expect(validateTricks({ a: 0, b: 0, c: 0 }, 1, players, 1)).toEqual([])
+  })
+
+  it('refuse plus de plis écartés que de cartes', () => {
+    expect(codes(validateVoided(3, 2))).toEqual(['voided.range'])
+    expect(codes(validateVoided(-1, 2))).toEqual(['voided.range'])
+  })
+})
+
+describe('pari de Rascal Jack', () => {
+  it('accepte un seul pari dans la manche', () => {
+    expect(validateRascal({ a: 20, b: 0, c: 0 }, players)).toEqual([])
+  })
+
+  it('accepte une manche sans pari', () => {
+    expect(validateRascal({}, players)).toEqual([])
+  })
+
+  it('refuse deux paris : il n y a qu un Rascal Jack', () => {
+    expect(codes(validateRascal({ a: 20, b: -10, c: 0 }, players))).toEqual(['rascal.multiple'])
+  })
+
+  it('refuse une valeur hors barème', () => {
+    expect(validateRascal({ a: 15, b: 0, c: 0 }, players)).toEqual([
+      { code: 'rascal.value', playerId: 'a' },
+    ])
   })
 })

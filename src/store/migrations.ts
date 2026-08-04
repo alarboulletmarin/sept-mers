@@ -6,6 +6,20 @@ export const CURRENT_SCHEMA_VERSION = 1
  * Montées de version successives. Une migration lit la forme `n` et rend la
  * forme `n + 1`. Le tableau est vide en v1 : il existe pour que la prochaine
  * version soit une addition et pas une réécriture.
+ *
+ * Ce qui ne mérite pas une montée de version : une addition. Les options de
+ * variante, les plis écartés d'une manche, le pari d'un joueur et la saisie
+ * mise de côté sont tous arrivés en v1, parce que `normalise` sait leur donner
+ * la valeur historique quand la clé manque — faux, zéro, rien. Aucun champ
+ * existant n'a changé de sens sur le disque.
+ *
+ * Ce qui la mériterait : une relecture. Le jour où une clé déjà écrite veut
+ * dire autre chose, ou disparaît au profit d'une autre forme.
+ *
+ * La retenue n'est pas de la coquetterie. `parseStore` refuse un fichier dont
+ * la version dépasse la sienne : monter la version ici, c'est empêcher un
+ * export fait sur un téléphone à jour d'être relu sur un téléphone qui n'a pas
+ * encore pris la mise à jour — deux personnes à la même table.
  */
 type Migration = (data: Record<string, unknown>) => Record<string, unknown>
 

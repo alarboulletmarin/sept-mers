@@ -5,12 +5,19 @@ export interface ScoreInput {
   tricks: number
   cards: number
   bonus: RoundBonus
+  /** Pari de Rascal Jack, signé. */
+  rascal?: number
   options: { bonusIfBidMissed: boolean }
 }
 
 export interface ScoreResult {
   bidPoints: number
   bonusPoints: number
+  /**
+   * Le pari de Rascal Jack, tenu à part des primes : l'option qui annule les
+   * primes d'une mise ratée ne l'annule pas, et lui seul peut être négatif.
+   */
+  rascalPoints: number
   total: number
   /** `over` = a misé plus qu'il n'a fait. */
   outcome: 'exact' | 'over' | 'under'
@@ -36,6 +43,7 @@ export function rawBonusPoints(bonus: RoundBonus): number {
 export function scoreRound(input: ScoreInput): ScoreResult {
   const { bid, tricks, cards, bonus, options } = input
   const bidMet = bid === tricks
+  const rascalPoints = input.rascal ?? 0
 
   const bidPoints =
     bid === 0
@@ -51,7 +59,8 @@ export function scoreRound(input: ScoreInput): ScoreResult {
   return {
     bidPoints,
     bonusPoints,
-    total: bidPoints + bonusPoints,
+    rascalPoints,
+    total: bidPoints + bonusPoints + rascalPoints,
     outcome: bidMet ? 'exact' : tricks < bid ? 'over' : 'under',
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cardsForRound, isCapped, roundsPlan } from './deck.ts'
+import { DECK_SIZE, cardsForRound, deckSize, isCapped, roundsPlan } from './deck.ts'
 
 describe('cartes de la manche', () => {
   it('distribue le numéro de la manche tant que le paquet suit', () => {
@@ -42,5 +42,22 @@ describe('plan de partie', () => {
     expect(roundsPlan(4).map((round) => round.cards)).toEqual([
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
     ])
+  })
+})
+
+describe('paquet des monstres marins', () => {
+  it('compte 2 cartes de plus', () => {
+    expect(deckSize({ seaMonsters: false })).toBe(DECK_SIZE)
+    expect(deckSize({ seaMonsters: true })).toBe(DECK_SIZE + 2)
+  })
+
+  it('fait tenir la manche 9 à huit joueurs', () => {
+    // 72 cartes pour 8 joueurs : 9 chacun, tout juste.
+    expect(cardsForRound(9, 8, deckSize({ seaMonsters: true }))).toBe(9)
+    expect(cardsForRound(9, 8)).toBe(8)
+  })
+
+  it('ne suffit toujours pas pour la manche 10 à huit joueurs', () => {
+    expect(cardsForRound(10, 8, deckSize({ seaMonsters: true }))).toBe(9)
   })
 })

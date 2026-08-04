@@ -37,15 +37,15 @@ export const rulesFr: RuleSection[] = [
     id: 'material',
     title: 'Le paquet',
     blocks: [
-      { kind: 'p', text: 'Soixante-dix cartes, réparties ainsi.' },
+      { kind: 'p', text: '70 cartes, réparties ainsi.' },
       {
         kind: 'ul',
         items: [
-          'Quatre couleurs numérotées de 1 à 14 : vert, jaune, violet, et le noir qui coupe.',
-          'Cinq Fuites, qui perdent volontairement.',
-          'Cinq pirates.',
+          '4 couleurs numérotées de 1 à 14 : vert, jaune, violet, et le noir qui coupe.',
+          '5 Fuites, qui perdent volontairement.',
+          '5 pirates.',
           'La Tigresse, qui se joue au choix en pirate ou en Fuite.',
-          'Deux sirènes.',
+          '2 sirènes.',
           'Le Skull King.',
         ],
       },
@@ -61,11 +61,11 @@ export const rulesFr: RuleSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: "La partie compte dix manches. À la première, chacun reçoit une carte, à la deuxième deux, et ainsi de suite jusqu'à dix. Le nombre de plis à remporter dans la manche est exactement le nombre de cartes en main.",
+        text: "La partie compte 10 manches. On reçoit 1 carte à la manche 1, 2 à la manche 2, et ainsi de suite jusqu'à 10. Le nombre de plis à remporter dans la manche est exactement le nombre de cartes en main.",
       },
       {
         kind: 'p',
-        text: "Une fois les cartes distribuées, tout le monde annonce en même temps combien de plis il compte remporter. On peut annoncer zéro. Ce chiffre est ferme pour toute la manche.",
+        text: "Une fois les cartes distribuées, tout le monde annonce en même temps combien de plis il compte remporter. On peut annoncer 0. Ce chiffre est ferme pour toute la manche.",
       },
       {
         kind: 'p',
@@ -77,7 +77,7 @@ export const rulesFr: RuleSection[] = [
       },
       {
         kind: 'p',
-        text: "À huit joueurs, le paquet ne suffit plus pour les deux dernières manches : elles se jouent à huit cartes chacune. L'app applique ce plafond toute seule.",
+        text: "À 8 joueurs, le paquet ne suffit plus pour les 2 dernières manches : elles se jouent à 8 cartes chacune. L'app applique ce plafond toute seule.",
       },
     ],
   },
@@ -105,19 +105,19 @@ export const rulesFr: RuleSection[] = [
     id: 'scoring',
     title: 'Compter les points',
     blocks: [
-      { kind: 'p', text: 'Deux cas, selon que l’annonce était zéro ou non.' },
+      { kind: 'p', text: '2 cas, selon que l’annonce était 0 ou non.' },
       {
         kind: 'ul',
         items: [
-          'Annonce à un ou plus, tenue exactement : vingt points par pli annoncé.',
-          "Annonce à un ou plus, ratée : dix points de moins par pli d'écart, dans un sens comme dans l'autre. Les plis remportés ne rapportent rien.",
-          'Annonce à zéro, tenue : dix points par carte distribuée dans la manche.',
-          'Annonce à zéro, ratée : dix points de moins par carte distribuée dans la manche.',
+          'Annonce à 1 ou plus, tenue exactement : 20 points par pli annoncé.',
+          "Annonce à 1 ou plus, ratée : 10 points de moins par pli d'écart, dans un sens comme dans l'autre. Les plis remportés ne rapportent rien.",
+          'Annonce à 0, tenue : 10 points par carte distribuée dans la manche.',
+          'Annonce à 0, ratée : 10 points de moins par carte distribuée dans la manche.',
         ],
       },
       {
         kind: 'p',
-        text: "Une annonce à zéro vaut donc de plus en plus cher au fil de la partie, dans les deux sens. En manche dix elle rapporte cent points ou en coûte cent.",
+        text: "Une annonce à 0 vaut donc de plus en plus cher au fil de la partie, dans les deux sens. En manche 10 elle rapporte 100 points, ou en coûte 100.",
       },
     ],
   },
@@ -128,11 +128,11 @@ export const rulesFr: RuleSection[] = [
       {
         kind: 'ul',
         items: [
-          'Dix points par 14 de couleur classique gardé en fin de manche : le vert, le jaune, le violet.',
-          'Vingt points pour le 14 noir gardé en fin de manche.',
-          'Vingt points par sirène capturée dans un pli remporté par un pirate.',
-          'Trente points par pirate capturé dans un pli remporté par le Skull King. La Tigresse jouée en pirate compte.',
-          'Quarante points pour le Skull King capturé dans un pli remporté par une sirène.',
+          '10 points par 14 de couleur classique gardé en fin de manche : le vert, le jaune, le violet.',
+          '20 points pour le 14 noir gardé en fin de manche.',
+          '20 points par sirène capturée dans un pli remporté par un pirate.',
+          '30 points par pirate capturé dans un pli remporté par le Skull King. La Tigresse jouée en pirate compte.',
+          '40 points pour le Skull King capturé dans un pli remporté par une sirène.',
         ],
       },
       {
@@ -146,12 +146,59 @@ export const rulesFr: RuleSection[] = [
     ],
   },
   {
+    id: 'variants',
+    title: 'Les variantes, à activer au lancement',
+    blocks: [
+      {
+        kind: 'p',
+        text: "Deux réglages se choisissent au moment de composer la table, et l'app s'en souvient d'une partie à l'autre. Rien n'est imposé : une table qui les laisse fermés joue le score classique, à l'identique.",
+      },
+      {
+        kind: 'p',
+        text: 'Kraken et Baleine blanche : 2 cartes de plus dans le paquet, soit 72.',
+      },
+      {
+        kind: 'ul',
+        items: [
+          "Le Kraken écarte le pli. Personne ne le remporte et il ne compte pour personne : les plis de la manche font alors moins que le nombre de cartes distribuées.",
+          "La Baleine blanche prive toutes les cartes spéciales de leur pouvoir, le temps de ce pli : c'est le plus grand numéro qui l'emporte, quelle que soit la couleur. Si personne n'a posé de numéro, le pli est écarté lui aussi.",
+        ],
+      },
+      {
+        kind: 'p',
+        text: "L'app demande donc, à chaque manche, combien de plis ont été écartés. C'est tout ce qu'elle a besoin d'en savoir.",
+      },
+      {
+        kind: 'p',
+        text: 'Pouvoirs des pirates : chacun des 5 pirates en gagne un, annoncé au moment où on le pose.',
+      },
+      {
+        kind: 'ul',
+        items: [
+          "Harry le Géant permet de changer sa propre mise de 1 pli, vers le haut ou vers le bas. Pour la corriger dans l'app, revenir à l'étape des mises : la saisie de la manche n'est pas perdue.",
+          'Rosie D’Laney désigne qui entame le pli suivant.',
+          'Bendt le Bandit pioche 2 cartes dans le talon, puis en défausse 2.',
+          "Juanita Jade permet de regarder les cartes non distribuées et d'en échanger une contre une carte de sa main.",
+          "Rascal Jack parie 0, 10 ou 20 points sur le fait de remporter ce pli. Pari tenu, on marque la somme. Pari perdu, on la perd.",
+        ],
+      },
+      {
+        kind: 'p',
+        text: "Le pari de Rascal Jack se saisit dans la feuille des primes, mais ce n'en est pas une : il se compte quoi qu'il arrive, y compris quand la mise est ratée et que les primes sautent. Il n'y a qu'un Rascal Jack dans le paquet, donc au plus un pari par manche.",
+      },
+      {
+        kind: 'p',
+        text: "L'app ne suit pas les cartes jouées. De ces 7 nouveautés, elle ne demande que les 2 qui changent le score : les plis écartés, et le pari du Rascal.",
+      },
+    ],
+  },
+  {
     id: 'faq',
     title: 'Questions qui reviennent',
     blocks: [
       {
         kind: 'p',
-        text: "La sirène et le Skull King sont dans le même pli, sans pirate. La sirène remporte le pli, et celui qui l'a jouée gagne quarante points de prime.",
+        text: "La sirène et le Skull King sont dans le même pli, sans pirate. La sirène remporte le pli, et celui qui l'a jouée gagne 40 points de prime.",
       },
       {
         kind: 'p',
@@ -159,7 +206,7 @@ export const rulesFr: RuleSection[] = [
       },
       {
         kind: 'p',
-        text: "Deux pirates dans le même pli. Celui posé en premier remporte le pli, l'ordre autour de la table tranche.",
+        text: "2 pirates dans le même pli. Celui posé en premier remporte le pli, l'ordre autour de la table tranche.",
       },
       {
         kind: 'p',

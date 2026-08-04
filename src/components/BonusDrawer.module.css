@@ -150,3 +150,23 @@
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
+
+/*
+ * Le pari de Rascal Jack, hors de la liste des primes : il ne se compte pas
+ * comme elles, il ne doit pas se lire comme elles.
+ */
+.rascal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--hairline);
+  min-width: 0;
+}
+
+.rascalHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}

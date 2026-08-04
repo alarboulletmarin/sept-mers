@@ -35,6 +35,17 @@ export function AccuracyBars({ game }: { game: Game }) {
 
   return (
     <figure className={styles.frame}>
+      {/* La légende passe avant le dessin : on apprend la convention, puis on
+          lit. Après coup, il fallait revenir en arrière pour comprendre. */}
+      <div className={styles.legend}>
+        {SERIES.map((series) => (
+          <span key={series.key} className={styles.legendItem}>
+            <span className={styles.swatch} style={swatchStyle(series.fill)} />
+            <span>{t(series.label)}</span>
+          </span>
+        ))}
+      </div>
+
       <svg
         className={styles.svg}
         viewBox={`0 0 ${BOX.width} ${BOX.height}`}
@@ -94,15 +105,6 @@ export function AccuracyBars({ game }: { game: Game }) {
           )
         })}
       </svg>
-
-      <div className={styles.legend}>
-        {SERIES.map((series) => (
-          <span key={series.key} className={styles.legendItem}>
-            <span className={styles.swatch} style={swatchStyle(series.fill)} />
-            <span>{t(series.label)}</span>
-          </span>
-        ))}
-      </div>
 
       <figcaption className="sr-only">
         <p>{t('chart.accuracy.desc')}</p>

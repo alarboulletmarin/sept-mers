@@ -1,0 +1,31 @@
+.option {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Les options se suivent dans un même panneau : un filet les sépare, plutôt
+   qu'un écart, sinon on ne sait plus quelle phrase va avec quelle bascule. */
+.option + .option {
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+
+.label {
+  font-size: var(--size-label);
+  font-weight: 600;
+}
+
+.help {
+  font-size: var(--size-caption);
+  line-height: 1.45;
+  color: var(--surface-muted, var(--canvas-muted));
+}
