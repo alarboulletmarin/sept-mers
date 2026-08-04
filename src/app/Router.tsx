@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 
-/** Six routes, sur le hash. Pas de librairie. */
+/**
+ * Huit routes, sur le chemin. Pas de librairie.
+ *
+ * Sur le chemin et non sur le hash : le hash est un identifiant de fragment,
+ * pas une adresse, et le navigateur ne l'envoie jamais au serveur. L'app y
+ * vivait, ce qui dispensait l'hébergeur de connaître les routes — au prix
+ * d'une barre d'adresse qui disait `/#/new`. Le prix est payé une fois côté
+ * hébergeur, avec une réécriture ; les adresses, elles, se lisent et se
+ * partagent tous les jours.
+ */
 export type Route =
   | { name: 'home' }
   | { name: 'new' }
@@ -11,25 +20,31 @@ export type Route =
   | { name: 'rules' }
   | { name: 'settings' }
 
-export function parseHash(hash: string): Route {
-  const path = hash.replace(/^#\/?/, '')
-  const [head, tail] = path.split('/')
+export function parsePath(pathname: string): Route {
+  // `filter` avale les segments vides : les barres obliques de tête, de queue
+  // et les doubles ne changent pas l'écran nommé.
+  const [head, tail, ...rest] = pathname.split('/').filter(Boolean)
+
+  /*
+   * Plus de segments que la route n'en prend : l'adresse ne nomme aucun écran.
+   * On préfère l'accueil à une devinette — `/new/de/trop` n'est pas `/new`,
+   * c'est une adresse fausse, et la faire passer pour juste ferait taire une
+   * faute de lien au lieu de la montrer.
+   */
+  if (rest.length > 0) return { name: 'home' }
 
   switch (head) {
-    case 'new':
-      return { name: 'new' }
-    case 'game':
-      return { name: 'game' }
     case 'summary':
       return tail ? { name: 'summary', gameId: tail } : { name: 'summary' }
-    case 'history':
-      return { name: 'history' }
     case 'players':
       return tail ? { name: 'players', playerId: tail } : { name: 'players' }
+    // Les routes sans paramètre : un segment de plus les invalide aussi.
+    case 'new':
+    case 'game':
+    case 'history':
     case 'rules':
-      return { name: 'rules' }
     case 'settings':
-      return { name: 'settings' }
+      return tail ? { name: 'home' } : { name: head }
     default:
       return { name: 'home' }
   }
@@ -38,36 +53,75 @@ export function parseHash(hash: string): Route {
 export function hrefFor(route: Route): string {
   switch (route.name) {
     case 'home':
-      return '#/'
+      return '/'
     case 'summary':
-      return route.gameId ? `#/summary/${route.gameId}` : '#/summary'
+      return route.gameId ? `/summary/${route.gameId}` : '/summary'
     case 'players':
-      return route.playerId ? `#/players/${route.playerId}` : '#/players'
+      return route.playerId ? `/players/${route.playerId}` : '/players'
     default:
-      return `#/${route.name}`
+      return `/${route.name}`
   }
 }
 
+/**
+ * La route de l'adresse courante.
+ *
+ * Les adresses de l'ancien routeur — `/#/rules` — restent valides : un signet,
+ * un lien envoyé dans une conversation, un onglet restauré. On les relit, et
+ * `useRoute` réécrit la barre d'adresse en clair juste après.
+ */
+function currentRoute(): Route {
+  if (typeof location === 'undefined') return { name: 'home' }
+  if (location.hash.startsWith('#/')) return parsePath(location.hash.slice(1))
+  return parsePath(location.pathname)
+}
+
 export function useRoute(): { route: Route; go: (route: Route, replace?: boolean) => void } {
-  const [route, setRoute] = useState<Route>(() =>
-    parseHash(typeof location === 'undefined' ? '' : location.hash),
-  )
+  const [route, setRoute] = useState<Route>(currentRoute)
 
   useEffect(() => {
-    const onChange = () => setRoute(parseHash(location.hash))
-    window.addEventListener('hashchange', onChange)
-    return () => window.removeEventListener('hashchange', onChange)
+    // Les boutons précédent et suivant du navigateur : ils changent l'adresse
+    // sans passer par `go`, et c'est `popstate` qui le dit.
+    const onPop = () => setRoute(parsePath(location.pathname))
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
+  useEffect(() => {
+    /*
+     * Deux adresses mènent à un écran sans s'écrire comme lui : celles de
+     * l'ancien routeur, et tout ce qui ne correspond à aucune route et retombe
+     * sur l'accueil. On les remet en forme au premier rendu, en remplaçant
+     * l'entrée d'historique plutôt qu'en en empilant une — sinon le bouton
+     * précédent ramènerait à l'adresse qu'on vient de corriger, en boucle.
+     */
+    const canonical = hrefFor(currentRoute())
+    if (location.pathname + location.search + location.hash !== canonical) {
+      history.replaceState(null, '', canonical)
+    }
   }, [])
 
   const go = useCallback((next: Route, replace = false) => {
     const href = hrefFor(next)
-    if (location.hash === href) return
+    if (location.pathname === href) return
     if (replace) history.replaceState(null, '', href)
-    else location.hash = href
+    else history.pushState(null, '', href)
     setRoute(next)
   }, [])
 
   return { route, go }
+}
+
+/**
+ * Vrai quand un clic sur un lien doit rester au navigateur : nouvel onglet,
+ * nouvelle fenêtre, téléchargement. Les intercepter tous reviendrait à casser
+ * le clic du milieu et le cmd-clic, que de vraies adresses rendent enfin
+ * utiles.
+ */
+export function opensElsewhere(event: React.MouseEvent): boolean {
+  return (
+    event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+  )
 }
 
 /** Ramène la vue en haut à chaque changement d'écran. */

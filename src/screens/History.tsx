@@ -1,5 +1,5 @@
 import { Screen } from '../app/Layout.tsx'
-import { hrefFor, type Route } from '../app/Router.tsx'
+import { hrefFor, opensElsewhere, type Route } from '../app/Router.tsx'
 import { useStore } from '../app/StoreProvider.tsx'
 import { Button } from '../components/Button.tsx'
 import { EmptyState } from '../components/EmptyState.tsx'
@@ -48,6 +48,7 @@ export function History({ go }: { go: (route: Route) => void }) {
                   href={hrefFor({ name: 'summary', gameId: game.id })}
                   aria-label={t('history.open', { date: date(game.endedAt ?? game.startedAt) })}
                   onClick={(event) => {
+                    if (opensElsewhere(event)) return
                     event.preventDefault()
                     go({ name: 'summary', gameId: game.id })
                   }}

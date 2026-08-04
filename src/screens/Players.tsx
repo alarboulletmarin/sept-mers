@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Screen } from '../app/Layout.tsx'
-import { hrefFor, type Route } from '../app/Router.tsx'
+import { hrefFor, opensElsewhere, type Route } from '../app/Router.tsx'
 import { useStore } from '../app/StoreProvider.tsx'
 import { RankingBars } from '../charts/RankingBars.tsx'
 import { Button } from '../components/Button.tsx'
@@ -75,6 +75,7 @@ function PlayerList({ go }: { go: (route: Route) => void }) {
                   className={styles.row}
                   href={hrefFor({ name: 'players', playerId: player.id })}
                   onClick={(event) => {
+                    if (opensElsewhere(event)) return
                     event.preventDefault()
                     go({ name: 'players', playerId: player.id })
                   }}

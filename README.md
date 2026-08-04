@@ -125,7 +125,7 @@ En développement s'ajoutent Vitest et Playwright, pour les parcours navigateur.
 Pas de routeur, pas de librairie d'état, pas de Tailwind, pas de librairie de
 graphiques, pas de pack d'icônes. Les deux fichiers de police vivent dans `src/`
 pour que Vite leur pose un hash de contenu et que le service worker les
-précache avec le bundle. Le routeur tient sur le hash, l'état sur un
+précache avec le bundle. Le routeur tient sur `history.pushState`, l'état sur un
 `useReducer` persisté, les styles sur des variables CSS et des modules CSS, les
 graphiques sur du SVG calculé à la main.
 
@@ -187,8 +187,26 @@ forme de `engines.node`. Les explications, elles, vivent ci-dessous.
 | `assets/*` | un an, immuable | Ces fichiers portent un hash de contenu : leur nom change à chaque build. |
 | `icons/*` | un jour | Ils n'ont pas de hash, et on doit pouvoir les corriger. |
 
-L'app vivant sur le hash, il n'y a aucune route serveur à réécrire : la
-redirection déclarée ne sert qu'à rattraper une adresse tapée à la main.
+### Les routes
+
+Les écrans ont de vraies adresses — `/new`, `/rules`, `/summary/<id>` — et non
+un hash. Deux conséquences, dans les deux sens :
+
+- **L'hébergeur doit les connaître.** `vercel.json` déclare une *réécriture* :
+  toute adresse qui n'est pas un fichier reçoit `index.html`, **à son adresse**,
+  sans redirection. Une redirection changerait la barre, ce qui est précisément
+  ce qu'on veut éviter. Sur un autre hébergeur, c'est la même règle sous un
+  autre nom — `try_files` chez nginx, `_redirects` chez Netlify.
+- **Le build se sert depuis la racine** (`base: '/'` dans `vite.config.ts`).
+  Une URL relative se résout contre l'adresse du document : à `/summary/<id>`,
+  `./assets/index-abc.js` irait chercher `/summary/assets/index-abc.js`. L'app
+  ne peut donc plus vivre dans un sous-dossier.
+
+Hors ligne, c'est `navigateFallback` du service worker qui joue le rôle de la
+réécriture : recharger `/rules` en mode avion sert la coquille précachée.
+
+Les adresses de l'ancien routeur, en `/#/rules`, restent valides : elles sont
+relues une fois, puis réécrites en clair sans empiler d'entrée d'historique.
 
 ## Vie privée
 

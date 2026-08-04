@@ -197,7 +197,7 @@ describe('favicon', () => {
 
     const tag = document.match(/<link\s+rel="apple-touch-icon"[^>]*>/)?.[0] ?? ''
     expect(tag, 'la balise ne pointe pas sur le fichier de la racine').toContain(
-      'href="./apple-touch-icon.png"',
+      'href="/apple-touch-icon.png"',
     )
   })
 

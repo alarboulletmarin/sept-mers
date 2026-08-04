@@ -1,6 +1,6 @@
 import { Icon, Logo, type IconName } from '../components/Icon.tsx'
 import { useT } from '../i18n/index.ts'
-import { hrefFor, type Route } from './Router.tsx'
+import { hrefFor, opensElsewhere, type Route } from './Router.tsx'
 import styles from './TabBar.module.css'
 
 /**
@@ -49,6 +49,7 @@ export function TabBar({ route, go }: { route: Route; go: (next: Route) => void 
                 href={hrefFor(target)}
                 aria-current={current ? 'page' : undefined}
                 onClick={(event) => {
+                  if (opensElsewhere(event)) return
                   event.preventDefault()
                   go(target)
                 }}

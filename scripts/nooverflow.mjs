@@ -5,20 +5,10 @@
  * choses : la page ne défile pas horizontalement, et aucun élément ne déborde
  * de son conteneur — un composant qui défile en interne compte comme un échec.
  */
-import { launchChromium } from './browser.mjs'
-import { createServer } from 'node:http'
-import { readFile } from 'node:fs/promises'
-import { extname, join, normalize } from 'node:path'
+import { launchChromium, listen, serveDist } from './browser.mjs'
 
-const ROOT = new URL('../dist/', import.meta.url).pathname
-const TYPES = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'}
-const server = createServer(async (req, res) => {
-  const p = decodeURIComponent(req.url.split('?')[0]); const f = p === '/' ? '/index.html' : p
-  try { const b = await readFile(join(ROOT, normalize(f))); res.writeHead(200, {'content-type': TYPES[extname(f)] ?? 'application/octet-stream'}); res.end(b) }
-  catch { res.writeHead(404).end('x') }
-})
-await new Promise((r) => server.listen(0, r))
-const base = `http://127.0.0.1:${server.address().port}`
+const server = serveDist()
+const base = await listen(server)
 
 // 320 est le plus étroit qu'on rencontre encore, 430 un grand téléphone.
 const WIDTHS = [320, 360, 390, 430, 820]
@@ -160,10 +150,10 @@ for (const width of WIDTHS) {
   await audit('accueil avec historique')
 
   for (const [route, marker, label] of [
-    ['#/history', 'Historique', 'historique'],
-    ['#/players', 'Joueurs', 'joueurs et palmarès'],
-    ['#/rules', 'Qui remporte le pli', 'règles'],
-    ['#/settings', 'Langue', 'réglages'],
+    ['/history', 'Historique', 'historique'],
+    ['/players', 'Joueurs', 'joueurs et palmarès'],
+    ['/rules', 'Qui remporte le pli', 'règles'],
+    ['/settings', 'Langue', 'réglages'],
   ]) {
     await page.goto(`${base}${route}`)
     await page.waitForSelector(`text=${marker}`)
@@ -171,7 +161,7 @@ for (const width of WIDTHS) {
   }
 
   // Fiche d'un joueur, avec ses statistiques.
-  await page.goto(`${base}#/players`)
+  await page.goto(`${base}/players`)
   await page.getByRole('link', { name: /Ferdinand/ }).click()
   await page.waitForSelector('text=Statistiques')
   await audit('fiche joueur')
