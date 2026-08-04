@@ -167,3 +167,96 @@ describe('statistiques de joueur', () => {
     )
   })
 })
+
+describe('sous le Score Rascal', () => {
+  /** La même tablée, comptée au barème Rascal. */
+  const rascalGame = (rounds: { cards: number; lines: Line[] }[]): Game => ({
+    ...game(rounds),
+    options: { ...DEFAULT_OPTIONS, rascalScoring: true },
+  })
+
+  const played = [
+    { cards: 4, lines: [['a', 2, 2], ['b', 1, 2], ['c', 0, 3]] as Line[] },
+    { cards: 6, lines: [['a', 3, 3], ['b', 2, 0], ['c', 1, 3]] as Line[] },
+  ]
+
+  it('compte les totaux au barème choisi par la partie', () => {
+    // Manche 1 : a tenu (40), b raté d'un (20), c raté de trois (0).
+    // Manche 2 : a tenu (60), b raté de deux (0), c raté de deux (0).
+    expect(totals(rascalGame(played))).toEqual({ a: 100, b: 20, c: 0 })
+  })
+
+  it('ne fait jamais reculer un cumul, faute de points négatifs', () => {
+    const series = cumulativeSeries(rascalGame(played))
+    for (const line of series) {
+      for (let i = 1; i < line.points.length; i += 1) {
+        expect(line.points[i]).toBeGreaterThanOrEqual(line.points[i - 1])
+      }
+    }
+  })
+
+  it('laisse la précision des mises inchangée', () => {
+    // L'issue parle de la mise face aux plis, pas du barème : les mêmes mises
+    // et les mêmes plis donnent les mêmes comptes sous les deux systèmes.
+    expect(accuracy(rascalGame(played))).toEqual(accuracy(game(played)))
+  })
+
+  it('divise les primes marquées sans toucher à leur compte', () => {
+    const withBonus = [
+      { cards: 4, lines: [['a', 2, 3, { blackFourteen: 1 }], ['b', 0, 1]] as Line[] },
+    ]
+    const rows = bonusTotals(rascalGame(withBonus))
+    expect(rows[0].counts.blackFourteen).toBe(1)
+    expect(rows[0].points).toBe(10)
+  })
+
+  it('honore le boulet de canon d une manche enregistrée', () => {
+    const base = game([{ cards: 6, lines: [['a', 3, 3], ['b', 0, 3]] }])
+    const loaded: Game = {
+      ...base,
+      options: { ...DEFAULT_OPTIONS, rascalScoring: true, cannonball: true },
+      rounds: base.rounds.map((round) => ({
+        ...round,
+        entries: round.entries.map((entry) =>
+          entry.playerId === 'a' ? { ...entry, cannonball: true } : entry,
+        ),
+      })),
+    }
+    expect(totals(loaded).a).toBe(90)
+  })
+})
+
+describe('une tablée à deux joueurs', () => {
+  /** Manche à 4 cartes : 1 pli à chacun, 2 raflés par le fantôme. */
+  const twoPlayers: Game = {
+    id: 'g2',
+    startedAt: '2026-01-01T20:00:00.000Z',
+    endedAt: '2026-01-01T21:00:00.000Z',
+    playerIds: ['a', 'b'],
+    options: { ...DEFAULT_OPTIONS },
+    nameSnapshot: { a: 'A', b: 'B' },
+    rounds: [
+      {
+        index: 1,
+        cards: 4,
+        greyBeard: 2,
+        entries: [
+          { playerId: 'a', bid: 1, tricks: 1, bonus: makeBonus() },
+          { playerId: 'b', bid: 0, tricks: 1, bonus: makeBonus() },
+        ],
+      },
+    ],
+  }
+
+  it('ne fait jamais apparaître le fantôme dans les résultats', () => {
+    expect(Object.keys(totals(twoPlayers))).toEqual(['a', 'b'])
+    expect(standings(twoPlayers).map((row) => row.playerId)).toEqual(['a', 'b'])
+    expect(accuracy(twoPlayers).map((row) => row.playerId)).toEqual(['a', 'b'])
+  })
+
+  it('compte les joueurs sur leurs propres plis, pas sur la manche', () => {
+    // a tient sa mise d'un pli, b en annonçait zéro et en a fait un.
+    expect(totals(twoPlayers)).toEqual({ a: 20, b: -40 })
+    expect(winnerIds(twoPlayers)).toEqual(['a'])
+  })
+})

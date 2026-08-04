@@ -116,15 +116,24 @@ for (const theme of ['light', 'dark']) {
     await page.getByRole('button', { name: 'Ajouter', exact: true }).click()
   }
   await page.getByRole('button', { name: 'Options' }).click()
-  // Variantes activées : le compteur de plis écartés et le pari du Rascal
-  // n'apparaissent qu'avec elles, et sont à contrôler comme le reste.
+  // Variantes activées : le compteur de plis écartés, le pari du Rascal et la
+  // pastille de charge n'apparaissent qu'avec elles, et sont à contrôler comme
+  // le reste.
   await page.getByRole('switch', { name: /Kraken/ }).click()
   await page.getByRole('switch', { name: /Pouvoirs/ }).click()
+  await page.getByRole('switch', { name: /Score Rascal/ }).click()
+  await page.getByRole('switch', { name: /Boulet de canon/ }).click()
   await audit('nouvelle partie, options dépliées')
 
   await page.getByRole('button', { name: 'Commencer la partie' }).click()
   await page.waitForSelector('[data-player-tile]')
   await audit('manche 1, mises')
+
+  // La pastille de charge dans ses deux états, sur une tuile encre comme sur
+  // une tuile blanche : une option cochée qui suivrait l'accent global au lieu
+  // de sa surface serait noire sur noire.
+  await page.locator('[data-player-tile]').nth(0).getByRole('switch').click()
+  await audit('manche 1, mises, une charge au boulet')
 
   const tiles = page.locator('[data-player-tile]')
   const setValue = async (tile, target) => {
@@ -148,6 +157,19 @@ for (const theme of ['light', 'dark']) {
 
   await page.getByRole('button', { name: 'Valider la manche' }).click()
   await page.waitForSelector('[data-round="2"]')
+
+  // La tuile du fantôme, qui n'existe qu'à deux joueurs. On y va par le
+  // routeur et non par `goto` : le script sème le store avant chaque
+  // chargement, et une vraie navigation rendrait la table à son état vide.
+  await page.getByRole('link', { name: 'Accueil' }).click()
+  await page.getByRole('button', { name: 'Nouvelle partie' }).click()
+  await page.getByRole('checkbox', { name: /Anaïs/ }).click()
+  await page.getByRole('checkbox', { name: /Bo/ }).click()
+  await page.getByRole('button', { name: 'Commencer la partie' }).click()
+  await page.waitForSelector('[data-player-tile]')
+  await page.getByRole('button', { name: 'Valider les mises' }).click()
+  await page.waitForSelector('[data-grey-beard-tile]')
+  await audit('manche à deux, tuile du fantôme')
 
   for (const [route, marker, label] of [
     ['/rules', 'Qui remporte le pli', 'règles'],

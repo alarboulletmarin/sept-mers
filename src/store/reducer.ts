@@ -1,8 +1,11 @@
 import { cardsForRound, deckSize } from '../domain/deck.ts'
 import {
   EMPTY_BONUS,
+  GREY_BEARD,
   RASCAL_VALUES,
   TOTAL_ROUNDS,
+  hasGreyBeard,
+  trickHolders,
   type Draft,
   type Game,
   type GameOptions,
@@ -13,7 +16,7 @@ import {
   type Store,
   type Theme,
 } from '../domain/types.ts'
-import { soleUntouchedPlayer, trickTarget } from '../domain/validation.ts'
+import { deducedHolder, trickTarget } from '../domain/validation.ts'
 import { newId } from './storage.ts'
 
 export type Action =
@@ -29,6 +32,7 @@ export type Action =
   | { type: 'game/setBonus'; playerId: Id; key: keyof RoundBonus; value: number }
   | { type: 'game/setVoided'; voided: number }
   | { type: 'game/setRascal'; playerId: Id; value: number }
+  | { type: 'game/setCannonball'; playerId: Id; loaded: boolean }
   | { type: 'game/phase'; phase: Draft['phase'] }
   | { type: 'game/commitRound' }
   | { type: 'game/undoRound' }
@@ -56,6 +60,7 @@ function emptyDraft(game: Game, roundIndex: number): Draft {
   const tricks: Record<Id, number | null> = {}
   const bonus: Record<Id, RoundBonus> = {}
   const rascal: Record<Id, number> = {}
+  const cannonball: Record<Id, boolean> = {}
   for (const id of game.playerIds) {
     // Les compteurs partent à zéro plutôt qu'à vide : une manche où personne
     // ne mise doit pouvoir se valider sans toucher une seule tuile.
@@ -63,7 +68,11 @@ function emptyDraft(game: Game, roundIndex: number): Draft {
     tricks[id] = 0
     bonus[id] = { ...EMPTY_BONUS }
     rascal[id] = 0
+    cannonball[id] = false
   }
+  // Le fantôme part à zéro pour la même raison, et n'a que des plis : ni mise,
+  // ni prime, ni pari.
+  if (hasGreyBeard(game.playerIds.length)) tricks[GREY_BEARD] = 0
   return {
     gameId: game.id,
     roundIndex,
@@ -72,6 +81,7 @@ function emptyDraft(game: Game, roundIndex: number): Draft {
     tricks,
     bonus,
     rascal,
+    cannonball,
     voided: 0,
     touchedTricks: [],
     autoTricks: null,
@@ -89,10 +99,13 @@ function draftFromRound(game: Game, round: Round): Draft {
     draft.tricks[entry.playerId] = entry.tricks
     draft.bonus[entry.playerId] = { ...entry.bonus }
     draft.rascal[entry.playerId] = entry.rascal ?? 0
+    draft.cannonball[entry.playerId] = entry.cannonball ?? false
   }
-  // Une manche validée a été saisie en entier : ni resemis, ni déduction.
-  // Sans ça, la rouvrir pour relire un chiffre la réécrirait.
-  draft.touchedTricks = [...game.playerIds]
+  if (hasGreyBeard(game.playerIds.length)) draft.tricks[GREY_BEARD] = round.greyBeard ?? 0
+  // Une manche validée a été saisie en entier : ni resemis, ni déduction. Le
+  // fantôme en est, sans quoi la rouvrir pour relire un chiffre le recalculerait
+  // et réécrirait la manche.
+  draft.touchedTricks = trickHolders(game.playerIds)
   return draft
 }
 
@@ -118,12 +131,12 @@ function seedTricks(draft: Draft, playerIds: Id[]): Record<Id, number | null> {
 function withDeduction(
   tricks: Record<Id, number | null>,
   touchedTricks: Id[],
-  playerIds: Id[],
+  holders: Id[],
   cards: number,
 ): { tricks: Record<Id, number | null>; autoTricks: Id | null } {
-  const auto = soleUntouchedPlayer(touchedTricks, playerIds)
+  const auto = deducedHolder(touchedTricks, holders)
   if (auto === null) return { tricks, autoTricks: null }
-  const assigned = playerIds.reduce(
+  const assigned = holders.reduce(
     (total, id) => (id === auto ? total : total + (tricks[id] ?? 0)),
     0,
   )
@@ -138,6 +151,11 @@ const marked = (list: Id[], id: Id): Id[] => (list.includes(id) ? list : [...lis
 /** Cartes distribuées à la manche du brouillon, paquet de la partie compris. */
 function cardsOf(game: Game, draft: Draft): number {
   return cardsForRound(draft.roundIndex, game.playerIds.length, deckSize(game.options))
+}
+
+/** Les porteurs de plis de la partie : les joueurs, et le fantôme à 2. */
+function holdersOf(game: Game): Id[] {
+  return trickHolders(game.playerIds)
 }
 
 /** Plis réellement attribuables : les cartes, moins ce que les monstres ont pris. */
@@ -244,6 +262,10 @@ export function reducer(store: Store, action: Action): Store {
     case 'game/setTricks': {
       const game = runningGame(store)
       if (!game) return store
+      const holders = holdersOf(game)
+      // Le fantôme n'existe qu'à 2 : ailleurs, sa tuile n'est pas rendue et son
+      // identifiant n'a rien à faire dans les plis.
+      if (!holders.includes(action.playerId)) return store
       const draft = draftFor(store, game)
 
       // Poser une valeur, c'est la reprendre en main — y compris sur la tuile
@@ -255,7 +277,7 @@ export function reducer(store: Store, action: Action): Store {
       const deduced = withDeduction(
         { ...draft.tricks, [action.playerId]: action.tricks },
         touchedTricks,
-        game.playerIds,
+        holders,
         targetOf(game, draft),
       )
 
@@ -272,7 +294,7 @@ export function reducer(store: Store, action: Action): Store {
       const deduced = withDeduction(
         draft.tricks,
         draft.touchedTricks,
-        game.playerIds,
+        holdersOf(game),
         trickTarget(cards, voided),
       )
       return { ...store, draft: { ...draft, ...deduced, voided } }
@@ -286,6 +308,22 @@ export function reducer(store: Store, action: Action): Store {
       return {
         ...store,
         draft: { ...draft, rascal: { ...draft.rascal, [action.playerId]: action.value } },
+      }
+    }
+
+    case 'game/setCannonball': {
+      const game = runningGame(store)
+      // Deux conditions, un seul arbitre : le barème doit être le Rascal, et la
+      // table doit avoir ouvert le Boulet.
+      if (!game || !game.options.rascalScoring || !game.options.cannonball) return store
+      if (!game.playerIds.includes(action.playerId)) return store
+      const draft = draftFor(store, game)
+      return {
+        ...store,
+        draft: {
+          ...draft,
+          cannonball: { ...draft.cannonball, [action.playerId]: action.loaded },
+        },
       }
     }
 
@@ -317,10 +355,15 @@ export function reducer(store: Store, action: Action): Store {
       // une doit donc se répercuter, et la déduction se reposer derrière —
       // sinon le joueur déduit garderait sa mise au lieu du reste, la somme
       // ne tomberait pas juste, et le bouton resterait mort.
+      //
+      // Le fantôme, lui, n'a pas de mise à semer : il reste donc à la déduction
+      // et prend le reste. C'est ce qui garde, à 2 joueurs comme ailleurs, la
+      // propriété qu'une manche où tout le monde tient sa mise se valide sans
+      // un geste.
       const deduced = withDeduction(
         seedTricks(draft, game.playerIds),
         draft.touchedTricks,
-        game.playerIds,
+        holdersOf(game),
         targetOf(game, draft),
       )
       return { ...store, draft: { ...draft, ...deduced, phase: 'results' } }
@@ -332,20 +375,27 @@ export function reducer(store: Store, action: Action): Store {
       const draft = store.draft
       const cards = cardsOf(game, draft)
 
-      // Un zéro ne s'écrit pas : une partie sans variante garde sur disque la
-      // forme qu'elle avait avant qu'elles existent.
+      // Un zéro ne s'écrit pas, et un défaut non plus : une partie sans
+      // variante garde sur disque la forme qu'elle avait avant qu'elles
+      // existent.
+      const greyBeard = hasGreyBeard(game.playerIds.length)
+        ? (draft.tricks[GREY_BEARD] ?? 0)
+        : 0
       const round: Round = {
         index: draft.roundIndex,
         cards,
         ...(draft.voided > 0 ? { voided: draft.voided } : {}),
+        ...(greyBeard > 0 ? { greyBeard } : {}),
         entries: game.playerIds.map((playerId) => {
           const rascal = draft.rascal[playerId] ?? 0
+          const cannonball = draft.cannonball[playerId] ?? false
           return {
             playerId,
             bid: draft.bids[playerId] ?? 0,
             tricks: draft.tricks[playerId] ?? 0,
             bonus: { ...(draft.bonus[playerId] ?? EMPTY_BONUS) },
             ...(rascal !== 0 ? { rascal } : {}),
+            ...(cannonball ? { cannonball } : {}),
           }
         }),
       }

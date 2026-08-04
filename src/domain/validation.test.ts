@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   bonusCeiling,
+  deducedHolder,
   remainingTricks,
   soleUntouchedPlayer,
   sumBids,
@@ -10,7 +11,7 @@ import {
   validateTricks,
   validateVoided,
 } from './validation.ts'
-import { makeBonus, type RoundBonus } from './types.ts'
+import { GREY_BEARD, makeBonus, trickHolders, type RoundBonus } from './types.ts'
 
 const players = ['a', 'b', 'c']
 const noBonus = () => Object.fromEntries(players.map((id) => [id, makeBonus()]))
@@ -264,6 +265,66 @@ describe('pari de Rascal Jack', () => {
   it('refuse une valeur hors barème', () => {
     expect(validateRascal({ a: 15, b: 0, c: 0 }, players)).toEqual([
       { code: 'rascal.value', playerId: 'a' },
+    ])
+  })
+})
+
+describe('le fantôme de Barbe Grise', () => {
+  const two = ['a', 'b']
+  const holders = trickHolders(two)
+
+  it('rejoint les porteurs de plis à deux joueurs, et à deux seulement', () => {
+    expect(holders).toEqual(['a', 'b', GREY_BEARD])
+    expect(trickHolders(['a', 'b', 'c'])).toEqual(['a', 'b', 'c'])
+  })
+
+  it('ne rend jamais la liste des joueurs elle-même', () => {
+    const players = ['a', 'b', 'c']
+    expect(trickHolders(players)).not.toBe(players)
+  })
+
+  it('prend la déduction même quand plusieurs joueurs sont non touchés', () => {
+    // `soleUntouchedPlayer` rendrait `null` : trois porteurs, aucun seul.
+    expect(soleUntouchedPlayer([], holders)).toBeNull()
+    expect(deducedHolder([], holders)).toBe(GREY_BEARD)
+    expect(deducedHolder(['a'], holders)).toBe(GREY_BEARD)
+  })
+
+  it('rend la place au second joueur quand on le reprend en main', () => {
+    expect(deducedHolder(['a', GREY_BEARD], holders)).toBe('b')
+    expect(deducedHolder([GREY_BEARD], holders)).toBeNull()
+  })
+
+  it('laisse la règle ordinaire intacte sans lui', () => {
+    expect(deducedHolder(['a'], players)).toBeNull()
+    expect(deducedHolder(['a', 'b'], players)).toBe('c')
+    expect(deducedHolder([], ['a'])).toBe('a')
+  })
+
+  it('entre dans la somme des plis', () => {
+    expect(validateTricks({ a: 3, b: 2, [GREY_BEARD]: 2 }, 7, holders)).toEqual([])
+    // Sans lui, les mêmes plis ne feraient pas le compte.
+    expect(codes(validateTricks({ a: 3, b: 2 }, 7, two))).toEqual(['tricks.sum'])
+  })
+
+  it('porte ses anomalies sous son propre identifiant', () => {
+    const missing = validateTricks({ a: 3, b: 2, [GREY_BEARD]: null }, 7, holders)
+    expect(missing).toEqual([{ code: 'tricks.missing', playerId: GREY_BEARD }])
+    const over = validateTricks({ a: 0, b: 0, [GREY_BEARD]: 9 }, 7, holders)
+    expect(over[0]).toMatchObject({ code: 'tricks.range', playerId: GREY_BEARD })
+  })
+
+  it('compte dans les plis restants du pied d écran', () => {
+    expect(remainingTricks({ a: 3, b: 2, [GREY_BEARD]: 2 }, 7, holders)).toBe(0)
+    expect(remainingTricks({ a: 3, b: 2 }, 7, holders)).toBe(2)
+  })
+
+  it('se partage la manche avec les plis écartés', () => {
+    // Kraken et fantôme se soustraient tous les deux : 6 cartes, 1 pli écarté,
+    // 2 raflés par le fantôme, il en reste 3 pour les deux joueurs.
+    expect(validateTricks({ a: 2, b: 1, [GREY_BEARD]: 2 }, 6, holders, 1)).toEqual([])
+    expect(codes(validateTricks({ a: 2, b: 2, [GREY_BEARD]: 2 }, 6, holders, 1))).toEqual([
+      'tricks.sum',
     ])
   })
 })

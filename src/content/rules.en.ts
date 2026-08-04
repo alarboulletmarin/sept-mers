@@ -79,6 +79,37 @@ export const rulesEn: RuleSection[] = [
         kind: 'p',
         text: 'With 8 players the deck runs short for the last 2 rounds: they are dealt 8 cards each. The app applies that cap on its own.',
       },
+      {
+        kind: 'p',
+        text: 'With 2 players the tricks of a round are not shared between them alone: a third hand is dealt, and it takes its share. See the next chapter.',
+      },
+    ],
+  },
+  {
+    id: 'twoPlayers',
+    title: "With 2 players: Greybeard's ghost",
+    blocks: [
+      {
+        kind: 'p',
+        text: "3 hands are dealt: one each, and a third laid face down as a pile. That is Greybeard's ghost. It never bids and never scores a point: it is there to steal tricks and wreck bids.",
+      },
+      {
+        kind: 'ul',
+        items: [
+          'The 2 players take turns leading from one round to the next.',
+          'The ghost always plays second — unless it won the previous trick, in which case it leads the next one.',
+          'On its turn, flip the top card of its pile. It does not follow the led suit.',
+          'Its Tigress is always played as an escape.',
+        ],
+      },
+      {
+        kind: 'p',
+        text: 'It follows that the tricks of the 2 players no longer add up to the number of cards in the round. That is why the results screen shows a third tile in its name: it fills itself with whatever is left, and stays correctable if the count is off.',
+      },
+      {
+        kind: 'p',
+        text: 'A table that would rather play with 2 and no ghost has nothing to set: leave its tile at zero, and the 2 players share every trick as anywhere else.',
+      },
     ],
   },
   {
@@ -119,6 +150,10 @@ export const rulesEn: RuleSection[] = [
         kind: 'p',
         text: 'A 0 announcement therefore grows more expensive as the game goes on, in both directions. In round 10 it earns 100 points, or costs 100.',
       },
+      {
+        kind: 'p',
+        text: 'That is the classic scoring. A second one exists, Rascal scoring, gentler and more calculating: it is chosen when a game is started, and it is described in the variants chapter.',
+      },
     ],
   },
   {
@@ -151,7 +186,7 @@ export const rulesEn: RuleSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: "Two settings are chosen as the table is set, and the app remembers them from one game to the next. Nothing is forced: a table that leaves them off plays the classic score, unchanged.",
+        text: "Three settings are chosen as the table is set, and the app remembers them from one game to the next. Nothing is forced: a table that leaves them off plays the classic score, unchanged.",
       },
       {
         kind: 'p',
@@ -189,6 +224,37 @@ export const rulesEn: RuleSection[] = [
       {
         kind: 'p',
         text: "The app does not track the cards played. Of those 7 additions it only asks for the 2 that change the score: the voided tricks, and the Rascal's wager.",
+      },
+      {
+        kind: 'p',
+        text: 'Rascal scoring: the second scoring system. Every round holds the same potential for everyone, whatever the bid — 10 points per card dealt. What varies is the accuracy.',
+      },
+      {
+        kind: 'ul',
+        items: [
+          'Bid met exactly: all the points of the round.',
+          'Off by 1 trick, either way: half.',
+          'Off by 2 tricks or more: nothing.',
+        ],
+      },
+      {
+        kind: 'p',
+        text: 'Bonuses follow exactly the same scale: all, half, or nothing. There is never a negative score, which makes for a more calculating mood than the classic system. This scoring replaces the setting for bonuses on a missed bid, which no longer has anything to do: the switch leaves the panel while it is on.',
+      },
+      {
+        kind: 'p',
+        text: 'Cannonball: an option of Rascal scoring. After bidding, everyone secretly chooses how to load their cannon, and all reveal at the same time.',
+      },
+      {
+        kind: 'ul',
+        items: [
+          'Grapeshot: normal Rascal scoring, 10 points per card, with half when off by 1.',
+          'Cannonball: 15 points per card, but nothing at all at the slightest difference.',
+        ],
+      },
+      {
+        kind: 'p',
+        text: "The app records the charge once it is revealed: it does not keep it secret, that is for the table to do. Rascal Jack's wager stays outside the scale — it counts signed, never halved and never cancelled, and it is the only way a round total can drop below zero.",
       },
     ],
   },

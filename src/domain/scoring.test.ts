@@ -153,3 +153,181 @@ describe('pari de Rascal Jack', () => {
     expect(score(1, 1, 5).rascalPoints).toBe(0)
   })
 })
+
+// ------------------------------------------------------------ Score Rascal
+
+/** Une manche au barème Rascal. `charge` vraie vaut boulet de canon. */
+const rascalScore = (
+  bid: number,
+  tricks: number,
+  cards: number,
+  bonus = makeBonus(),
+  charge = false,
+  cannonballOpen = true,
+  wager = 0,
+) =>
+  scoreRound({
+    bid,
+    tricks,
+    cards,
+    bonus,
+    rascal: wager,
+    cannonball: charge,
+    // `bonusIfBidMissed` est allumé exprès : sous le Score Rascal il ne doit
+    // rien changer, et un réglage éteint le prouverait moins bien.
+    options: { bonusIfBidMissed: true, rascalScoring: true, cannonball: cannonballOpen },
+  })
+
+describe('écart à la mise', () => {
+  it('vaut zéro quand la mise est tenue', () => {
+    expect(score(3, 3, 5).gap).toBe(0)
+  })
+
+  it('se compte en valeur absolue, dans les deux sens', () => {
+    expect(score(4, 1, 5).gap).toBe(3)
+    expect(score(1, 4, 5).gap).toBe(3)
+  })
+})
+
+describe('Score Rascal', () => {
+  it('donne le même potentiel quelle que soit la mise', () => {
+    // C'est tout le propos du barème : la mise ne décide plus de ce qu'on peut
+    // gagner, seulement de ce qu'on en garde.
+    expect(rascalScore(3, 3, 5).total).toBe(50)
+    expect(rascalScore(0, 0, 5).total).toBe(50)
+    expect(rascalScore(5, 5, 5).total).toBe(50)
+  })
+
+  it('rend dix points par carte distribuée', () => {
+    expect(rascalScore(1, 1, 1).total).toBe(10)
+    expect(rascalScore(4, 4, 10).total).toBe(100)
+  })
+
+  it('rend la moitié à un pli d écart, dans les deux sens', () => {
+    expect(rascalScore(2, 3, 6).total).toBe(30)
+    expect(rascalScore(3, 2, 6).total).toBe(30)
+  })
+
+  it('ne rend rien à deux plis d écart ou plus', () => {
+    expect(rascalScore(1, 3, 6).total).toBe(0)
+    expect(rascalScore(6, 0, 6).total).toBe(0)
+  })
+
+  it('adoucit une mise à zéro ratée là où le classique la punit', () => {
+    expect(score(0, 1, 9).total).toBe(-90)
+    expect(rascalScore(0, 1, 9).total).toBe(45)
+  })
+
+  it('fait suivre les primes sur la même échelle', () => {
+    const bonus = makeBonus({ blackFourteen: 1, colorFourteens: 2 })
+    expect(rascalScore(2, 2, 4, bonus).bonusPoints).toBe(40)
+    expect(rascalScore(2, 3, 4, bonus).bonusPoints).toBe(20)
+    expect(rascalScore(2, 4, 4, bonus).bonusPoints).toBe(0)
+  })
+
+  it('ignore le réglage des primes d une mise ratée', () => {
+    // L'échelle tout/moitié/rien remplace le tout-ou-rien de l'option : c'est
+    // pourquoi la bascule disparaît du panneau quand le barème est allumé.
+    const bonus = makeBonus({ blackFourteen: 1 })
+    const kept = scoreRound({
+      bid: 2,
+      tricks: 4,
+      cards: 6,
+      bonus,
+      options: { bonusIfBidMissed: true, rascalScoring: true },
+    })
+    const dropped = scoreRound({
+      bid: 2,
+      tricks: 4,
+      cards: 6,
+      bonus,
+      options: { bonusIfBidMissed: false, rascalScoring: true },
+    })
+    expect(kept.bonusPoints).toBe(0)
+    expect(dropped.bonusPoints).toBe(0)
+  })
+
+  it('ne descend jamais sous zéro, sur toute la grille', () => {
+    const bonus = makeBonus({ blackFourteen: 1, piratesTakenBySkullKing: 2 })
+    for (let cards = 1; cards <= 10; cards += 1) {
+      for (let bid = 0; bid <= cards; bid += 1) {
+        for (let tricks = 0; tricks <= cards; tricks += 1) {
+          const result = rascalScore(bid, tricks, cards, bonus)
+          expect(result.bidPoints + result.bonusPoints).toBeGreaterThanOrEqual(0)
+        }
+      }
+    }
+  })
+
+  it('ne rend jamais de fraction de point', () => {
+    const bonus = makeBonus({ colorFourteens: 3, skullKingTakenByMermaid: 1 })
+    for (let cards = 1; cards <= 10; cards += 1) {
+      for (let gap = 0; gap <= 2; gap += 1) {
+        const result = rascalScore(gap, 0, cards, bonus)
+        expect(Number.isInteger(result.bidPoints)).toBe(true)
+        expect(Number.isInteger(result.bonusPoints)).toBe(true)
+      }
+    }
+  })
+
+  it('garde le pari de Rascal Jack hors du barème', () => {
+    // Il n'est ni divisé par deux à un pli d'écart, ni annulé à deux.
+    expect(rascalScore(2, 3, 6, makeBonus(), false, true, 10).rascalPoints).toBe(10)
+    expect(rascalScore(2, 4, 6, makeBonus(), false, true, -20).rascalPoints).toBe(-20)
+  })
+
+  it('laisse le pari perdu faire descendre le total sous zéro', () => {
+    // Le « jamais de négatif » porte sur la mise et les primes ; le pari se
+    // compte quoi qu'il arrive, et c'est la seule façon de passer sous zéro.
+    const round = rascalScore(2, 4, 6, makeBonus(), false, true, -20)
+    expect(round.bidPoints).toBe(0)
+    expect(round.bonusPoints).toBe(0)
+    expect(round.total).toBe(-20)
+  })
+
+  it('garde l issue de la mise, qui ne parle pas du barème', () => {
+    expect(rascalScore(4, 1, 5).outcome).toBe('over')
+    expect(rascalScore(1, 4, 5).outcome).toBe('under')
+    expect(rascalScore(3, 3, 5).outcome).toBe('exact')
+  })
+})
+
+describe('Boulet de canon', () => {
+  it('monte le potentiel à quinze points par carte', () => {
+    expect(rascalScore(3, 3, 6, makeBonus(), true).total).toBe(90)
+  })
+
+  it('ne rend rien au moindre écart, là où la mitraille rendait la moitié', () => {
+    expect(rascalScore(3, 4, 6, makeBonus(), false).total).toBe(30)
+    expect(rascalScore(3, 4, 6, makeBonus(), true).total).toBe(0)
+  })
+
+  it('emporte les primes avec lui', () => {
+    const bonus = makeBonus({ blackFourteen: 1 })
+    expect(rascalScore(3, 3, 6, bonus, true).bonusPoints).toBe(20)
+    expect(rascalScore(3, 4, 6, bonus, true).bonusPoints).toBe(0)
+  })
+
+  it('reste sans effet tant que la table ne l a pas ouvert', () => {
+    // Une manche enregistrée peut porter la charge ; c'est l'option de la
+    // partie qui décide si elle compte.
+    expect(rascalScore(3, 3, 6, makeBonus(), true, false).total).toBe(60)
+    expect(rascalScore(3, 4, 6, makeBonus(), true, false).total).toBe(30)
+  })
+
+  it('vaut mitraille quand rien n est chargé', () => {
+    expect(rascalScore(3, 4, 6).total).toBe(30)
+  })
+
+  it('ne touche pas au barème classique', () => {
+    const classic = scoreRound({
+      bid: 3,
+      tricks: 3,
+      cards: 6,
+      bonus: makeBonus(),
+      cannonball: true,
+      options: { bonusIfBidMissed: true, cannonball: true },
+    })
+    expect(classic.total).toBe(60)
+  })
+})

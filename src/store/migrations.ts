@@ -8,10 +8,17 @@ export const CURRENT_SCHEMA_VERSION = 1
  * version soit une addition et pas une réécriture.
  *
  * Ce qui ne mérite pas une montée de version : une addition. Les options de
- * variante, les plis écartés d'une manche, le pari d'un joueur et la saisie
- * mise de côté sont tous arrivés en v1, parce que `normalise` sait leur donner
+ * variante, les plis écartés d'une manche, le pari d'un joueur, la saisie mise
+ * de côté, puis le Score Rascal, le Boulet de canon et les plis du fantôme de
+ * Barbe Grise sont tous arrivés en v1, parce que `normalise` sait leur donner
  * la valeur historique quand la clé manque — faux, zéro, rien. Aucun champ
  * existant n'a changé de sens sur le disque.
+ *
+ * Le prix, assumé : un export fait par une version à jour reste lisible par une
+ * version qui ne l'est pas, mais sa liste blanche y jettera les clés qu'elle ne
+ * connaît pas, et recomptera la partie au barème classique. C'est moins grave
+ * qu'un fichier carrément refusé, qui est ce que la montée de version
+ * produirait.
  *
  * Ce qui la mériterait : une relecture. Le jour où une clé déjà écrite veut
  * dire autre chose, ou disparaît au profit d'une autre forme.

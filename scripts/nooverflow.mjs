@@ -93,17 +93,26 @@ for (const width of WIDTHS) {
     await page.getByPlaceholder('Nom du joueur').fill(n)
     await page.getByRole('button', { name: 'Ajouter', exact: true }).click()
   }
-  // Les variantes activées : elles ajoutent trois surfaces à auditer — le
-  // panneau à trois bascules, le compteur de plis écartés dans la mosaïque, et
-  // le pari du Rascal dans la feuille des primes.
+  // Les variantes activées : elles ajoutent quatre surfaces à auditer — le
+  // panneau à quatre bascules, le compteur de plis écartés dans la mosaïque, le
+  // pari du Rascal dans la feuille des primes, et la pastille de charge sur
+  // chacune des huit tuiles. Le Score Rascal chasse au passage le réglage des
+  // primes d'une mise ratée, qui n'a plus d'objet sous lui.
   await page.getByRole('button', { name: 'Options' }).click()
   await page.getByRole('switch', { name: /Kraken/ }).click()
   await page.getByRole('switch', { name: /Pouvoirs/ }).click()
+  await page.getByRole('switch', { name: /Score Rascal/ }).click()
+  await page.getByRole('switch', { name: /Boulet de canon/ }).click()
   await audit('nouvelle partie, huit joueurs, options dépliées')
 
   await page.getByRole('button', { name: 'Commencer la partie' }).click()
   await page.waitForSelector('[data-player-tile]')
   await audit('manche 1, mises')
+
+  // Une tuile chargée au boulet : c'est l'état plein de la pastille, et le
+  // rappel de mise le plus long des résultats.
+  await page.locator('[data-player-tile]').nth(0).getByRole('switch').click()
+  await audit('manche 1, mises, une charge au boulet')
 
   const tiles = page.locator('[data-player-tile]')
   const play = async (round) => {
@@ -165,6 +174,17 @@ for (const width of WIDTHS) {
   await page.getByRole('link', { name: /Ferdinand/ }).click()
   await page.waitForSelector('text=Statistiques')
   await audit('fiche joueur')
+
+  // À deux joueurs, la mosaïque porte une tuile de plus que de joueurs : celle
+  // du fantôme de Barbe Grise, dont le nom est le plus long de l'écran.
+  await page.goto(`${base}/new`)
+  await page.getByRole('checkbox', { name: /Anaïs/ }).click()
+  await page.getByRole('checkbox', { name: /Ferdinand/ }).click()
+  await page.getByRole('button', { name: 'Commencer la partie' }).click()
+  await page.waitForSelector('[data-player-tile]')
+  await page.getByRole('button', { name: 'Valider les mises' }).click()
+  await page.waitForSelector('[data-grey-beard-tile]')
+  await audit('manche à deux, tuile du fantôme')
 
   await context.close()
 }

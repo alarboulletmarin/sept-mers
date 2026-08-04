@@ -79,6 +79,37 @@ export const rulesFr: RuleSection[] = [
         kind: 'p',
         text: "À 8 joueurs, le paquet ne suffit plus pour les 2 dernières manches : elles se jouent à 8 cartes chacune. L'app applique ce plafond toute seule.",
       },
+      {
+        kind: 'p',
+        text: "À 2 joueurs, les plis de la manche ne se partagent pas qu'entre eux : une troisième main est distribuée, et elle en rafle sa part. Voir le chapitre suivant.",
+      },
+    ],
+  },
+  {
+    id: 'twoPlayers',
+    title: 'À 2 joueurs : le fantôme de Barbe Grise',
+    blocks: [
+      {
+        kind: 'p',
+        text: "On distribue 3 mains : une à chacun, et une troisième posée en pile face cachée. C'est le fantôme de Barbe Grise. Il ne mise pas et ne marque aucun point : il est là pour rafler des plis et ruiner les mises.",
+      },
+      {
+        kind: 'ul',
+        items: [
+          "Les 2 joueurs alternent l'entame d'une manche à l'autre.",
+          "Le fantôme joue toujours en deuxième — sauf s'il a remporté le pli précédent, auquel cas c'est lui qui entame le suivant.",
+          "À son tour, on retourne la carte du dessus de sa pile. Il ne suit pas la couleur entamée.",
+          "Sa Tigresse est toujours jouée en fuite.",
+        ],
+      },
+      {
+        kind: 'p',
+        text: "Il en découle que la somme des plis des 2 joueurs ne fait plus le nombre de cartes de la manche. C'est pour ça que l'écran des résultats affiche une troisième tuile à son nom : elle se remplit toute seule avec ce qui reste, et reste corrigeable si le compte n'y est pas.",
+      },
+      {
+        kind: 'p',
+        text: "Une table qui préfère jouer à 2 sans le fantôme n'a rien à régler : elle laisse sa tuile à zéro, et les 2 joueurs se partagent tous les plis comme ailleurs.",
+      },
     ],
   },
   {
@@ -119,6 +150,10 @@ export const rulesFr: RuleSection[] = [
         kind: 'p',
         text: "Une annonce à 0 vaut donc de plus en plus cher au fil de la partie, dans les deux sens. En manche 10 elle rapporte 100 points, ou en coûte 100.",
       },
+      {
+        kind: 'p',
+        text: "C'est le barème classique. Il en existe un second, le Score Rascal, plus doux et plus calculateur : il se choisit au lancement d'une partie, et il est décrit au chapitre des variantes.",
+      },
     ],
   },
   {
@@ -151,7 +186,7 @@ export const rulesFr: RuleSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: "Deux réglages se choisissent au moment de composer la table, et l'app s'en souvient d'une partie à l'autre. Rien n'est imposé : une table qui les laisse fermés joue le score classique, à l'identique.",
+        text: "Trois réglages se choisissent au moment de composer la table, et l'app s'en souvient d'une partie à l'autre. Rien n'est imposé : une table qui les laisse fermés joue le score classique, à l'identique.",
       },
       {
         kind: 'p',
@@ -189,6 +224,37 @@ export const rulesFr: RuleSection[] = [
       {
         kind: 'p',
         text: "L'app ne suit pas les cartes jouées. De ces 7 nouveautés, elle ne demande que les 2 qui changent le score : les plis écartés, et le pari du Rascal.",
+      },
+      {
+        kind: 'p',
+        text: "Score Rascal : le second barème. Chaque manche a le même potentiel pour tout le monde, quelle que soit la mise — 10 points par carte distribuée. Ce qui varie, c'est la précision.",
+      },
+      {
+        kind: 'ul',
+        items: [
+          'Mise tenue exactement : tous les points de la manche.',
+          "Écart de 1 pli, dans un sens comme dans l'autre : la moitié.",
+          'Écart de 2 plis ou plus : rien.',
+        ],
+      },
+      {
+        kind: 'p',
+        text: "Les primes suivent exactement la même échelle : tout, la moitié, ou rien. Il n'y a jamais de score négatif, d'où une ambiance plus calculatrice que le barème classique. Ce barème remplace le réglage des primes d'une mise ratée, qui n'a plus d'objet : la bascule disparaît du panneau quand il est allumé.",
+      },
+      {
+        kind: 'p',
+        text: "Boulet de canon : une option du Score Rascal. Après avoir misé, chacun choisit en secret comment charger son canon, et tout le monde révèle en même temps.",
+      },
+      {
+        kind: 'ul',
+        items: [
+          'Mitraille : le Score Rascal normal, 10 points par carte, avec la moitié à 1 pli près.',
+          "Boulet : 15 points par carte, mais rien du tout au moindre écart.",
+        ],
+      },
+      {
+        kind: 'p',
+        text: "L'app enregistre la charge une fois qu'elle est révélée : elle ne la tient pas secrète, c'est à la table de le faire. Le pari de Rascal Jack, lui, reste hors du barème — il se compte signé, sans jamais être divisé ni annulé, et c'est la seule façon de faire descendre un total de manche sous zéro.",
       },
     ],
   },

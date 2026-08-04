@@ -4,7 +4,7 @@ import type { Route } from '../app/Router.tsx'
 import { useStore } from '../app/StoreProvider.tsx'
 import { Button } from '../components/Button.tsx'
 import { Icon } from '../components/Icon.tsx'
-import { OPTIONS, OptionSwitch } from '../components/OptionSwitch.tsx'
+import { OptionSwitch, visibleOptions } from '../components/OptionSwitch.tsx'
 import { Sheet } from '../components/Sheet.tsx'
 import { useToast } from '../components/Toast.tsx'
 import type { Locale, Store, Theme } from '../domain/types.ts'
@@ -112,7 +112,7 @@ export function Settings({ go }: { go: (route: Route) => void }) {
       <section className="stack-tight">
         <h2 className="section-title">{t('settings.defaults')}</h2>
         <div className={styles.panel}>
-          {OPTIONS.map(({ key }) => {
+          {visibleOptions(store.settings.defaultOptions).map(({ key }) => {
             const checked = store.settings.defaultOptions[key]
             return (
               <OptionSwitch
