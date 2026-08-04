@@ -85,6 +85,8 @@ for (const theme of ['light', 'dark']) {
         settings: { locale: 'fr', theme: chosen, lastOptions: { bonusIfBidMissed: true } },
       }),
     )
+    // Le transport local du partage : la salle s'ouvre sans toucher un relais.
+    localStorage.setItem('sept-mers:transport', 'loopback')
   }, theme)
   const page = await context.newPage()
 
@@ -135,6 +137,17 @@ for (const theme of ['light', 'dark']) {
   await page.locator('[data-player-tile]').nth(0).getByRole('switch').click()
   await audit('manche 1, mises, une charge au boulet')
 
+  // La feuille de partage, au repos puis salle ouverte : le code sur fond
+  // creux et les légendes sous les QR sont des couples texte/surface à eux.
+  await page.getByRole('button', { name: 'Partager la table' }).click()
+  await page.waitForSelector('text=Lancer le direct')
+  await audit('feuille de partage')
+  await page.getByRole('button', { name: 'Lancer le direct' }).click()
+  await page.waitForSelector('[data-share-code]')
+  await page.waitForSelector('[data-recap-url]')
+  await audit('feuille de partage, salle ouverte')
+  await page.keyboard.press('Escape')
+
   const tiles = page.locator('[data-player-tile]')
   const setValue = async (tile, target) => {
     const st = tile.locator('[role=spinbutton]')
@@ -176,11 +189,22 @@ for (const theme of ['light', 'dark']) {
     ['/settings', 'Langue', 'réglages'],
     ['/players', 'Joueurs', 'joueurs'],
     ['/history', 'Historique', 'historique'],
+    ['/watch', 'Suivre une table', 'suivre une table'],
   ]) {
     await page.goto(`${base}${route}`)
     await page.waitForSelector(`text=${marker}`)
     await audit(label)
   }
+
+  // Le suivi sans table au bout : la pastille en attente, sur le canevas.
+  await page.goto(`${base}/watch/AB2C3D`)
+  await page.waitForSelector('[data-watch-state="connecting"]')
+  await audit('suivi, en attente de la table')
+
+  // Un lien-résumé abîmé : l'erreur se nomme, et doit se lire.
+  await page.goto(`${base}/recap#s=nimportequoi`)
+  await page.waitForSelector('text=illisible')
+  await audit('résumé illisible')
 
   await context.close()
 }

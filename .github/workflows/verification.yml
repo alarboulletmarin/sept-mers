@@ -1,7 +1,7 @@
 # La barrière de qualité du projet, exécutée à chaque poussée.
 #
-# Le README annonce cinq vérifications ; jusqu'ici rien ne les lançait, et les
-# quatre parcours navigateur pointaient un Chromium qui n'existait que sur une
+# Le README annonce six vérifications ; jusqu'ici rien ne les lançait, et les
+# parcours navigateur pointaient un Chromium qui n'existait que sur une
 # machine. Ce workflow est la seule chose qui fasse de ces scripts une garantie
 # plutôt qu'une intention.
 
@@ -38,13 +38,16 @@ jobs:
       - name: Types, tests et build
         run: npm run verify
 
-      # Le navigateur ne sert qu'aux quatre parcours : on ne prend que Chromium,
+      # Le navigateur ne sert qu'aux cinq parcours : on ne prend que Chromium,
       # et on le met en cache par version de Playwright.
       - name: Installer Chromium
         run: npx playwright install --with-deps chromium
 
       - name: Parcours complet
         run: node scripts/smoke.mjs
+
+      - name: Partage de table
+        run: node scripts/share.mjs
 
       - name: Mode avion et thème système
         run: node scripts/offline.mjs

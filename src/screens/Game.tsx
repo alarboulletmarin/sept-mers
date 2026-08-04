@@ -38,6 +38,8 @@ import {
   type Issue,
 } from '../domain/validation.ts'
 import { useT } from '../i18n/index.ts'
+import { useShare } from '../share/ShareProvider.tsx'
+import { ShareSheet } from '../share/ShareSheet.tsx'
 import { draftFor, isEditingRound, runningGame } from '../store/reducer.ts'
 import { RulesBody } from '../content/RulesBody.tsx'
 import styles from './Game.module.css'
@@ -49,9 +51,11 @@ export function Game({ go }: { go: (route: Route) => void }) {
   const actionBar = useActionBarHeight<HTMLDivElement>()
 
   const game = runningGame(store)
+  const share = useShare()
   const [openBonus, setOpenBonus] = useState<Id | null>(null)
   const [rulesOpen, setRulesOpen] = useState(false)
   const [tableOpen, setTableOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
   const [touched, setTouched] = useState(false)
 
   useWakeLock(Boolean(game))
@@ -154,8 +158,17 @@ export function Game({ go }: { go: (route: Route) => void }) {
               <div className={styles.tags}>
                 <Tag>{t('game.roundLabel')}</Tag>
                 <Tag>{t('game.cards', { count: cards })}</Tag>
+                {share.status === 'on' && <Tag>{t('share.tag', { count: share.peers })}</Tag>}
               </div>
               <div className={styles.roundActions}>
+                <button
+                  type="button"
+                  className={styles.action}
+                  aria-label={t('share.open')}
+                  onClick={() => setShareOpen(true)}
+                >
+                  <Icon name="live" size={17} />
+                </button>
                 <button
                   type="button"
                   className={styles.action}
@@ -441,6 +454,10 @@ export function Game({ go }: { go: (route: Route) => void }) {
 
       <Sheet open={rulesOpen} onClose={() => setRulesOpen(false)} title={t('rules.quick')}>
         <RulesBody quickFirst />
+      </Sheet>
+
+      <Sheet open={shareOpen} onClose={() => setShareOpen(false)} title={t('share.title')}>
+        <ShareSheet game={game} draft={draft} />
       </Sheet>
 
       <Sheet open={tableOpen} onClose={() => setTableOpen(false)} title={t('game.scoreTable')}>

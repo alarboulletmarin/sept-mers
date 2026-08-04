@@ -1,0 +1,91 @@
+/*
+ * Le panneau du partage. Le code de la salle est le héros : en chasse fixe,
+ * espacé, assez grand pour se lire depuis l'autre bout de la table.
+ */
+
+.codeBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border-radius: var(--radius-widget);
+  background: var(--sunken);
+  color: var(--sunken-on);
+  min-width: 0;
+}
+
+.codeLabel {
+  font-size: var(--size-tag);
+  font-weight: 700;
+  font-stretch: var(--stretch-tight);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--sunken-muted);
+}
+
+.code {
+  font-family: var(--font-figure);
+  font-size: 40px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  /* L'espacement se pose après chaque caractère, dernier compris : on le
+     rattrape pour que le code reste optiquement centré. */
+  margin-right: -0.22em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.scanHint {
+  text-align: center;
+  font-size: var(--size-label);
+  font-weight: 500;
+  color: var(--canvas-muted);
+}
+
+/* L'adresse en clair, pour qui préfère la taper. Elle casse où elle veut. */
+.address {
+  text-align: center;
+  font-family: var(--font-figure);
+  font-size: var(--size-caption);
+  font-weight: 500;
+  color: var(--canvas-muted);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.meta {
+  text-align: center;
+  font-size: var(--size-label);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.issue {
+  font-size: var(--size-label);
+  font-weight: 600;
+}
+
+.privacy {
+  font-size: var(--size-caption);
+  font-weight: 500;
+  color: var(--canvas-muted);
+}
+
+.snapshotHelp {
+  font-size: var(--size-label);
+  font-weight: 500;
+  color: var(--canvas-muted);
+}
+
+.snapshotActions {
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.snapshotActions > * {
+  flex: 1;
+  min-width: 0;
+}

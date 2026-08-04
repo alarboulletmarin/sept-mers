@@ -1,5 +1,5 @@
 /**
- * Jeu maison, douze icônes, aucune dépendance.
+ * Jeu maison, treize icônes, aucune dépendance.
  * Trait de 1.75, extrémités arrondies, `currentColor`.
  */
 export type IconName =
@@ -15,6 +15,7 @@ export type IconName =
   | 'grip'
   | 'history'
   | 'players'
+  | 'live'
 
 const paths: Record<IconName, React.ReactNode> = {
   chevron: <path d="M9 5l7 7-7 7" />,
@@ -91,6 +92,15 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="M3.5 19.25a5.75 5.75 0 0 1 11.5 0" />
       <path d="M16.25 6.4a3.25 3.25 0 0 1 0 5.2" />
       <path d="M17.5 15.1a5.75 5.75 0 0 1 3 4.15" />
+    </>
+  ),
+  /* Un point qui émet, deux arcs : le direct. Le point est un cercle minuscule
+     que l'épaisseur du trait remplit d'elle-même. */
+  live: (
+    <>
+      <circle cx="12" cy="12" r="0.9" />
+      <path d="M8.1 15.9a5.5 5.5 0 0 1 0-7.8" />
+      <path d="M15.9 8.1a5.5 5.5 0 0 1 0 7.8" />
     </>
   ),
 }

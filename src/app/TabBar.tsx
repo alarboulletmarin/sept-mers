@@ -26,6 +26,9 @@ function activeTab(route: Route): Route['name'] {
     case 'new':
     case 'game':
     case 'summary':
+    // Suivre une table ou lire un résumé partagé part aussi de l'accueil.
+    case 'watch':
+    case 'recap':
       return 'home'
     default:
       return route.name

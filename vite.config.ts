@@ -105,7 +105,10 @@ export default defineConfig({
   base: '/',
   build: {
     target: 'es2022',
-    // Un seul chunk : l'app est petite et doit démarrer d'un trait hors ligne.
+    // Un seul chunk pour la coquille : l'app est petite et doit démarrer d'un
+    // trait hors ligne. Le partage de table s'y ajoute en chunks paresseux —
+    // les `import()` de `src/share/transport.ts` les découpent d'eux-mêmes, et
+    // le service worker les précache avec le reste.
     rollupOptions: {
       output: {
         manualChunks: undefined,

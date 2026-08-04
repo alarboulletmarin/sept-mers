@@ -1,19 +1,24 @@
+import { useState } from 'react'
 import { Screen } from '../app/Layout.tsx'
 import type { Route } from '../app/Router.tsx'
 import { useStore } from '../app/StoreProvider.tsx'
 import { AccuracyBars } from '../charts/AccuracyBars.tsx'
 import { ScoreLines } from '../charts/ScoreLines.tsx'
 import { Button } from '../components/Button.tsx'
+import { Icon } from '../components/Icon.tsx'
 import { ScoreTable } from '../components/ScoreTable.tsx'
+import { Sheet } from '../components/Sheet.tsx'
 import { Caption, Figure, Tag, Widget, WidgetTitle } from '../components/Widget.tsx'
 import { standings, winnerIds } from '../domain/stats.ts'
 import { useT } from '../i18n/index.ts'
+import { ShareSheet } from '../share/ShareSheet.tsx'
 import { gameById, runningGame } from '../store/reducer.ts'
 import styles from './GameSummary.module.css'
 
 export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route) => void }) {
   const { store, dispatch } = useStore()
   const { t, number, date } = useT()
+  const [shareOpen, setShareOpen] = useState(false)
 
   // Sans identifiant, c'est la partie qu'on vient de finir.
   const game = gameId ? gameById(store, gameId) : runningGame(store)
@@ -51,6 +56,18 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
       title={t('summary.title')}
       lede={t('summary.lede')}
       onBack={() => go({ name: readOnly ? 'history' : 'home' })}
+      actions={
+        // Le résultat se partage : un lien-résumé qui fige la partie, à
+        // envoyer dans la conversation du groupe ou à faire scanner.
+        <button
+          type="button"
+          className="round-button"
+          aria-label={t('share.snapshot')}
+          onClick={() => setShareOpen(true)}
+        >
+          <Icon name="live" size={20} />
+        </button>
+      }
       footer={
         <div className={styles.actions}>
           <Button variant="secondary" full onClick={rematch}>
@@ -108,6 +125,10 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
           <ScoreTable game={game} />
         </Widget>
       </div>
+
+      <Sheet open={shareOpen} onClose={() => setShareOpen(false)} title={t('share.snapshot')}>
+        <ShareSheet game={game} live={false} />
+      </Sheet>
     </Screen>
   )
 }

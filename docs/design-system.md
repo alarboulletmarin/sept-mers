@@ -409,6 +409,24 @@ la feuille.
 Un widget `md` en `sunken`, un titre, une phrase qui dit quoi faire, un bouton.
 Aucune illustration.
 
+### La pastille de connexion
+
+L'état du suivi en direct, dit par la forme et jamais par la teinte : **pleine**
+(surface `accent`) quand le direct est là, **au filet** quand on cherche la
+table, **en tiretés** quand le fil est perdu, **creusée** (surface `sunken`)
+quand c'est fini. Le mot est toujours dans la pastille, à côté de la forme —
+« En direct », « Connexion », « Fil perdu », « Terminé » — parce qu'une forme
+seule ne se relit pas d'une partie à l'autre.
+
+### Le code QR
+
+La seule surface de l'app qui ne s'inverse pas avec le thème : modules sombres
+sur boîte blanche, de jour comme de nuit — les lecteurs attendent du sombre sur
+clair, et un code inversé se scanne mal. La zone de silence de quatre modules
+est dans la matrice ; en thème sombre, un filet détache la boîte du fond. C'est
+un objet posé sur l'écran, pas une surface de l'interface — c'est pour ça qu'il
+a le droit d'ignorer le thème.
+
 ## 7. Ne pas perdre l'utilisateur
 
 L'app est prise en main par quelqu'un qui joue en même temps, souvent sans
@@ -428,7 +446,8 @@ du design.
 4. **Le blocage se dit avant de bloquer.** Tant qu'il manque une saisie, la barre
    basse annonce laquelle — « Il manque la mise de 3 joueurs » — au lieu de se
    contenter de griser le bouton. Une fois tout renseigné, elle passe au compte
-   des plis.
+   des plis. Même règle en mode avion : le direct nomme son besoin de réseau —
+   et laisse le lien-résumé, qui marche sans rien, juste en dessous.
 
 ## 8. Règles absolues d'accessibilité
 
