@@ -75,7 +75,7 @@ Node 22.12, que toute version 22 récente satisfait.
 | `node scripts/offline.mjs` | Mode avion et suivi du thème système, sur `dist/` |
 | `node scripts/nooverflow.mjs` | Absence de scroll latéral, à cinq largeurs |
 | `node scripts/contrast.mjs` | Absence de texte illisible, dans les deux thèmes |
-| `python3 scripts/make-icons.py` | Regénère les icônes PNG depuis le logotype |
+| `python3 scripts/make-icons.py` | Regénère les icônes et le `favicon.ico` depuis le logotype |
 
 Les quatre parcours navigateur ont besoin d'un Chromium. Après
 `npx playwright install chromium` ils le trouvent seuls ; `scripts/browser.mjs`
@@ -125,7 +125,7 @@ En développement s'ajoutent Vitest et Playwright, pour les parcours navigateur.
 Pas de routeur, pas de librairie d'état, pas de Tailwind, pas de librairie de
 graphiques, pas de pack d'icônes. Les deux fichiers de police vivent dans `src/`
 pour que Vite leur pose un hash de contenu et que le service worker les
-précache avec le bundle. Le routeur tient sur le hash, l'état sur un
+précache avec le bundle. Le routeur tient sur `history.pushState`, l'état sur un
 `useReducer` persisté, les styles sur des variables CSS et des modules CSS, les
 graphiques sur du SVG calculé à la main.
 
@@ -187,8 +187,26 @@ forme de `engines.node`. Les explications, elles, vivent ci-dessous.
 | `assets/*` | un an, immuable | Ces fichiers portent un hash de contenu : leur nom change à chaque build. |
 | `icons/*` | un jour | Ils n'ont pas de hash, et on doit pouvoir les corriger. |
 
-L'app vivant sur le hash, il n'y a aucune route serveur à réécrire : la
-redirection déclarée ne sert qu'à rattraper une adresse tapée à la main.
+### Les routes
+
+Les écrans ont de vraies adresses — `/new`, `/rules`, `/summary/<id>` — et non
+un hash. Deux conséquences, dans les deux sens :
+
+- **L'hébergeur doit les connaître.** `vercel.json` déclare une *réécriture* :
+  toute adresse qui n'est pas un fichier reçoit `index.html`, **à son adresse**,
+  sans redirection. Une redirection changerait la barre, ce qui est précisément
+  ce qu'on veut éviter. Sur un autre hébergeur, c'est la même règle sous un
+  autre nom — `try_files` chez nginx, `_redirects` chez Netlify.
+- **Le build se sert depuis la racine** (`base: '/'` dans `vite.config.ts`).
+  Une URL relative se résout contre l'adresse du document : à `/summary/<id>`,
+  `./assets/index-abc.js` irait chercher `/summary/assets/index-abc.js`. L'app
+  ne peut donc plus vivre dans un sous-dossier.
+
+Hors ligne, c'est `navigateFallback` du service worker qui joue le rôle de la
+réécriture : recharger `/rules` en mode avion sert la coquille précachée.
+
+Les adresses de l'ancien routeur, en `/#/rules`, restent valides : elles sont
+relues une fois, puis réécrites en clair sans empiler d'entrée d'historique.
 
 ## Vie privée
 
@@ -230,10 +248,12 @@ Le texte des règles présenté dans l'app est une réécriture originale. Les
 mécanismes d'un jeu ne sont pas protégeables, la prose d'un livret l'est : rien
 n'est repris du livret officiel, ni dans les mots, ni dans le découpage des
 chapitres. L'app ne contient aucune illustration de carte, aucun visuel de boîte,
-aucune reprise de la typographie ou du logo du jeu.
+aucune reprise de la typographie du jeu.
 
-Le logotype est un dessin original : sept traits horizontaux de longueurs
-inégales, une houle vue de profil, sept traits pour sept mers.
+Le logotype est un crâne couronné, plein, d'un seul tenant. C'est un motif de
+pavillon pirate, et il ressemble par force à ce qu'un jeu de pirates arbore : la
+formule qui précédait — « aucune reprise du logo du jeu » — ne tenait plus, elle
+est retirée. À vérifier avant toute publication sous ce nom.
 
 ## Licence
 

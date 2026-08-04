@@ -4,42 +4,16 @@
  *
  *   node scripts/smoke.mjs [--shots]
  */
-import { launchChromium } from './browser.mjs'
-import { createServer } from 'node:http'
-import { readFile } from 'node:fs/promises'
-import { extname, join, normalize } from 'node:path'
+import { launchChromium, listen, serveDist } from './browser.mjs'
 import { mkdirSync } from 'node:fs'
 
-const ROOT = new URL('../dist/', import.meta.url).pathname
 const SHOTS = process.argv.includes('--shots')
 const SHOT_DIR = new URL('../shots/', import.meta.url).pathname
 
-const TYPES = {
-  '.html': 'text/html',
-  '.js': 'text/javascript',
-  '.css': 'text/css',
-  '.json': 'application/json',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.webmanifest': 'application/manifest+json',
-}
-
 const requests = []
 
-const server = createServer(async (req, res) => {
-  const path = decodeURIComponent(req.url.split('?')[0])
-  const file = path === '/' ? '/index.html' : path
-  try {
-    const body = await readFile(join(ROOT, normalize(file)))
-    res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' })
-    res.end(body)
-  } catch {
-    res.writeHead(404).end('not found')
-  }
-})
-
-await new Promise((resolve) => server.listen(0, resolve))
-const base = `http://127.0.0.1:${server.address().port}`
+const server = serveDist()
+const base = await listen(server)
 
 const browser = await launchChromium()
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'fr-FR' })
@@ -261,7 +235,7 @@ check('la saisie en cours est restituée après rechargement', restored === '1')
 await shot('reprise')
 
 // Depuis l'accueil, la partie en cours se reprend d'un tap.
-await page.goto(`${base}#/`)
+await page.goto(`${base}/`)
 await page.waitForSelector('text=Reprendre')
 check('l accueil propose de reprendre', await page.getByText('Reprendre').isVisible())
 await page.getByText('Reprendre').click()
@@ -276,7 +250,7 @@ await page.evaluate(() => {
   delete store.draft
   localStorage.setItem('sept-mers', JSON.stringify(store))
 })
-await page.goto(`${base}#/new`)
+await page.goto(`${base}/new`)
 await page.reload()
 for (const name of ['Eve', 'Fay', 'Gus', 'Hal', 'Ivy', 'Jo']) {
   await page.getByPlaceholder('Nom du joueur').fill(name)
@@ -316,7 +290,7 @@ await page.evaluate(() => {
   delete store.draft
   localStorage.setItem('sept-mers', JSON.stringify(store))
 })
-await page.goto(`${base}#/game`)
+await page.goto(`${base}/game`)
 await page.reload()
 await page.waitForSelector("text=Le paquet ne suit plus")
 check('à huit joueurs, la manche 9 se joue à 8 cartes', await page.getByText('8 cartes').first().isVisible())
@@ -325,7 +299,7 @@ await shot('plafond-huit-joueurs')
 
 // ------------------------------------------------------------- thème et langue
 
-await page.goto(`${base}#/settings`)
+await page.goto(`${base}/settings`)
 await page.getByRole('radio', { name: 'Sombre' }).click()
 const theme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
 check('le thème sombre s applique', theme === 'dark')
@@ -343,10 +317,44 @@ await page.getByRole('radio', { name: 'Clair' }).click()
 
 // ----------------------------------------------------------------- règles
 
-await page.goto(`${base}#/rules`)
+await page.goto(`${base}/rules`)
 await page.waitForSelector('text=Règles')
 check('les règles s ouvrent', await page.getByText('Qui remporte le pli').isVisible())
 await shot('regles')
+
+// ---------------------------------------------------------------- adresses
+
+/*
+ * Le routeur est passé du hash au chemin. Quatre choses en dépendent, et
+ * aucune ne se voit depuis un test unitaire : elles tiennent au navigateur,
+ * à son historique, et à ce que l'hébergeur répond sur une route.
+ */
+const url = () => page.evaluate(() => location.pathname + location.search + location.hash)
+
+await page.goto(base)
+await page.getByRole('link', { name: 'Règles' }).click()
+await page.waitForSelector('text=Qui remporte le pli')
+check('naviguer écrit l adresse en clair', (await url()) === '/rules')
+
+await page.getByRole('link', { name: 'Historique' }).click()
+await page.waitForSelector('text=Historique')
+await page.goBack()
+await page.waitForSelector('text=Qui remporte le pli')
+check('le bouton précédent revient à l écran d avant', (await url()) === '/rules')
+await page.goForward()
+await page.waitForSelector('text=Historique')
+check('le bouton suivant y retourne', (await url()) === '/history')
+
+// Une adresse de l'ancien routeur, telle qu'un signet la garde.
+await page.goto(`${base}/#/rules`)
+await page.waitForSelector('text=Qui remporte le pli')
+check('une adresse en hash ouvre encore son écran', await page.getByText('Qui remporte le pli').isVisible())
+check('et la barre d adresse est remise en clair', (await url()) === '/rules')
+
+// Une adresse qui ne nomme rien : l'accueil, et l'adresse le dit aussi.
+await page.goto(`${base}/regles`)
+await page.waitForSelector('text=Sept Mers')
+check('une adresse inconnue retombe sur l accueil', (await url()) === '/')
 
 // -------------------------------------------------------------- pas de réseau
 

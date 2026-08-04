@@ -79,9 +79,9 @@ describe('déroulé d une partie', () => {
     const store = run(seeded(), {
       type: 'game/start',
       playerIds: ['p1', 'p2'],
-      options: { ...DEFAULT_OPTIONS, bonusIfBidMissed: false },
+      options: { ...DEFAULT_OPTIONS, bonusIfBidMissed: true },
     })
-    expect(store.settings.lastOptions.bonusIfBidMissed).toBe(false)
+    expect(store.settings.defaultOptions.bonusIfBidMissed).toBe(true)
   })
 
   it('valide une manche et ouvre la suivante', () => {
@@ -332,6 +332,49 @@ describe('export et import', () => {
 
   it('refuse un fichier sans schemaVersion', () => {
     expect(() => parseStore(JSON.stringify({ players: [], games: [] }))).toThrow()
+  })
+})
+
+describe('options par défaut', () => {
+  it("n'allume aucune option à l'installation", () => {
+    // Les trois bascules de l'écran de nouvelle partie sont éteintes tant que
+    // personne ne les a touchées, et l'écran part de ce réglage.
+    expect(DEFAULT_OPTIONS).toEqual({
+      bonusIfBidMissed: false,
+      seaMonsters: false,
+      advancedPirates: false,
+    })
+    expect(emptyStore().settings.defaultOptions).toEqual(DEFAULT_OPTIONS)
+  })
+
+  it("éteint le réglage écrit par une version d'avant", () => {
+    /*
+     * `bonusIfBidMissed` valait vrai par défaut, et ce vrai-là a été écrit dans
+     * le stockage de tout le monde sous la clé `lastOptions`. Sans cette
+     * relecture, le changement de valeur par défaut ne se verrait que sur une
+     * installation neuve.
+     */
+    const store = normalise({
+      schemaVersion: 1,
+      players: [],
+      games: [],
+      settings: {
+        locale: 'fr',
+        theme: 'system',
+        lastOptions: { bonusIfBidMissed: true, seaMonsters: false, advancedPirates: false },
+      },
+    })
+    expect(store.settings.defaultOptions).toEqual(DEFAULT_OPTIONS)
+  })
+
+  it('garde le réglage que quelqu un a lui-même allumé', () => {
+    const store = normalise({
+      schemaVersion: 1,
+      players: [],
+      games: [],
+      settings: { locale: 'fr', theme: 'system', defaultOptions: { seaMonsters: true } },
+    })
+    expect(store.settings.defaultOptions).toEqual({ ...DEFAULT_OPTIONS, seaMonsters: true })
   })
 })
 
@@ -657,12 +700,18 @@ describe('variantes', () => {
     expect(reimported).toEqual(store)
   })
 
-  it('relit une partie d avant les variantes en score classique', () => {
+  it('relit une partie d avant les variantes comme elle a été jouée', () => {
     const store = normalise({
       schemaVersion: 1,
       players: [{ id: 'p1', name: 'Ana' }],
       games: [{ id: 'g', playerIds: ['p1', 'p2'], options: {}, rounds: [] }],
     })
-    expect(store.games[0].options).toEqual(DEFAULT_OPTIONS)
+    // Historique et non préférentiel : la partie a compté les bonus d'une mise
+    // ratée, et le réglage par défaut de l'app ne la fait pas changer d'avis.
+    expect(store.games[0].options).toEqual({
+      bonusIfBidMissed: true,
+      seaMonsters: false,
+      advancedPirates: false,
+    })
   })
 })

@@ -22,6 +22,7 @@ const ALLOWED_TOP_LEVEL = new Set(['$schema', 'redirects', 'headers', 'rewrites'
 const ALLOWED_IN_ENTRY: Record<string, Set<string>> = {
   headers: new Set(['source', 'headers', 'has', 'missing']),
   redirects: new Set(['source', 'destination', 'permanent', 'statusCode', 'has', 'missing']),
+  rewrites: new Set(['source', 'destination', 'has', 'missing']),
 }
 
 function everyKey(value: unknown, seen: string[] = []): string[] {
@@ -81,9 +82,28 @@ describe('vercel.json', () => {
     expect(assets?.headers[0].value).toContain('immutable')
   })
 
-  it('ne redirige aucun fichier réel du build', () => {
-    const redirects = config.redirects as { source: string }[]
-    const pattern = new RegExp(`^${redirects[0].source}$`)
+  /*
+   * La réécriture, et non la redirection. Une redirection change l'adresse de
+   * la barre ; c'est exactement ce qu'on ne veut pas d'une route : `/summary/x`
+   * doit rester `/summary/x` et recevoir la coquille. Sans elle, recharger
+   * ailleurs qu'à la racine donne un 404, ce qui est le seul vrai risque du
+   * passage aux adresses en clair.
+   */
+  const rewrite = (config.rewrites as { source: string; destination: string }[] | undefined)?.[0]
+
+  it('sert la coquille aux routes de l app, sans changer leur adresse', () => {
+    expect(rewrite, 'aucune réécriture déclarée').toBeTruthy()
+    expect(rewrite?.destination).toBe('/index.html')
+    expect(config.redirects, 'une redirection changerait l adresse').toBeUndefined()
+
+    const pattern = new RegExp(`^${rewrite?.source}$`)
+    for (const route of ['/new', '/game', '/rules', '/settings', '/summary/g1', '/players/p1']) {
+      expect(pattern.test(route), `${route} ne serait pas servi`).toBe(true)
+    }
+  })
+
+  it('ne réécrit aucun fichier réel du build', () => {
+    const pattern = new RegExp(`^${rewrite?.source}$`)
     for (const real of [
       '/index.html',
       '/sw.js',
@@ -92,16 +112,13 @@ describe('vercel.json', () => {
       '/assets/index-abc123.css',
       '/icons/favicon.svg',
       '/icons/icon-192.png',
+      // Les deux chemins que l'on va chercher sans lire le document. Réécrits,
+      // ils ramèneraient du HTML sous un nom d'image : l'onglet retomberait sur
+      // l'initiale du titre, et l'écran d'accueil iOS sur une capture de page.
+      '/favicon.ico',
+      '/apple-touch-icon.png',
     ]) {
-      expect(pattern.test(real), `${real} serait redirigé`).toBe(false)
-    }
-  })
-
-  it('rattrape une adresse tapée à la main', () => {
-    const redirects = config.redirects as { source: string }[]
-    const pattern = new RegExp(`^${redirects[0].source}$`)
-    for (const typed of ['/regles', '/game', '/joueurs/ana']) {
-      expect(pattern.test(typed), `${typed} devrait être rattrapé`).toBe(true)
+      expect(pattern.test(real), `${real} serait réécrit`).toBe(false)
     }
   })
 })

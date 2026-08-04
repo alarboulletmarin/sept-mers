@@ -259,10 +259,10 @@ de perdre la partie en cours.
 - **Accueil, Historique, Joueurs, Règles.** Les réglages n'en font pas partie :
   on y va une fois pour choisir sa langue et son thème, pas en jouant. Ils
   vivent en bouton rond sur l'accueil.
-- L'onglet **Accueil porte le logotype** plutôt qu'une maison : la houle est
+- L'onglet **Accueil porte le logotype** plutôt qu'une maison : la marque est
   déjà le dessin de la maison.
 - L'onglet actif porte **un trait court au-dessus de son icône** — le même geste
-  que le logotype et que la houle de progression, à la plus petite échelle. Le
+  que la houle de progression, à la plus petite échelle. Le
   trait est toujours présent et toujours à la même place ; seule son encre
   change, si bien que rien ne saute quand on change d'onglet.
 - Une partie, sa composition et son résultat allument **Accueil** : ce sont
@@ -278,7 +278,7 @@ de perdre la partie en cours.
 
 L'intitulé de section est en capitales étroites, et **le filet le prolonge
 jusqu'au bord**. C'est le seul ornement de l'app : il coûte un pixel, il tient la
-page ensemble, et il vient de la même famille de gestes que le logotype — des
+page ensemble, et il vient de la même famille de gestes que la houle — des
 traits horizontaux, rien d'autre.
 
 Il remplace les fonds de section. Un empilement de blocs blancs se lit comme un
@@ -286,7 +286,7 @@ formulaire ; une suite de filets se lit comme un sommaire.
 
 ### La houle — repère de partie
 
-Dix traits pour dix manches, du même geste que le logotype. Les manches jouées
+Dix traits pour dix manches, du geste de la maison. Les manches jouées
 sont pleines mais posées, celle en cours est plus haute et plus longue, celles à
 venir sont à 22 % d'opacité.
 
@@ -482,27 +482,35 @@ s'incrémente, pas de graphique qui se dessine.
 **Sept Mers.** Le nom vient du titre décerné au vainqueur. Il ne reprend aucun
 élément de la marque déposée.
 
-Le logotype est un dessin original : **sept traits horizontaux** de longueurs
-inégales, empilés, formant une houle vue de profil. Sept traits pour sept mers,
-et une forme qui évoque autant une vague qu'un relevé de scores.
+Le logotype est un **crâne couronné**, plein, d'un seul tenant. Une silhouette
+et rien d'autre : pas de contour, pas de dégradé, pas de second ton. C'est la
+seule forme figurative de l'app, et elle ne sert qu'à la marque — jamais à dire
+un état.
 
-```svg
-<svg viewBox="0 0 48 48" fill="none">
-  <g stroke="currentColor" stroke-width="3" stroke-linecap="round">
-    <path d="M10 12h12" /><path d="M26 12h12" />
-    <path d="M8 20h16" /><path d="M28 20h12" />
-    <path d="M12 28h20" /><path d="M36 28h4" />
-    <path d="M10 36h28" />
-  </g>
-</svg>
-```
+Le tracé est trop long pour être recopié ici. Il vit à trois endroits, et un
+test compare les trois à chaque exécution, parce qu'une divergence ne se verrait
+qu'à l'icône installée :
 
-Le trait horizontal de longueur inégale est le motif de la maison : on le
-retrouve dans la houle de progression, dans le filet de section, et dans le trait
-à remplir du stepper. C'est le même geste à trois échelles.
+| Fichier | Rôle |
+|---|---|
+| `src/components/Icon.tsx` | Le composant `Logo`, en `currentColor` |
+| `public/icons/favicon.svg` | Le favicon vectoriel, blanc sur encre |
+| `scripts/make-icons.py` | Les PNG du manifeste et le `favicon.ico` |
 
-Il se pose toujours dans la couleur de texte de sa surface. Sur l'icône PWA
-maskable, blanc sur noir.
+**Deux cadrages, un tracé.** Le composant remplit son cadre, sans marge : à
+21 px dans la barre d'onglets, chaque unité compte. Les tuiles — favicon, icônes
+du manifeste — rétrécissent le même tracé vers leur centre : `TILE` pour une
+icône pleine, `MASKABLE` pour celle que le lanceur découpe, où seuls les 80 %
+centraux sont garantis et où c'est le cercle circonscrit d'un dessin haut qui
+commande.
+
+Il se pose toujours dans la couleur de texte de sa surface. Sur l'icône PWA,
+blanc sur noir.
+
+Le **trait horizontal de longueur inégale** reste, lui, le motif de la maison :
+on le retrouve dans la houle de progression, dans le filet de section, et dans
+le trait à remplir du stepper. C'est le même geste à trois échelles — il ne
+descend plus du logotype, il tient tout seul.
 
 **Aucune imagerie de piraterie.** Pas de crâne, pas de couronne, pas de
 parchemin, pas de bois vieilli. Skull King est une marque déposée de Grandpa

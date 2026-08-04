@@ -2,20 +2,10 @@
  * Vérifie les deux critères qui demandent un vrai navigateur :
  * le mode avion, et le suivi du thème système en direct.
  */
-import { launchChromium } from './browser.mjs'
-import { createServer } from 'node:http'
-import { readFile } from 'node:fs/promises'
-import { extname, join, normalize } from 'node:path'
+import { launchChromium, listen, serveDist } from './browser.mjs'
 
-const ROOT = new URL('../dist/', import.meta.url).pathname
-const TYPES = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'}
-const server = createServer(async (req, res) => {
-  const p = decodeURIComponent(req.url.split('?')[0]); const f = p === '/' ? '/index.html' : p
-  try { const b = await readFile(join(ROOT, normalize(f))); res.writeHead(200, {'content-type': TYPES[extname(f)] ?? 'application/octet-stream'}); res.end(b) }
-  catch { res.writeHead(404).end('x') }
-})
-await new Promise(r => server.listen(0, r))
-const base = `http://127.0.0.1:${server.address().port}`
+const server = serveDist()
+const base = await listen(server)
 
 const failures = []
 const check = (l, c) => { console.log(`  ${c ? 'ok  ' : 'FAIL'} ${l}`); if (!c) failures.push(l) }
@@ -85,7 +75,7 @@ await page.waitForSelector('text=Les résultats', { timeout: 10000 }).catch(() =
 check('une manche se valide hors ligne', await page.locator('[data-round]').first().isVisible())
 
 // Les écrans secondaires aussi.
-await page.goto(`${base}#/rules`)
+await page.goto(`${base}/rules`)
 await page.waitForSelector('text=Qui remporte le pli', { timeout: 10000 })
 check('les règles s ouvrent hors ligne', true)
 await context.setOffline(false)

@@ -31,7 +31,7 @@ export default defineConfig({
             .sort()
             .map(
               (name) =>
-                `    <link rel="preload" href="./${name}" as="font" type="font/woff2" crossorigin />`,
+                `    <link rel="preload" href="/${name}" as="font" type="font/woff2" crossorigin />`,
             )
             .join('\n')
           return html.replace('</head>', `${links}\n  </head>`)
@@ -54,16 +54,22 @@ export default defineConfig({
       // affiche le bandeau : le script que le plugin injecte d'office ferait
       // le travail une seconde fois, sans rien à quoi s'accrocher.
       injectRegister: null,
-      // Le manifeste est écrit à la main dans `public/`, en chemins relatifs
-      // comme le reste du build. On laisse le plugin le précacher, pas le
-      // réécrire.
+      // Le manifeste est écrit à la main dans `public/`. Ses chemins sont
+      // relatifs, ce qui reste juste : ils se résolvent contre l'adresse du
+      // manifeste, à la racine, et non contre celle de la page. On laisse le
+      // plugin le précacher, pas le réécrire.
       manifest: false,
       workbox: {
         // Tout le shell, fontes et icônes comprises : l'app ne fait aucun appel
         // réseau après le chargement, ce précache est la totalité du hors ligne.
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
-        // L'app vit sur le hash : une seule page, et toute navigation y retombe,
-        // y compris en mode avion.
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,webmanifest}'],
+        /*
+         * Une seule page, et toute navigation y retombe — y compris en mode
+         * avion, et y compris sur une route profonde comme `/summary/<id>`.
+         * C'est le pendant hors ligne de la réécriture de `vercel.json` : sans
+         * lui, recharger l'app ailleurs qu'à la racine, sans réseau, donnerait
+         * une page blanche.
+         */
         navigateFallback: 'index.html',
         // Le précache de la version précédente part à l'activation, sinon le
         // stockage grossit d'un build à l'autre sans jamais redescendre.
@@ -87,9 +93,16 @@ export default defineConfig({
       },
     }),
   ],
-  // Chemins relatifs : l'app tourne aussi bien à la racine d'un domaine que
-  // dans un sous-dossier.
-  base: './',
+  /*
+   * Chemins absolus, et non relatifs.
+   *
+   * Une URL relative se résout contre l'adresse du document, pas contre la
+   * racine du site. Le routeur vivant sur le chemin, `/summary/<id>` ferait
+   * chercher `./assets/index-abc.js` à `/summary/assets/index-abc.js` — un 404
+   * sur toute route à deux segments. C'est le prix du `#` en moins : l'app se
+   * sert depuis la racine d'un domaine, plus depuis un sous-dossier.
+   */
+  base: '/',
   build: {
     target: 'es2022',
     // Un seul chunk : l'app est petite et doit démarrer d'un trait hors ligne.

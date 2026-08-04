@@ -113,7 +113,7 @@ export function Settings({ go }: { go: (route: Route) => void }) {
         <h2 className="section-title">{t('settings.defaults')}</h2>
         <div className={styles.panel}>
           {OPTIONS.map(({ key }) => {
-            const checked = store.settings.lastOptions[key]
+            const checked = store.settings.defaultOptions[key]
             return (
               <OptionSwitch
                 key={key}
@@ -125,7 +125,7 @@ export function Settings({ go }: { go: (route: Route) => void }) {
                     type: 'settings/defaultOptions',
                     // On étale : écrire l'objet en littéral effacerait en
                     // silence les options qu'on n'a pas nommées.
-                    options: { ...store.settings.lastOptions, [key]: !checked },
+                    options: { ...store.settings.defaultOptions, [key]: !checked },
                   })
                 }
               />

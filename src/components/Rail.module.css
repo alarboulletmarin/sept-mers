@@ -31,8 +31,8 @@
   opacity: 0.55;
 }
 
-/* La manche en cours : plus haute et plus longue. C'est l'irrégularité du
-   logotype, et c'est ce qui la rend repérable sans compter. */
+/* La manche en cours : plus haute et plus longue. C'est l'irrégularité de la
+   houle, et c'est ce qui la rend repérable sans compter. */
 .now {
   flex-grow: 1.8;
   height: 6px;

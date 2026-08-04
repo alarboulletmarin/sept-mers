@@ -6,20 +6,10 @@
  * devient blanc sur blanc, sans que rien ne casse par ailleurs. On mesure donc
  * le contraste réel de chaque texte contre son fond effectif.
  */
-import { launchChromium } from './browser.mjs'
-import { createServer } from 'node:http'
-import { readFile } from 'node:fs/promises'
-import { extname, join, normalize } from 'node:path'
+import { launchChromium, listen, serveDist } from './browser.mjs'
 
-const ROOT = new URL('../dist/', import.meta.url).pathname
-const TYPES = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'}
-const server = createServer(async (req, res) => {
-  const p = decodeURIComponent(req.url.split('?')[0]); const f = p === '/' ? '/index.html' : p
-  try { const b = await readFile(join(ROOT, normalize(f))); res.writeHead(200, {'content-type': TYPES[extname(f)] ?? 'application/octet-stream'}); res.end(b) }
-  catch { res.writeHead(404).end('x') }
-})
-await new Promise((r) => server.listen(0, r))
-const base = `http://127.0.0.1:${server.address().port}`
+const server = serveDist()
+const base = await listen(server)
 
 /** Seuil volontairement bas : on cherche l'illisible, pas l'imparfait. */
 const FLOOR = 3
@@ -160,10 +150,10 @@ for (const theme of ['light', 'dark']) {
   await page.waitForSelector('[data-round="2"]')
 
   for (const [route, marker, label] of [
-    ['#/rules', 'Qui remporte le pli', 'règles'],
-    ['#/settings', 'Langue', 'réglages'],
-    ['#/players', 'Joueurs', 'joueurs'],
-    ['#/history', 'Historique', 'historique'],
+    ['/rules', 'Qui remporte le pli', 'règles'],
+    ['/settings', 'Langue', 'réglages'],
+    ['/players', 'Joueurs', 'joueurs'],
+    ['/history', 'Historique', 'historique'],
   ]) {
     await page.goto(`${base}${route}`)
     await page.waitForSelector(`text=${marker}`)

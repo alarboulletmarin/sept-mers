@@ -1,6 +1,6 @@
 import { Icon, Logo, type IconName } from '../components/Icon.tsx'
 import { useT } from '../i18n/index.ts'
-import { hrefFor, type Route } from './Router.tsx'
+import { hrefFor, opensElsewhere, type Route } from './Router.tsx'
 import styles from './TabBar.module.css'
 
 /**
@@ -49,12 +49,13 @@ export function TabBar({ route, go }: { route: Route; go: (next: Route) => void 
                 href={hrefFor(target)}
                 aria-current={current ? 'page' : undefined}
                 onClick={(event) => {
+                  if (opensElsewhere(event)) return
                   event.preventDefault()
                   go(target)
                 }}
               >
-                {/* Le trait de l'onglet actif : le même geste que le logotype
-                    et que la houle de progression, à la plus petite échelle. */}
+                {/* Le trait de l'onglet actif : le même geste que la houle de
+                    progression, à la plus petite échelle. */}
                 <span className={styles.mark} aria-hidden="true" />
                 {tab.icon === 'logo' ? (
                   <Logo size={21} className={styles.icon} />

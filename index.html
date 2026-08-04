@@ -13,10 +13,26 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Sept Mers" />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" href="./icons/favicon.svg" type="image/svg+xml" />
-    <link rel="icon" href="./icons/icon-192.png" type="image/png" sizes="192x192" />
-    <link rel="apple-touch-icon" href="./icons/icon-180.png" sizes="180x180" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!--
+      Quatre déclarations, parce qu'aucune ne suffit seule.
+
+      Le `.ico` d'abord : c'est le seul format que tout le monde lit, et c'est
+      celui que les navigateurs vont chercher à `/favicon.ico` de leur propre
+      chef quand rien d'autre ne leur convient. Le SVG ensuite, pour ceux qui
+      savent le rendre — Safari n'en fait rien en `rel="icon"`, et Chrome sur
+      Android non plus. Sans raster déclaré, ces deux-là ne trouvaient donc
+      aucune icône, et affichaient l'initiale du titre à la place : un « S ».
+
+      L'icône d'accueil iOS ferme la marche. Safari ne lit pas les icônes du
+      manifeste pour elle : sans cette balise, l'écran d'accueil affiche une
+      capture de la page. Elle et le `.ico` sont les deux fichiers posés à la
+      racine du site, aux noms que l'on va chercher sans lire le document.
+    -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48 32x32 16x16" />
+    <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <script>
       // Le thème s'applique avant le premier rendu : sans ça, un écran clair
       // clignote avant de passer au sombre.
