@@ -92,9 +92,11 @@ describe('vercel.json', () => {
       '/assets/index-abc123.css',
       '/icons/favicon.svg',
       '/icons/icon-192.png',
-      // Le chemin que les navigateurs vont chercher d'eux-mêmes : redirigé, il
-      // ramènerait le document HTML et l'onglet retomberait sur l'initiale.
+      // Les deux chemins que l'on va chercher sans lire le document. Redirigés,
+      // ils ramèneraient du HTML sous un nom d'image : l'onglet retomberait sur
+      // l'initiale du titre, et l'écran d'accueil iOS sur une capture de page.
       '/favicon.ico',
+      '/apple-touch-icon.png',
     ]) {
       expect(pattern.test(real), `${real} serait redirigé`).toBe(false)
     }

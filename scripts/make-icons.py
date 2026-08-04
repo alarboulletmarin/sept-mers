@@ -305,7 +305,6 @@ def main() -> None:
     targets = [
         ('icon-192.png', 192, TILE),
         ('icon-512.png', 512, TILE),
-        ('icon-180.png', 180, TILE),
         ('icon-maskable-192.png', 192, MASKABLE),
         ('icon-maskable-512.png', 512, MASKABLE),
     ]
@@ -314,14 +313,24 @@ def main() -> None:
         (out / name).write_bytes(encode_png(rasterise(size, INK, PAPER, scale=scale)))
         print(f'{name} {size}x{size}')
 
-    # Le `.ico`, à la racine et non dans `icons/` : c'est `/favicon.ico` que les
-    # navigateurs vont chercher d'eux-mêmes quand le document ne leur donne rien
-    # qu'ils sachent lire, et ce chemin-là n'est pas négociable. Sans lui, la
-    # réponse est un 404 et l'onglet retombe sur l'initiale du titre.
-    #
-    # Trois tailles, parce que les usages diffèrent : 16 pour un onglet en
-    # densité simple, 32 pour la même chose en densité double et pour les
-    # vignettes de Safari, 48 pour les raccourcis.
+    # Les deux fichiers de la racine, et non de `icons/`. Ce sont les chemins
+    # qu'un client va chercher de lui-même quand le document ne lui donne rien
+    # qu'il sache lire, ou qu'il ne lit pas le document du tout — un aspirateur
+    # de liens, une prévisualisation, un Safari dont la page est en cache. La
+    # balise du `<head>` reste la voie normale ; ceux-là sont le filet.
+    root = [
+        # 180 : la taille de référence d'iOS, celle d'où il redimensionne pour
+        # tous les autres emplacements. Sans elle, l'écran d'accueil met une
+        # capture de la page à la place de l'icône.
+        ('apple-touch-icon.png', 180),
+    ]
+    for name, size in root:
+        (public / name).write_bytes(encode_png(rasterise(size, INK, PAPER, scale=TILE)))
+        print(f'{name} {size}x{size}')
+
+    # Trois tailles dans le `.ico`, parce que les usages diffèrent : 16 pour un
+    # onglet en densité simple, 32 pour la même chose en densité double et pour
+    # les vignettes de Safari, 48 pour les raccourcis.
     sizes = (16, 32, 48)
     (public / 'favicon.ico').write_bytes(
         encode_ico([rasterise(size, INK, PAPER, scale=TILE) for size in sizes])

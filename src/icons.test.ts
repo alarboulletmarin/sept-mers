@@ -90,7 +90,10 @@ describe('icônes de l app', () => {
   })
 
   it('ne laisse aucune icône transparente, manifeste ou écran d accueil', () => {
-    const paths = [...manifest.icons.map((icon) => icon.src.replace(/^\.\//, '')), 'icons/icon-180.png']
+    const paths = [
+      ...manifest.icons.map((icon) => icon.src.replace(/^\.\//, '')),
+      'apple-touch-icon.png',
+    ]
     for (const path of paths) {
       // Type 2 : RVB sans canal alpha. La transparence n'est alors pas
       // seulement absente, elle est impossible.
@@ -176,6 +179,26 @@ describe('favicon', () => {
       icons.some((tag) => tag.includes('apple-touch-icon')),
       'rien pour l écran d accueil iOS',
     ).toBe(true)
+  })
+
+  it("sert l icône d accueil iOS à la racine, en 180 et sans alpha", () => {
+    /*
+     * Safari ne lit pas les icônes du manifeste pour l'écran d'accueil : sans
+     * ce fichier-là, iOS y met une capture de la page. Trois contraintes :
+     *
+     * - 180x180, la taille de référence d'où iOS redimensionne pour le reste.
+     * - Aucune transparence : iOS jette la couche alpha et compose sur du noir.
+     * - À la racine, sous ce nom, parce que c'est le chemin qu'iOS interroge
+     *   de lui-même quand il n'a pas la balise sous les yeux.
+     */
+    const png = readPng('apple-touch-icon.png')
+    expect(`${png.width}x${png.height}`).toBe('180x180')
+    expect(png.colourType, 'porte un canal alpha').toBe(2)
+
+    const tag = document.match(/<link\s+rel="apple-touch-icon"[^>]*>/)?.[0] ?? ''
+    expect(tag, 'la balise ne pointe pas sur le fichier de la racine').toContain(
+      'href="./apple-touch-icon.png"',
+    )
   })
 
   it('précache le .ico avec le reste du shell', () => {
