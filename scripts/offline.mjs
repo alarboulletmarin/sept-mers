@@ -78,6 +78,29 @@ check('une manche se valide hors ligne', await page.locator('[data-round]').firs
 await page.goto(`${base}/rules`)
 await page.waitForSelector('text=Qui remporte le pli', { timeout: 10000 })
 check('les règles s ouvrent hors ligne', true)
+
+// Le partage, hors ligne : le direct nomme son blocage au lieu d'échouer en
+// silence, et le lien-résumé — qui ne dépend d'aucun réseau — reste offert.
+//
+// `setOffline` coupe le réseau mais, selon le build de Chromium, ne bascule
+// pas `navigator.onLine` — c'est pourtant lui que lit la garde du direct, et
+// lui que le mode avion d'un vrai téléphone éteint. On force le signal, pour
+// que le parcours vérifie la même chose sur tous les navigateurs.
+await context.addInitScript(() => {
+  Object.defineProperty(navigator, 'onLine', { get: () => false })
+})
+await page.goto(`${base}/game`)
+await page.waitForSelector('[data-player-tile]', { timeout: 15000 })
+await page.getByRole('button', { name: 'Partager la table' }).click()
+await page.getByRole('button', { name: 'Lancer le direct' }).click()
+await page.waitForSelector('text=Pas de réseau')
+check('le direct nomme son blocage hors ligne', true)
+await page.waitForSelector('[data-recap-url]')
+check(
+  'le lien-résumé se prépare sans réseau',
+  await page.getByRole('img', { name: 'Code à scanner pour ouvrir le résumé' }).isVisible(),
+)
+await page.keyboard.press('Escape')
 await context.setOffline(false)
 
 // -------------------------------------------------- thème système en direct

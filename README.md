@@ -36,6 +36,13 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
   10 se jouent à 8 cartes — 9 avec les monstres marins, que les 2 cartes de plus
   suffisent à faire tenir la manche 9.
 - **Reprise exacte** de la manche et de la phase après fermeture de l'app.
+- **Partage de table** : les autres joueurs suivent la partie en direct sur
+  leur propre téléphone, en lecture seule — mises, plis, totaux, la manche et
+  son temps, puis le résultat. Un code de six caractères ou un QR pour
+  rejoindre ; pair-à-pair et chiffré, sans compte ni serveur. Et un
+  **lien-résumé** qui fige la partie dans l'adresse elle-même, à envoyer dans
+  la conversation du groupe ou à faire scanner — celui-là marche même sans
+  réseau.
 - **Marche arrière** : on revient à la manche précédente pour la corriger, et la
   saisie en cours est mise de côté le temps qu'on y retourne.
 - **Trois graphiques** en SVG écrit à la main, historique, joueurs récurrents et
@@ -77,16 +84,17 @@ Node 22.12, que toute version 22 récente satisfait.
 |---|---|
 | `npm run dev` | Vite en développement |
 | `npm run build` | Vérification des types puis bundle de production |
-| `npm run test` | Tests Vitest sur `domain/`, `store/`, `i18n/` et `charts/` |
+| `npm run test` | Tests Vitest sur `domain/`, `store/`, `share/`, `i18n/` et `charts/` |
 | `npm run typecheck` | TypeScript seul |
 | `npm run verify` | Les trois d'affilée |
 | `node scripts/smoke.mjs` | Parcours complet dans un vrai navigateur, sur `dist/` |
+| `node scripts/share.mjs` | Partage de table en direct et lien-résumé, à deux pages |
 | `node scripts/offline.mjs` | Mode avion et suivi du thème système, sur `dist/` |
 | `node scripts/nooverflow.mjs` | Absence de scroll latéral, à cinq largeurs |
 | `node scripts/contrast.mjs` | Absence de texte illisible, dans les deux thèmes |
 | `python3 scripts/make-icons.py` | Regénère les icônes et le `favicon.ico` depuis le logotype |
 
-Les quatre parcours navigateur ont besoin d'un Chromium. Après
+Les cinq parcours navigateur ont besoin d'un Chromium. Après
 `npx playwright install chromium` ils le trouvent seuls ; `scripts/browser.mjs`
 regarde d'abord `CHROMIUM_PATH`, puis les emplacements où un Chromium
 préinstallé se trouve d'ordinaire, et laisse Playwright résoudre à défaut.
@@ -97,9 +105,18 @@ Score Rascal et sa pastille de charge, le changement de thème et de langue,
 l'absence de requête réseau et l'absence d'emoji. Il attend un `dist/` à jour.
 L'option `--shots` écrit des captures dans `shots/`.
 
+`scripts/share.mjs` fait suivre une partie par une seconde page du même
+navigateur : salle ouverte depuis l'écran de manche, code et QR affichés, mises
+et manches propagées en direct, correction annoncée en face, rechargement du
+téléphone de la table qui rouvre la salle tout seul, fin de partie vue par le
+spectateur, arrêt annoncé, puis lien-résumé rouvert. Le transport y est local —
+c'est le même fil, sur `BroadcastChannel` — et le parcours vérifie qu'aucune
+requête ne sort et que le chunk de Trystero n'est jamais chargé.
+
 `scripts/offline.mjs` coupe le réseau une fois le service worker installé, puis
-relance l'app, valide une manche et ouvre les règles hors ligne. Il vérifie aussi
-que le thème système bascule en direct, sans rechargement.
+relance l'app, valide une manche et ouvre les règles hors ligne. Il vérifie que
+le direct nomme son blocage en mode avion pendant que le lien-résumé reste
+offert, et que le thème système bascule en direct, sans rechargement.
 
 `scripts/nooverflow.mjs` parcourt les seize écrans à 320, 360, 390, 430 et
 820 px, avec huit joueurs et la valeur la plus haute, et échoue dès qu'un
@@ -119,11 +136,14 @@ src/
   main.tsx
   app/          App, Router, Layout, TabBar, StoreProvider, ThemeProvider,
                 useWakeLock
-  screens/      Home, NewGame, Game, GameSummary, History, Players, Rules, Settings
+  screens/      Home, NewGame, Game, GameSummary, History, Players, Rules,
+                Settings, Watch, Recap
   components/   Widget, Button, Stepper, Rail, PlayerChip, ScoreTable, Sheet,
-                Toast, Icon, EmptyState, BonusDrawer, OptionSwitch
+                Toast, Icon, EmptyState, BonusDrawer, OptionSwitch, QrCode
   domain/       scoring, deck, validation, stats, types
   store/        storage, reducer, migrations
+  share/        protocol, codec, code, qr, transport, loopback, trystero,
+                session, ShareProvider, ShareSheet, Board, useSpectator
   charts/       ScoreLines, AccuracyBars, RankingBars, primitives
   i18n/         fr.json, en.json, index
   content/      rules.fr, rules.en, RulesBody
@@ -132,10 +152,14 @@ public/         manifest.webmanifest, sw.js, icons/
 docs/           design-system.md
 ```
 
-**React 19 + TypeScript + Vite, et rien d'autre en dépendance d'exécution.**
-En développement s'ajoutent Vitest et Playwright, pour les parcours navigateur.
-Pas de routeur, pas de librairie d'état, pas de Tailwind, pas de librairie de
-graphiques, pas de pack d'icônes. Les deux fichiers de police vivent dans `src/`
+**React 19 + TypeScript + Vite, et deux dépendances d'exécution, choisies pour
+le partage de table** : `trystero`, le pair-à-pair, qui n'arrive que par un
+`import()` au moment de partager — le bundle d'entrée n'en contient pas une
+ligne, et `scripts/share.mjs` le vérifie sur le build — et `uqr`, qui calcule
+la matrice des QR ; leur rendu SVG reste maison. En développement s'ajoutent
+Vitest et Playwright, pour les parcours navigateur. Pas de routeur, pas de
+librairie d'état, pas de Tailwind, pas de librairie de graphiques, pas de pack
+d'icônes. Les deux fichiers de police vivent dans `src/`
 pour que Vite leur pose un hash de contenu et que le service worker les
 précache avec le bundle. Le routeur tient sur `history.pushState`, l'état sur un
 `useReducer` persisté, les styles sur des variables CSS et des modules CSS, les
@@ -159,35 +183,57 @@ validation de la somme, le compteur de pied d'écran — prend la première ; to
 ce qui parle de mise, de prime, de pari ou de score prend la seconde. Il n'a
 donc fallu écrire aucun mécanisme parallèle, seulement allonger une liste.
 
+Le partage de table suit le même partage des rôles : un seul écrivain — le
+téléphone qui saisit — diffuse l'état complet, les autres le lisent. La charge
+utile est `{ game, draft }`, que `Game` rend autoportante en embarquant ses
+noms et ses options ; tout ce qui est reçu repasse par `normalise`, le
+relecteur défensif du stockage, comme un fichier importé — et rien de reçu ne
+s'écrit jamais dans le stockage du téléphone qui regarde. Le transport est une
+interface à deux implémentations : Trystero — WebRTC de téléphone à téléphone,
+signaling chiffré passant par des relais Nostr publics — et un
+`BroadcastChannel` local, qui porte les tests et les parcours. Le lien-résumé
+compacte la même charge en tableaux de position, la déflate avec le
+`CompressionStream` du navigateur, et la pose en base64 d'URL dans le fragment
+de l'adresse — quelques centaines de caractères pour une partie pleine, qui
+tiennent dans un QR.
+
 Le stockage tient dans une clé `localStorage`, écrite avec 300 ms de debounce et
 vidée dès que l'onglet passe en arrière-plan. La lecture est défensive : un
 fichier abîmé ou bricolé à la main ne doit pas empêcher l'app de démarrer autour
 d'une table. `store/migrations.ts` existe déjà, vide, pour que la prochaine
-version de schéma soit une addition et pas une réécriture.
+version de schéma soit une addition et pas une réécriture. La session de
+partage, elle, vit sous une clé à part — un code de salle éphémère n'a rien à
+faire dans un export — et survit ainsi à un rechargement accidentel du
+téléphone de la table.
 
 ## Tests
 
-293 tests unitaires couvrent les deux moteurs de score — dont les huit cas de
+339 tests unitaires couvrent les deux moteurs de score — dont les huit cas de
 référence du cahier des charges, et l'absence de tout point négatif ou
 fractionnaire sur toute la grille du Score Rascal —, la validation de saisie, le
 plafonnement du paquet, les variantes, le fantôme de Barbe Grise, les
 statistiques, le réducteur, le préremplissage et la complétion automatique du
 dernier joueur, la marche arrière entre manches, l'aller-retour export/import,
-la lecture défensive du stockage, les pluriels, la géométrie des graphiques, la
-configuration de déploiement, les icônes d'installation, les jetons de la
-palette et le système typographique — familles, échelle, fichiers de fonte
-embarqués, et l'absence de toute famille écrite en dur hors des jetons. Le
-parcours navigateur complète le tout sur l'app réellement construite.
+la lecture défensive du stockage, le partage de table — protocole et
+durcissement de l'état reçu, aller-retour du lien-résumé jusqu'aux liens
+hostiles et à sa taille au pire de la grille, alphabet et tirage du code de
+salle, transport local, session de diffusion, géométrie des QR —, les
+pluriels, la géométrie des graphiques, la configuration de déploiement, les
+icônes d'installation, les jetons de la palette et le système typographique —
+familles, échelle, fichiers de fonte embarqués, et l'absence de toute famille
+écrite en dur hors des jetons. Les parcours navigateur complètent le tout sur
+l'app réellement construite.
 
 ```bash
 npm run verify \
   && node scripts/smoke.mjs \
+  && node scripts/share.mjs \
   && node scripts/offline.mjs \
   && node scripts/nooverflow.mjs \
   && node scripts/contrast.mjs
 ```
 
-Ces cinq vérifications tournent à chaque poussée et à chaque pull request, dans
+Ces six vérifications tournent à chaque poussée et à chaque pull request, dans
 [`.github/workflows/verification.yml`](.github/workflows/verification.yml), sur
 la même majeure de Node que le déploiement.
 
@@ -232,13 +278,42 @@ réécriture : recharger `/rules` en mode avion sert la coquille précachée.
 
 Les adresses de l'ancien routeur, en `/#/rules`, restent valides : elles sont
 relues une fois, puis réécrites en clair sans empiler d'entrée d'historique.
+Seul ce hash-là — `#/…` — se réécrit : tout autre fragment est préservé, parce
+que le lien-résumé s'écrit `/recap#s=…` et porte la partie entière après le
+`#`, précisément là où le navigateur n'envoie jamais rien au serveur. Le
+suivi en direct, lui, a une adresse pleine : `/watch/<code>`, celle que le QR
+de la salle contient.
+
+### Si le pair-à-pair ne passe pas
+
+À la même table, les téléphones partagent presque toujours un réseau, et
+WebRTC s'y connecte en direct une fois les pairs présentés. Deux opérateurs
+mobiles derrière leurs NAT peuvent malgré tout ne pas se joindre : la parade
+serait un relais TURN, que Trystero accepte par `rtcConfig` — Cloudflare en
+offre un généreux — comme il accepte d'autres relais de signaling par
+`relayConfig`. Rien de tout cela n'est branché : c'est l'échappatoire
+documentée, pas le chemin.
 
 ## Vie privée
 
-Aucun compte, aucun serveur, aucune requête réseau après le premier chargement,
-aucun analytics. Les données vivent dans le navigateur et n'en sortent que par un
-export déclenché à la main. Le mode avion n'empêche ni le lancement ni aucune
-fonctionnalité.
+Aucun compte, aucun serveur, aucun analytics. Par défaut, aucune requête
+réseau après le premier chargement : les données vivent dans le navigateur et
+n'en sortent que par un export déclenché à la main — `scripts/smoke.mjs` le
+vérifie à chaque poussée.
+
+Le **partage de table** est la seule exception, et il ne s'ouvre qu'à la main.
+Pendant un direct, l'état de la partie — noms de la table compris — circule de
+téléphone à téléphone, chiffré de bout en bout ; des relais Nostr publics ne
+voient passer que la mise en relation, elle-même chiffrée par le code de
+salle, qui est le seul secret et ne vit que le temps d'une partie. Le
+**lien-résumé** porte la partie dans le fragment de l'adresse, que le
+navigateur n'envoie jamais à un serveur : il ne voyage que là où on l'envoie
+soi-même.
+
+Le mode avion n'empêche ni le lancement ni aucune fonctionnalité — hors le
+direct, qui a besoin d'internet pour que les téléphones se trouvent, et qui le
+dit au lieu d'échouer en silence. Le lien-résumé, lui, marche d'écran à
+caméra, sans aucun réseau.
 
 ## Design
 

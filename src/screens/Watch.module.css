@@ -1,0 +1,70 @@
+/*
+ * L'écran de suivi. Une pastille d'état, jamais une teinte : pleine quand le
+ * direct est là, au filet quand on cherche, en tiretés quand on a perdu le
+ * fil, creusée quand c'est fini. Le mot est toujours à côté de la forme.
+ */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  color: var(--canvas-on);
+  font-size: var(--size-tag);
+  font-weight: 700;
+  font-stretch: var(--stretch-tight);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.live {
+  background: var(--accent);
+  color: var(--accent-on);
+  border-color: transparent;
+}
+
+.connecting {
+  opacity: 0.7;
+}
+
+.lost {
+  border-style: dashed;
+}
+
+.ended {
+  background: var(--sunken);
+  color: var(--sunken-on);
+  border-color: transparent;
+}
+
+/* ------------------------------------------------------------------- code */
+
+/* Le code s'écrit comme il se lit : en chasse fixe, espacé, en capitales. */
+.codeInput {
+  font-family: var(--font-figure);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.formIssue {
+  font-size: var(--size-label);
+  font-weight: 600;
+  color: var(--canvas-on);
+}
+
+.notice {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--sunken);
+  color: var(--sunken-on);
+  font-size: var(--size-label);
+  font-weight: 500;
+  min-width: 0;
+}

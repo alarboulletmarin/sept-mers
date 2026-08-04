@@ -1,0 +1,17 @@
+/*
+ * Le QR ne s'inverse pas avec le thème : les lecteurs attendent du sombre sur
+ * clair, et la zone de silence est déjà dans la matrice. En thème sombre, un
+ * filet le détache du fond — c'est un objet posé, pas une surface de l'app.
+ */
+.qr {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  margin: 0 auto;
+  border-radius: var(--radius-control);
+}
+
+:global([data-theme='dark']) .qr {
+  box-shadow: 0 0 0 1px var(--hairline);
+}

@@ -11,7 +11,7 @@ import { hrefFor, parsePath, type Route } from './Router.tsx'
  *   l'écran qu'elles nommaient.
  */
 
-/** Les huit routes, dans leur forme la plus complète. */
+/** Les dix routes, dans leur forme la plus complète. */
 const ROUTES: Route[] = [
   { name: 'home' },
   { name: 'new' },
@@ -23,6 +23,9 @@ const ROUTES: Route[] = [
   { name: 'players', playerId: 'p1' },
   { name: 'rules' },
   { name: 'settings' },
+  { name: 'watch' },
+  { name: 'watch', code: 'AB2C3D' },
+  { name: 'recap' },
 ]
 
 describe('routeur', () => {
@@ -56,6 +59,9 @@ describe('routeur', () => {
       '/new/de/trop',
       '/summary/g1/de/trop',
       '/rules/1',
+      '/watch/AB2C3D/de/trop',
+      // Le résumé partagé vit dans le fragment, pas dans un segment.
+      '/recap/1abc',
     ]) {
       expect(parsePath(unknown), `${unknown} n ouvre pas l accueil`).toEqual({ name: 'home' })
     }

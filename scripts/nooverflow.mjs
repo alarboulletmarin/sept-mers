@@ -70,10 +70,14 @@ const browser = await launchChromium()
 
 for (const width of WIDTHS) {
   const context = await browser.newContext({ viewport: { width, height: 800 }, locale: 'fr-FR' })
+  // Le transport local du partage : la salle s'ouvre sans toucher un relais.
+  await context.addInitScript(() => {
+    localStorage.setItem('sept-mers:transport', 'loopback')
+  })
   const page = await context.newPage()
 
-  const audit = async (label) => {
-    const problems = await page.evaluate(AUDIT)
+  const audit = async (label, on = page) => {
+    const problems = await on.evaluate(AUDIT)
     if (problems.length === 0) {
       console.log(`  ok   ${width}px · ${label}`)
     } else {
@@ -142,6 +146,35 @@ for (const width of WIDTHS) {
   await page.waitForSelector('text=Total')
   await audit('tableau des scores, huit joueurs')
   await page.keyboard.press('Escape')
+
+  // La feuille de partage : au repos, puis salle ouverte — le code en grand,
+  // deux QR et l'adresse en clair sont ce que l'écran porte de plus large.
+  await page.getByRole('button', { name: 'Partager la table' }).click()
+  await page.waitForSelector('text=Lancer le direct')
+  await audit('feuille de partage')
+  await page.getByRole('button', { name: 'Lancer le direct' }).click()
+  await page.waitForSelector('[data-share-code]')
+  await page.waitForSelector('[data-recap-url]')
+  await audit('feuille de partage, salle ouverte')
+  const shareCode = (await page.locator('[data-share-code]').textContent()).trim()
+  const recapUrl = await page.locator('[data-recap-url]').getAttribute('data-recap-url')
+  await page.keyboard.press('Escape')
+
+  // Les écrans du spectateur, sur une seconde page du même navigateur : la
+  // première tient la salle, celle-ci la suit par le transport local.
+  const viewer = await context.newPage()
+  await viewer.goto(`${base}/watch`)
+  await viewer.waitForSelector('text=Suivre une table')
+  await audit('suivre une table, formulaire', viewer)
+
+  await viewer.goto(`${base}/watch/${shareCode}`)
+  await viewer.waitForSelector('[data-watch-tile]', { timeout: 10000 })
+  await audit('suivi en direct, huit joueurs', viewer)
+
+  await viewer.goto(recapUrl)
+  await viewer.waitForSelector('text=Résumé de partie')
+  await audit('résumé partagé, huit joueurs', viewer)
+  await viewer.close()
 
   // Les règles, en feuille.
   await page.getByRole('button', { name: 'Règles' }).click()

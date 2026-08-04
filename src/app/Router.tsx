@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 /**
- * Huit routes, sur le chemin. Pas de librairie.
+ * Dix routes, sur le chemin. Pas de librairie.
  *
  * Sur le chemin et non sur le hash : le hash est un identifiant de fragment,
  * pas une adresse, et le navigateur ne l'envoie jamais au serveur. L'app y
@@ -9,6 +9,10 @@ import { useCallback, useEffect, useState } from 'react'
  * d'une barre d'adresse qui disait `/#/new`. Le prix est payé une fois côté
  * hébergeur, avec une réécriture ; les adresses, elles, se lisent et se
  * partagent tous les jours.
+ *
+ * Le résumé partagé, lui, garde un pied dans le fragment : `/recap#s=…` porte
+ * la partie entière après le `#`, précisément parce que cette partie-là ne
+ * doit jamais partir au serveur.
  */
 export type Route =
   | { name: 'home' }
@@ -19,6 +23,8 @@ export type Route =
   | { name: 'players'; playerId?: string }
   | { name: 'rules' }
   | { name: 'settings' }
+  | { name: 'watch'; code?: string }
+  | { name: 'recap' }
 
 export function parsePath(pathname: string): Route {
   // `filter` avale les segments vides : les barres obliques de tête, de queue
@@ -38,12 +44,16 @@ export function parsePath(pathname: string): Route {
       return tail ? { name: 'summary', gameId: tail } : { name: 'summary' }
     case 'players':
       return tail ? { name: 'players', playerId: tail } : { name: 'players' }
+    // Sans code, l'adresse reste bonne : c'est l'écran où on le tape.
+    case 'watch':
+      return tail ? { name: 'watch', code: tail } : { name: 'watch' }
     // Les routes sans paramètre : un segment de plus les invalide aussi.
     case 'new':
     case 'game':
     case 'history':
     case 'rules':
     case 'settings':
+    case 'recap':
       return tail ? { name: 'home' } : { name: head }
     default:
       return { name: 'home' }
@@ -58,6 +68,8 @@ export function hrefFor(route: Route): string {
       return route.gameId ? `/summary/${route.gameId}` : '/summary'
     case 'players':
       return route.playerId ? `/players/${route.playerId}` : '/players'
+    case 'watch':
+      return route.code ? `/watch/${route.code}` : '/watch'
     default:
       return `/${route.name}`
   }
@@ -94,8 +106,13 @@ export function useRoute(): { route: Route; go: (route: Route, replace?: boolean
      * sur l'accueil. On les remet en forme au premier rendu, en remplaçant
      * l'entrée d'historique plutôt qu'en en empilant une — sinon le bouton
      * précédent ramènerait à l'adresse qu'on vient de corriger, en boucle.
+     *
+     * Seul le hash de l'ancien routeur — `#/…` — se réécrit. Tout autre
+     * fragment se garde tel quel : celui d'un résumé partagé porte la partie
+     * entière, et la remise en forme l'effacerait avant que l'écran l'ait lue.
      */
-    const canonical = hrefFor(currentRoute())
+    const keep = location.hash.startsWith('#/') ? '' : location.hash
+    const canonical = hrefFor(currentRoute()) + keep
     if (location.pathname + location.search + location.hash !== canonical) {
       history.replaceState(null, '', canonical)
     }

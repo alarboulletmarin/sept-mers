@@ -97,7 +97,18 @@ describe('vercel.json', () => {
     expect(config.redirects, 'une redirection changerait l adresse').toBeUndefined()
 
     const pattern = new RegExp(`^${rewrite?.source}$`)
-    for (const route of ['/new', '/game', '/rules', '/settings', '/summary/g1', '/players/p1']) {
+    for (const route of [
+      '/new',
+      '/game',
+      '/rules',
+      '/settings',
+      '/summary/g1',
+      '/players/p1',
+      // Le fragment d'un résumé partagé n'atteint jamais le serveur : seule
+      // l'adresse nue a besoin d'être servie.
+      '/watch/AB2C3D',
+      '/recap',
+    ]) {
       expect(pattern.test(route), `${route} ne serait pas servi`).toBe(true)
     }
   })

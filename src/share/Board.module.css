@@ -1,0 +1,190 @@
+/*
+ * Le tableau de bord du spectateur reprend l'anatomie de l'écran de partie —
+ * même widget de manche, mêmes tuiles — sans un seul contrôle. Les styles
+ * sont les siens : une tuile qui ne se touche pas n'a ni bouton ni pastille.
+ */
+
+.board {
+  --surface: var(--accent);
+  --surface-on: var(--accent-on);
+  --surface-muted: var(--accent-muted);
+  background: var(--surface);
+  color: var(--surface-on);
+  border-radius: var(--radius-widget);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.roundFigure {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.roundNumber {
+  font-family: var(--font-figure);
+  font-size: 44px;
+  line-height: 0.82;
+  font-weight: 700;
+  letter-spacing: var(--track-hero);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-on);
+  flex: none;
+}
+
+.roundTotal {
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-muted);
+  flex: none;
+}
+
+.totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 0 var(--space-4);
+  min-width: 0;
+}
+
+.totalItem {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-1) 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.totalName {
+  font-size: var(--size-caption);
+  font-weight: 500;
+  color: var(--accent-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.totalValue {
+  font-family: var(--font-figure);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+/* ------------------------------------------------------------ tuile joueur */
+
+.name {
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  min-width: 0;
+  width: 100%;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.4em;
+}
+
+/* Le chiffre de la tuile, à la place du contrôle moins / plus. */
+.value {
+  min-width: 0;
+  text-align: center;
+  font-family: var(--font-figure);
+  font-size: 31px;
+  line-height: 1.2;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--track-figure);
+  display: block;
+  width: 100%;
+}
+
+/* Le trait à remplir : la valeur que la table n'a pas encore posée. */
+.slot {
+  display: block;
+  width: 22px;
+  height: 2px;
+  margin: 0.6em auto;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.3;
+}
+
+.tileMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.bidRecall {
+  font-size: var(--size-caption);
+  font-weight: 500;
+  color: var(--surface-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tileScore {
+  font-family: var(--font-figure);
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  flex: none;
+}
+
+/* ------------------------------------------------------------------ divers */
+
+.notice {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--sunken);
+  color: var(--sunken-on);
+  font-size: var(--size-label);
+  font-weight: 500;
+  min-width: 0;
+}
+
+.hint {
+  color: var(--canvas-muted);
+  max-width: 38ch;
+}
+
+.rankName {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

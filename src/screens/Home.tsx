@@ -94,6 +94,12 @@ export function Home({ go }: { go: (route: Route) => void }) {
           </>
         )}
 
+        {/* La porte du spectateur : quelqu'un dont c'est le premier lancement
+            est peut-être précisément venu suivre la table d'un autre. */}
+        <button type="button" className={styles.howLink} onClick={() => go({ name: 'watch' })}>
+          <Icon name="live" size={16} />
+          {t('home.watch')}
+        </button>
       </main>
 
       <div className="actionbar" ref={actionBar}>

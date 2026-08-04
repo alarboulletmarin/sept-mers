@@ -6,10 +6,13 @@ import { History } from '../screens/History.tsx'
 import { Home } from '../screens/Home.tsx'
 import { NewGame } from '../screens/NewGame.tsx'
 import { Players } from '../screens/Players.tsx'
+import { Recap } from '../screens/Recap.tsx'
 import { Rules } from '../screens/Rules.tsx'
 import { Settings } from '../screens/Settings.tsx'
+import { Watch } from '../screens/Watch.tsx'
 import { TOTAL_ROUNDS } from '../domain/types.ts'
 import { runningGame } from '../store/reducer.ts'
+import { ShareProvider } from '../share/ShareProvider.tsx'
 import { useRoute, useScrollReset, type Route } from './Router.tsx'
 import { StoreProvider, useStore } from './StoreProvider.tsx'
 import { TabBar } from './TabBar.tsx'
@@ -21,10 +24,12 @@ export function App() {
     <StoreProvider>
       <ThemeProvider>
         <ToastProvider>
-          <Screens />
-          {/* Monté une fois, hors des écrans : la proposition de recharger
-              survit à la navigation plutôt que de disparaître parce qu'on est
-              passé aux réglages. */}
+          {/* Comme la proposition de recharger, la session de partage vit
+              au-dessus des écrans : la salle reste ouverte de la manche au
+              résumé, et ne meurt pas d'un passage par l'accueil. */}
+          <ShareProvider>
+            <Screens />
+          </ShareProvider>
           <UpdatePrompt />
         </ToastProvider>
       </ThemeProvider>
@@ -35,7 +40,9 @@ export function App() {
 function Screens() {
   const { route, go } = useRoute()
   const { store } = useStore()
-  useScrollReset(`${route.name}:${'gameId' in route ? route.gameId : ''}${'playerId' in route ? route.playerId : ''}`)
+  useScrollReset(
+    `${route.name}:${'gameId' in route ? route.gameId : ''}${'playerId' in route ? route.playerId : ''}${'code' in route ? route.code : ''}`,
+  )
 
   const navigate = useCallback((next: Route) => go(next), [go])
 
@@ -80,6 +87,10 @@ function Screen({ route, go }: { route: Route; go: (next: Route) => void }) {
       return <Rules go={go} />
     case 'settings':
       return <Settings go={go} />
+    case 'watch':
+      return <Watch code={route.code} go={go} />
+    case 'recap':
+      return <Recap go={go} />
     default:
       return <Home go={go} />
   }
