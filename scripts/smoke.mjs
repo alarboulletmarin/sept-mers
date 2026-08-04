@@ -297,6 +297,112 @@ check('à huit joueurs, la manche 9 se joue à 8 cartes', await page.getByText('
 check('le plafond est expliqué', await page.getByText(/Le paquet ne suit plus/).isVisible())
 await shot('plafond-huit-joueurs')
 
+// -------------------------------------------------- Barbe Grise, à deux joueurs
+
+/** Repart d'une table vierge : les parties closes restent, la saisie s'en va. */
+async function freshTable(names) {
+  await page.evaluate(() => {
+    const store = JSON.parse(localStorage.getItem('sept-mers'))
+    store.games = store.games.filter((game) => game.endedAt)
+    delete store.draft
+    delete store.liveDraft
+    localStorage.setItem('sept-mers', JSON.stringify(store))
+  })
+  await page.goto(`${base}/new`)
+  await page.reload()
+  for (const name of names) {
+    await page.getByRole('checkbox', { name: new RegExp(name) }).click()
+  }
+}
+
+await freshTable(['Ana', 'Bo'])
+await page.getByRole('button', { name: 'Commencer la partie' }).click()
+await page.waitForSelector('[data-round="1"]')
+
+const ghost = page.locator('[data-grey-beard-tile]')
+check('le fantôme ne paraît pas pendant les mises', (await ghost.count()) === 0)
+
+// Manche 1, 1 carte : les deux misent zéro, le pli revient donc au fantôme.
+await page.getByRole('button', { name: 'Valider les mises' }).click()
+check('la tuile du fantôme paraît aux résultats', await ghost.isVisible())
+check('elle porte son nom', await ghost.getByText('Barbe Grise').isVisible())
+check(
+  'elle se remplit du reste toute seule',
+  (await ghost.locator('[role=spinbutton]').getAttribute('aria-valuenow')) === '1',
+)
+check('elle dit qu elle est déduite', await ghost.getByText('Complété automatiquement').isVisible())
+check(
+  'la manche se valide sans un geste de plus',
+  await page.getByRole('button', { name: 'Valider la manche' }).isEnabled(),
+)
+await shot('barbe-grise')
+await page.getByRole('button', { name: 'Valider la manche' }).click()
+
+// Manche 2, 2 cartes : un pli à Ana, le second au fantôme.
+await page.waitForSelector('[data-round="2"]')
+await setValue(page.locator('[data-player-tile]').nth(0), 1)
+await page.getByRole('button', { name: 'Valider les mises' }).click()
+check(
+  'le fantôme se repose quand un joueur prend un pli',
+  (await ghost.locator('[role=spinbutton]').getAttribute('aria-valuenow')) === '1',
+)
+await page.getByRole('button', { name: 'Valider la manche' }).click()
+await page.waitForSelector('[data-round="3"]')
+// L'écriture est debouncée à 300 ms : on la laisse passer avant de relire.
+await page.waitForTimeout(500)
+check(
+  'les plis du fantôme ne comptent pour personne',
+  await page.evaluate(() => {
+    const store = JSON.parse(localStorage.getItem('sept-mers'))
+    const game = store.games.find((candidate) => !candidate.endedAt)
+    return game.rounds[1].greyBeard === 1 && game.rounds[1].entries.length === 2
+  }),
+)
+
+// ------------------------------------------------------------- Score Rascal
+
+await freshTable(['Ana', 'Bo', 'Cy'])
+await page.getByRole('button', { name: 'Options' }).click()
+await page.getByRole('switch', { name: /Score Rascal/ }).click()
+check(
+  'le réglage des primes d une mise ratée quitte le panneau',
+  (await page.getByRole('switch', { name: /Bonus comptés/ }).count()) === 0,
+)
+await page.getByRole('switch', { name: /Boulet de canon/ }).click()
+await shot('options-rascal')
+await page.getByRole('button', { name: 'Commencer la partie' }).click()
+await page.waitForSelector('[data-round="1"]')
+
+const rascalTiles = page.locator('[data-player-tile]')
+check('la charge se déclare sur la tuile', await rascalTiles.nth(0).getByText('Mitraille').isVisible())
+await rascalTiles.nth(0).getByRole('switch').click()
+check('elle bascule au boulet', await rascalTiles.nth(0).getByText('Boulet').isVisible())
+
+// Manche 1, 1 carte : Ana mise 1 et le prend, les autres misent 0.
+await setValue(rascalTiles.nth(0), 1)
+await page.getByRole('button', { name: 'Valider les mises' }).click()
+await page.getByRole('button', { name: 'Valider la manche' }).click()
+await page.waitForSelector('[data-round="2"]')
+
+// Manche 2, 2 cartes : Bo mise 0 et prend un pli — un écart de 1, donc la
+// moitié du potentiel, et surtout pas de points négatifs.
+await setValue(rascalTiles.nth(0), 2)
+await page.getByRole('button', { name: 'Valider les mises' }).click()
+await setValue(rascalTiles.nth(0), 1)
+await setValue(rascalTiles.nth(1), 1)
+check('un pli d écart le dit sur la tuile', await rascalTiles.nth(1).getByText(/Moitié/).isVisible())
+await shot('score-rascal')
+await page.getByRole('button', { name: 'Valider la manche' }).click()
+await page.waitForSelector('[data-round="3"]')
+
+check(
+  'le barème Rascal ne rend aucun point négatif',
+  await page.evaluate(() => {
+    const totals = [...document.querySelectorAll('[class*="totalValue"]')]
+    return totals.length > 0 && totals.every((node) => !node.textContent.includes('\u2212'))
+  }),
+)
+
 // ------------------------------------------------------------- thème et langue
 
 await page.goto(`${base}/settings`)

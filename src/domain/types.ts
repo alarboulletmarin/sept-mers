@@ -19,6 +19,22 @@ export interface GameOptions {
   seaMonsters: boolean
   /** Pouvoirs des pirates. Seul le pari de Rascal Jack compte des points. */
   advancedPirates: boolean
+  /**
+   * Score Rascal : le barème alternatif. Chaque manche vaut autant pour tout le
+   * monde, et c'est l'écart à la mise qui décide de la part — tout, la moitié,
+   * ou rien. Jamais de points négatifs.
+   *
+   * À ne pas confondre avec le pari de Rascal Jack, qui est un pouvoir de
+   * pirate et vit sous la clé `rascal`. Ici c'est le barème, et il ne s'écrit
+   * jamais autrement que `rascalScoring`.
+   */
+  rascalScoring: boolean
+  /**
+   * Boulet de canon : sous le Score Rascal, chacun choisit après sa mise entre
+   * la mitraille — le jeu Rascal normal — et le boulet, qui monte le potentiel
+   * à 15 points par carte mais ne rend rien au moindre écart.
+   */
+  cannonball: boolean
 }
 
 /**
@@ -33,6 +49,8 @@ export const DEFAULT_OPTIONS: GameOptions = {
   bonusIfBidMissed: false,
   seaMonsters: false,
   advancedPirates: false,
+  rascalScoring: false,
+  cannonball: false,
 }
 
 /**
@@ -54,6 +72,11 @@ export interface RoundEntry {
   bonus: RoundBonus
   /** Pari de Rascal Jack. Absent quand il n'y en a pas eu. */
   rascal?: number
+  /**
+   * Boulet de canon chargé pour la manche. Absent quand le joueur a tiré à la
+   * mitraille — un défaut ne s'écrit pas, comme un zéro ne s'écrit pas.
+   */
+  cannonball?: boolean
 }
 
 export interface Round {
@@ -64,6 +87,12 @@ export interface Round {
    * Absent quand il n'y en a pas eu.
    */
   voided?: number
+  /**
+   * Plis raflés par le fantôme de Barbe Grise, à 2 joueurs. Il ne mise pas et
+   * ne marque pas : ses plis sortent du compte des joueurs sans aller nulle
+   * part. Absent quand il n'en a pris aucun.
+   */
+  greyBeard?: number
   entries: RoundEntry[]
 }
 
@@ -108,20 +137,28 @@ export interface Draft {
   roundIndex: number
   phase: 'bids' | 'results'
   bids: Record<Id, number | null>
+  /**
+   * Plis par porteur. À 2 joueurs le fantôme y a sa place, sous `GREY_BEARD` :
+   * c'est ce qui laisse la déduction, la validation, le compteur de pied
+   * d'écran et l'action `game/setTricks` marcher sur lui sans une ligne de
+   * plus — seule la liste de porteurs qu'on leur passe s'allonge.
+   */
   tricks: Record<Id, number | null>
   bonus: Record<Id, RoundBonus>
   /** Pari de Rascal Jack, par joueur. Zéro quand il n'y en a pas. */
   rascal: Record<Id, number>
+  /** Boulet de canon chargé, par joueur. Faux vaut mitraille. */
+  cannonball: Record<Id, boolean>
   /** Plis écartés de la manche par le Kraken ou la Baleine blanche. */
   voided: number
   /**
-   * Joueurs dont les plis ont été posés à la main. Les autres gardent la valeur
-   * semée depuis leur mise : c'est ce qui permet à la fois de resemer après une
-   * correction de mise, et de désigner celui dont la valeur se déduit.
+   * Porteurs dont les plis ont été posés à la main. Les autres gardent la
+   * valeur semée depuis leur mise : c'est ce qui permet à la fois de resemer
+   * après une correction de mise, et de désigner celui dont la valeur se déduit.
    */
   touchedTricks: Id[]
   /**
-   * Joueur dont les plis sont déduits des autres. On le retient pour pouvoir
+   * Porteur dont les plis sont déduits des autres. On le retient pour pouvoir
    * recalculer sa valeur à chaque saisie : sans ça, un `+` de plus sur un autre
    * joueur laisserait une déduction périmée.
    */
@@ -144,6 +181,38 @@ export interface Store {
 export const TOTAL_ROUNDS = 10
 export const MIN_PLAYERS = 2
 export const MAX_PLAYERS = 8
+
+/**
+ * Le fantôme de Barbe Grise dans les listes de saisie.
+ *
+ * À 2 joueurs, une troisième main est distribuée : elle rafle des plis, ne mise
+ * pas, ne marque pas. On lui donne un identifiant sentinelle plutôt qu'une
+ * place dans `playerIds`, qui pilote le score, les noms, le classement, les
+ * graphiques et les bornes `MIN_PLAYERS`/`MAX_PLAYERS`. Il ne porte que des
+ * plis.
+ *
+ * Le mot `ghost` est déjà pris par une variante de bouton du design system :
+ * on nomme le personnage, pas son genre.
+ */
+export const GREY_BEARD: Id = 'grey-beard'
+
+/** Vrai quand la table joue à 2 : le fantôme prend alors la troisième main. */
+export function hasGreyBeard(playerCount: number): boolean {
+  return playerCount === MIN_PLAYERS
+}
+
+/**
+ * Les porteurs de plis d'une manche : les joueurs, et le fantôme à 2.
+ *
+ * À ne pas confondre avec `playerIds`. Tout ce qui parle de plis prend cette
+ * liste-ci ; tout ce qui parle de mises, de primes, de pari ou de score prend
+ * l'autre.
+ */
+export function trickHolders(playerIds: Id[]): Id[] {
+  // Toujours une copie, jamais la liste des joueurs elle-même : l'appelant qui
+  // la garderait finirait par écrire dans l'ordre à table de la partie.
+  return hasGreyBeard(playerIds.length) ? [...playerIds, GREY_BEARD] : [...playerIds]
+}
 
 export const EMPTY_BONUS: RoundBonus = {
   colorFourteens: 0,

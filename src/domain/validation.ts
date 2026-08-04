@@ -2,6 +2,7 @@ import {
   BONUS_KEYS,
   BONUS_LIMITS,
   EMPTY_BONUS,
+  GREY_BEARD,
   RASCAL_VALUES,
   type Id,
   type RoundBonus,
@@ -93,11 +94,17 @@ export function trickTarget(cards: number, voided = 0): number {
   return Math.max(0, cards - voided)
 }
 
-/** La somme des plis vaut exactement le nombre de plis attribuables. */
+/**
+ * La somme des plis vaut exactement le nombre de plis attribuables.
+ *
+ * `holders`, et non `playerIds` : à 2 joueurs le fantôme de Barbe Grise est du
+ * compte. C'est ce qui permet à l'invariant de rester strict alors que la somme
+ * des plis des deux joueurs, elle, ne fait plus le nombre de cartes.
+ */
 export function validateTricks(
   tricks: TrickMap,
   cards: number,
-  playerIds: Id[],
+  holders: Id[],
   voided = 0,
 ): Issue[] {
   const issues: Issue[] = []
@@ -105,7 +112,7 @@ export function validateTricks(
   let assigned = 0
   let complete = true
 
-  for (const id of playerIds) {
+  for (const id of holders) {
     const value = tricks[id]
     if (value === null || value === undefined) {
       issues.push({ code: 'tricks.missing', playerId: id })
@@ -130,10 +137,10 @@ export function validateTricks(
 export function remainingTricks(
   tricks: TrickMap,
   cards: number,
-  playerIds: Id[],
+  holders: Id[],
   voided = 0,
 ): number {
-  const assigned = playerIds.reduce((total, id) => total + (tricks[id] ?? 0), 0)
+  const assigned = holders.reduce((total, id) => total + (tricks[id] ?? 0), 0)
   return trickTarget(cards, voided) - assigned
 }
 
@@ -175,6 +182,24 @@ export function validateRascal(rascal: Record<Id, number>, playerIds: Id[]): Iss
 export function soleUntouchedPlayer(touched: Id[], playerIds: Id[]): Id | null {
   const untouched = playerIds.filter((id) => !touched.includes(id))
   return untouched.length === 1 ? untouched[0] : null
+}
+
+/**
+ * Le porteur dont les plis se déduisent des autres.
+ *
+ * Le fantôme passe devant : il n'annonce rien, et son compte est par nature ce
+ * qui reste. Tant qu'on ne l'a pas repris en main, c'est donc lui qui absorbe,
+ * quel que soit le nombre de tuiles déjà posées — sans quoi une manche à 2
+ * joueurs n'aurait plus de déduction du tout, avec trois porteurs non touchés
+ * et jamais un seul.
+ *
+ * Repris en main, il rend la place à la règle ordinaire, et c'est le second
+ * joueur qui se met à bouger. La tuile le dit, comme n'importe quelle tuile
+ * déduite.
+ */
+export function deducedHolder(touched: Id[], holders: Id[]): Id | null {
+  if (holders.includes(GREY_BEARD) && !touched.includes(GREY_BEARD)) return GREY_BEARD
+  return soleUntouchedPlayer(touched, holders)
 }
 
 // -------------------------------------------------------------------- Bonus
@@ -313,19 +338,27 @@ export function bonusCeiling(
   return { max: Math.max(0, tightest.max), reason: tightest.reason }
 }
 
-/** Toutes les manches sont-elles saisissables en l'état ? */
+/**
+ * La manche est-elle saisissable en l'état ?
+ *
+ * Deux listes et non une : les misants d'un côté, les porteurs de plis de
+ * l'autre. À 2 joueurs le fantôme est du second groupe et pas du premier — il
+ * rafle des plis sans jamais annoncer ni prendre de prime. Les confondre
+ * réclamerait une mise au fantôme, et laisserait ses plis hors du compte.
+ */
 export function validateRound(
   bids: BidMap,
   tricks: TrickMap,
   bonuses: BonusMap,
   cards: number,
   playerIds: Id[],
+  holders: Id[] = playerIds,
   voided = 0,
 ): Issue[] {
   return [
     ...validateBids(bids, cards, playerIds),
     ...validateVoided(voided, cards),
-    ...validateTricks(tricks, cards, playerIds, voided),
+    ...validateTricks(tricks, cards, holders, voided),
     ...validateBonuses(bonuses, tricks, playerIds),
   ]
 }

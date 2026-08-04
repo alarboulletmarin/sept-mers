@@ -4,7 +4,7 @@ import { useStore } from '../app/StoreProvider.tsx'
 import type { Route } from '../app/Router.tsx'
 import { Button } from '../components/Button.tsx'
 import { Icon } from '../components/Icon.tsx'
-import { OPTIONS, OptionSwitch } from '../components/OptionSwitch.tsx'
+import { OptionSwitch, visibleOptions } from '../components/OptionSwitch.tsx'
 import { ChipGrid, PlayerChip } from '../components/PlayerChip.tsx'
 import { MAX_PLAYERS, MIN_PLAYERS, type GameOptions, type Id } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
@@ -235,7 +235,7 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
         </button>
         {optionsOpen && (
           <div className={styles.optionPanel}>
-            {OPTIONS.map(({ key }) => (
+            {visibleOptions(options).map(({ key }) => (
               <OptionSwitch
                 key={key}
                 label={t(`newGame.${key}`)}

@@ -2,10 +2,13 @@ import {
   BONUS_KEYS,
   DEFAULT_OPTIONS,
   EMPTY_BONUS,
+  GREY_BEARD,
   MAX_PLAYERS,
   MIN_PLAYERS,
   RASCAL_VALUES,
   TOTAL_ROUNDS,
+  hasGreyBeard,
+  trickHolders,
   type Draft,
   type GameOptions,
   type Locale,
@@ -65,6 +68,10 @@ const readGameOptions = (value: unknown): GameOptions => {
     bonusIfBidMissed: source.bonusIfBidMissed !== false,
     seaMonsters: source.seaMonsters === true,
     advancedPirates: source.advancedPirates === true,
+    // Aucune partie enregistrée n'a jamais été jouée au Score Rascal : ici la
+    // valeur historique est « non », et pas « comme avant ».
+    rascalScoring: source.rascalScoring === true,
+    cannonball: source.cannonball === true,
   }
 }
 
@@ -78,6 +85,8 @@ const readDefaultOptions = (value: unknown): GameOptions =>
         bonusIfBidMissed: value.bonusIfBidMissed === true,
         seaMonsters: value.seaMonsters === true,
         advancedPirates: value.advancedPirates === true,
+        rascalScoring: value.rascalScoring === true,
+        cannonball: value.cannonball === true,
       }
     : { ...DEFAULT_OPTIONS }
 
@@ -159,8 +168,10 @@ export function normalise(input: unknown): Store {
         if (!isObject(game)) return []
         if (typeof game.id !== 'string' || !Array.isArray(game.playerIds)) return []
 
+        // La sentinelle du fantôme n'est jamais un joueur : un fichier bricolé
+        // à la main ne doit pas pouvoir en asseoir un à sa place.
         const playerIds = game.playerIds.filter(
-          (id): id is string => typeof id === 'string',
+          (id): id is string => typeof id === 'string' && id !== GREY_BEARD,
         )
         if (playerIds.length < MIN_PLAYERS || playerIds.length > MAX_PLAYERS) return []
 
@@ -187,6 +198,7 @@ export function normalise(input: unknown): Store {
                 // Le pari du Rascal peut être négatif : il ne passe surtout
                 // pas par `isCount`, qui le ramènerait à zéro en silence.
                 const rascal = readRascal(entry.rascal)
+                const cannonball = entry.cannonball === true
                 return [
                   {
                     playerId: entry.playerId,
@@ -194,17 +206,24 @@ export function normalise(input: unknown): Store {
                     tricks: entry.tricks,
                     bonus,
                     ...(rascal !== 0 ? { rascal } : {}),
+                    ...(cannonball ? { cannonball } : {}),
                   },
                 ]
               },
             )
 
             const voided = isCount(round.voided) ? Math.min(round.cards, round.voided) : 0
+            // Un compte de plis n'est jamais négatif : `isCount` convient, à la
+            // différence du pari du Rascal.
+            const greyBeard = isCount(round.greyBeard)
+              ? Math.min(round.cards - voided, round.greyBeard)
+              : 0
             return [
               {
                 index: round.index,
                 cards: round.cards,
                 ...(voided > 0 ? { voided } : {}),
+                ...(greyBeard > 0 ? { greyBeard } : {}),
                 entries,
               },
             ]
@@ -276,6 +295,7 @@ export function normalise(input: unknown): Store {
     const tricks: Record<string, number | null> = {}
     const bonus: Record<string, typeof EMPTY_BONUS> = {}
     const rascal: Record<string, number> = {}
+    const cannonball: Record<string, boolean> = {}
     const readMap = (value: unknown): Record<string, unknown> => (isObject(value) ? value : {})
 
     for (const id of game.playerIds) {
@@ -291,16 +311,30 @@ export function normalise(input: unknown): Store {
       }
       bonus[id] = entry
       rascal[id] = readRascal(readMap(source.rascal)[id])
+      cannonball[id] = readMap(source.cannonball)[id] === true
     }
 
     const cards = cardsForRound(source.roundIndex, game.playerIds.length, deckSize(game.options))
     const voided = isCount(source.voided) ? Math.min(cards, source.voided) : 0
 
-    // On repart de la liste des joueurs, pas de celle du fichier : les
-    // doublons et les identifiants inconnus tombent d'eux-mêmes.
+    // Le fantôme se relit après la boucle : il n'est pas dans `playerIds`. Sa
+    // valeur historique est zéro et non `null` — une saisie écrite avant lui,
+    // à 2 joueurs, distribuait déjà tous les plis aux deux joueurs, et un
+    // `null` ferait apparaître une anomalie sur une manche qui n'en avait
+    // aucune.
+    const holders = trickHolders(game.playerIds)
+    if (hasGreyBeard(game.playerIds.length)) {
+      const value = readMap(source.tricks)[GREY_BEARD]
+      tricks[GREY_BEARD] = isCount(value) ? Math.min(cards, value) : 0
+    }
+
+    // On repart de la liste des porteurs, pas de celle du fichier : les
+    // doublons et les identifiants inconnus tombent d'eux-mêmes. Le fantôme en
+    // est, sans quoi un rechargement en pleine manche le « détoucherait » et
+    // recalculerait en silence une valeur posée à la main.
     const touched = source.touchedTricks
     const touchedTricks = Array.isArray(touched)
-      ? game.playerIds.filter((id) => touched.includes(id))
+      ? holders.filter((id) => touched.includes(id))
       : []
 
     const auto = source.autoTricks
@@ -312,9 +346,10 @@ export function normalise(input: unknown): Store {
       tricks,
       bonus,
       rascal,
+      cannonball,
       voided,
       touchedTricks,
-      autoTricks: typeof auto === 'string' && game.playerIds.includes(auto) ? auto : null,
+      autoTricks: typeof auto === 'string' && holders.includes(auto) ? auto : null,
     }
   }
 

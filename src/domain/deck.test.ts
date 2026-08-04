@@ -61,3 +61,18 @@ describe('paquet des monstres marins', () => {
     expect(cardsForRound(10, 8, deckSize({ seaMonsters: true }))).toBe(9)
   })
 })
+
+describe('la main du fantôme de Barbe Grise', () => {
+  it('ne fait pas mordre le plafond à deux joueurs', () => {
+    // À 2 joueurs une troisième main est distribuée. Compter le fantôme ou non
+    // ne change aucun chiffre — c'est ce qui autorise `cardsForRound` à rester
+    // sur le nombre de joueurs, et les 4 appelants à ne pas s'accorder.
+    for (let round = 1; round <= 10; round += 1) {
+      expect(cardsForRound(round, 2)).toBe(round)
+      expect(cardsForRound(round, 3)).toBe(round)
+      expect(cardsForRound(round, 2, DECK_SIZE + 2)).toBe(round)
+      expect(cardsForRound(round, 3, DECK_SIZE + 2)).toBe(round)
+    }
+    expect(isCapped(10, 3)).toBe(false)
+  })
+})

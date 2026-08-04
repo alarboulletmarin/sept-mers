@@ -13,9 +13,17 @@ import { Stepper } from '../components/Stepper.tsx'
 import { Tag, Widget } from '../components/Widget.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { cardsForRound, deckSize, isCapped } from '../domain/deck.ts'
-import { scoreRound } from '../domain/scoring.ts'
+import { scoreRound, type ScoreInput } from '../domain/scoring.ts'
 import { totals } from '../domain/stats.ts'
-import { TOTAL_ROUNDS, bonusIsEmpty, type Id, type RoundBonus } from '../domain/types.ts'
+import {
+  GREY_BEARD,
+  TOTAL_ROUNDS,
+  bonusIsEmpty,
+  hasGreyBeard,
+  trickHolders,
+  type Id,
+  type RoundBonus,
+} from '../domain/types.ts'
 import {
   globalIssues,
   issuesFor,
@@ -67,10 +75,17 @@ export function Game({ go }: { go: (route: Route) => void }) {
   const isEditing = isEditingRound(game, draft)
   const running = totals(game)
 
+  // À 2 joueurs, le fantôme de Barbe Grise rafle sa part : la somme des plis
+  // des deux joueurs ne fait plus le nombre de cartes, et c'est lui qui
+  // rétablit le compte. Tout ce qui parle de plis prend donc cette liste-ci.
+  const holders = trickHolders(game.playerIds)
+  const greyBeard = hasGreyBeard(game.playerIds.length)
+  const showCharge = game.options.rascalScoring && game.options.cannonball
+
   const bidIssues = validateBids(draft.bids, cards, game.playerIds)
   const trickIssues = [
     ...validateVoided(draft.voided, cards),
-    ...validateTricks(draft.tricks, cards, game.playerIds, draft.voided),
+    ...validateTricks(draft.tricks, cards, holders, draft.voided),
   ]
   const bonusIssues = [
     ...validateBonuses(draft.bonus, draft.tricks, game.playerIds),
@@ -81,7 +96,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
   const resultsReady = trickIssues.length === 0 && bonusIssues.length === 0
 
   const bidTotal = sumBids(draft.bids, game.playerIds)
-  const left = remainingTricks(draft.tricks, cards, game.playerIds, draft.voided)
+  const left = remainingTricks(draft.tricks, cards, holders, draft.voided)
 
   const isBids = draft.phase === 'bids'
 
@@ -270,6 +285,11 @@ export function Game({ go }: { go: (route: Route) => void }) {
               tricks={draft.tricks[playerId] ?? null}
               bonus={draft.bonus[playerId]}
               rascal={draft.rascal[playerId] ?? 0}
+              cannonball={draft.cannonball[playerId] ?? false}
+              showCharge={showCharge}
+              onCannonball={(loaded) =>
+                dispatch({ type: 'game/setCannonball', playerId, loaded })
+              }
               auto={!isBids && draft.autoTricks === playerId}
               issues={
                 touched
@@ -286,6 +306,38 @@ export function Game({ go }: { go: (route: Route) => void }) {
               t={t}
             />
           ))}
+
+          {/* À 2 joueurs, une troisième main est distribuée au fantôme de
+              Barbe Grise. Il rafle des plis sans miser ni marquer : sa tuile
+              n'est là que pour porter ce qui reste, et elle s'en remplit toute
+              seule. Une table qui ne le joue pas la laisse simplement à zéro. */}
+          {!isBids && greyBeard && (
+            <Widget surface="sunken" span="sm" tight marker="grey-beard-tile">
+              <h2 className={styles.name}>{t('game.greyBeard')}</h2>
+              <Stepper
+                max={target}
+                value={draft.tricks[GREY_BEARD] ?? 0}
+                onChange={(value) =>
+                  dispatch({ type: 'game/setTricks', playerId: GREY_BEARD, tricks: value })
+                }
+                label={`${t('game.phase.results')} — ${t('game.greyBeard')}`}
+                decreaseLabel={t('a11y.greyBeard.decrease')}
+                increaseLabel={t('a11y.greyBeard.increase')}
+              />
+              <div className={styles.tileMeta}>
+                <span className={styles.bidRecall}>
+                  {draft.autoTricks === GREY_BEARD
+                    ? t('game.results.autofilled')
+                    : t('game.greyBeard.help')}
+                </span>
+              </div>
+              {(touched ? issuesFor(trickIssues, GREY_BEARD) : []).map((issue, index) => (
+                <p key={index} className={styles.tileIssue} role="alert">
+                  {t(`issue.${issue.code}`, issue.data)}
+                </p>
+              ))}
+            </Widget>
+          )}
 
           {/* Le Kraken et la Baleine blanche écartent des plis : la somme des
               plis remportés vaut alors moins que le nombre de cartes, et il
@@ -428,13 +480,23 @@ interface PlayerTileProps {
   bonus: RoundBonus
   /** Pari de Rascal Jack, signé. */
   rascal: number
+  /** Boulet de canon chargé pour la manche. */
+  cannonball: boolean
+  /** La table joue-t-elle le Boulet ? Sinon la pastille de charge n'a rien à dire. */
+  showCharge: boolean
+  onCannonball: (loaded: boolean) => void
   /** Tuile dont la valeur se déduit des autres. */
   auto: boolean
   issues: Issue[]
   onBid: (value: number) => void
   onTricks: (value: number) => void
   onOpenBonus: () => void
-  options: { bonusIfBidMissed: boolean }
+  /**
+   * Typé sur l'entrée du moteur et non sur la seule option des primes : une
+   * option de barème absente de cet objet passerait sans erreur de compilation,
+   * et le score en direct resterait silencieusement au barème classique.
+   */
+  options: ScoreInput['options']
   signed: (value: number) => string
   t: (key: string, vars?: Record<string, string | number>) => string
 }
@@ -448,6 +510,9 @@ function PlayerTile(props: PlayerTileProps) {
     tricks,
     bonus,
     rascal,
+    cannonball,
+    showCharge,
+    onCannonball,
     auto,
     issues,
     onBid,
@@ -464,8 +529,16 @@ function PlayerTile(props: PlayerTileProps) {
 
   // Le total s'affiche en direct dès que la ligne est complète.
   const score =
-    !isBids && complete ? scoreRound({ bid, tricks, cards, bonus, rascal, options }) : null
+    !isBids && complete
+      ? scoreRound({ bid, tricks, cards, bonus, rascal, cannonball, options })
+      : null
   const bonusCount = Object.values(bonus).reduce((total, count) => total + count, 0)
+
+  // Sous le Score Rascal, un pli d'écart rend la moitié des points : sans le
+  // dire, le joueur verrait un chiffre deux fois moindre sans savoir pourquoi.
+  const halved = Boolean(
+    score && options.rascalScoring && score.gap === 1 && !(options.cannonball && cannonball),
+  )
 
   return (
     // Tout part rempli : le contraste ne peut plus dire « saisi ou non ». Il
@@ -485,12 +558,35 @@ function PlayerTile(props: PlayerTileProps) {
         increaseLabel={t('a11y.increase', { name })}
       />
 
+      {/* La charge se déclare après avoir misé, et se lit en toutes lettres :
+          l'app enregistre le choix révélé, elle ne le tient pas secret. */}
+      {isBids && showCharge && (
+        <button
+          type="button"
+          role="switch"
+          aria-checked={cannonball}
+          aria-label={t('a11y.charge', { name })}
+          className={`${styles.chargeButton} ${cannonball ? styles.chargeSet : ''}`}
+          onClick={() => onCannonball(!cannonball)}
+        >
+          {t(`game.charge.${cannonball ? 'cannonball' : 'grapeshot'}`)}
+        </button>
+      )}
+
       {!isBids && (
         <div className={styles.tileMeta}>
           <span className={styles.bidRecall}>
             {/* La tuile déduite le dit : sinon son chiffre bouge tout seul
                 pendant qu'on saisit les autres, sans que rien l'explique. */}
-            {auto ? t('game.results.autofilled') : bid !== null ? t('game.bid', { bid }) : ''}
+            {auto
+              ? t('game.results.autofilled')
+              : bid === null
+                ? ''
+                : halved
+                  ? t('game.bidHalf', { bid })
+                  : showCharge && cannonball
+                    ? t('game.bidCannonball', { bid })
+                    : t('game.bid', { bid })}
           </span>
           {score && <span className={styles.tileScore}>{signed(score.total)}</span>}
         </div>

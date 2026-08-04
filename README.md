@@ -11,10 +11,19 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 ## Ce qu'elle fait
 
 - **Score classique**, 2 à 8 joueurs, 10 manches, tout calculé par l'app.
-- **Deux variantes en option**, choisies au lancement d'une partie et
+- **Trois variantes en option**, choisies au lancement d'une partie et
   expliquées dans les règles : le Kraken et la Baleine blanche, qui font qu'un
   pli peut n'être remporté par personne ; les pouvoirs des pirates, dont seul le
-  pari de Rascal Jack change le score.
+  pari de Rascal Jack change le score ; le **Score Rascal**, second barème où
+  chaque manche vaut 10 points par carte pour tout le monde — tout, la moitié,
+  ou rien selon l'écart à la mise, et jamais de points négatifs. Il ouvre à son
+  tour le **Boulet de canon**, que chacun charge après avoir misé : 15 points
+  par carte, mais rien du tout au moindre écart.
+- **Le fantôme de Barbe Grise à 2 joueurs**, sans rien à régler. Le jeu y
+  distribue une troisième main, qui rafle des plis sans miser ni marquer : la
+  somme des plis des 2 joueurs ne fait donc plus le nombre de cartes de la
+  manche. L'app lui donne une tuile, qui se remplit du reste et reste
+  corrigeable — l'égalité qu'elle vérifie n'est pas relâchée, elle est élargie.
 - **Saisie sans clavier** : une grille de tuiles, une par joueur, avec un
   contrôle moins / plus. Appui maintenu pour défiler. Les mises partent à zéro,
   les plis partent sur la mise de chacun, et le dernier joueur qu'on n'a pas
@@ -83,7 +92,8 @@ regarde d'abord `CHROMIUM_PATH`, puis les emplacements où un Chromium
 préinstallé se trouve d'ordinaire, et laisse Playwright résoudre à défaut.
 
 `scripts/smoke.mjs` joue une partie entière à quatre, vérifie la reprise après
-rechargement, le plafond à huit joueurs, le changement de thème et de langue,
+rechargement, le plafond à huit joueurs, la tuile du fantôme à deux joueurs, le
+Score Rascal et sa pastille de charge, le changement de thème et de langue,
 l'absence de requête réseau et l'absence d'emoji. Il attend un `dist/` à jour.
 L'option `--shots` écrit des captures dans `shots/`.
 
@@ -91,9 +101,11 @@ L'option `--shots` écrit des captures dans `shots/`.
 relance l'app, valide une manche et ouvre les règles hors ligne. Il vérifie aussi
 que le thème système bascule en direct, sans rechargement.
 
-`scripts/nooverflow.mjs` parcourt les treize écrans à 320, 360, 390, 430 et
+`scripts/nooverflow.mjs` parcourt les seize écrans à 320, 360, 390, 430 et
 820 px, avec huit joueurs et la valeur la plus haute, et échoue dès qu'un
-élément dépasse la largeur ou qu'un composant défile horizontalement.
+élément dépasse la largeur ou qu'un composant défile horizontalement. La
+pastille de charge et la tuile du fantôme y ont leur passe : c'est là qu'une
+tuile de demi-largeur se serait fendue en deux rangées.
 
 `scripts/contrast.mjs` mesure le contraste réel de chaque texte contre son fond
 effectif, dans les deux thèmes. Il attrape la classe de défaut qui ne casse
@@ -134,7 +146,18 @@ des plis, un nombre de cartes et un objet d'options, et rend un score. Il ne lit
 ni horloge ni stockage. C'est par cet objet d'options que les variantes sont
 arrivées, et non par une réécriture : le pari de Rascal Jack s'ajoute au total
 sans passer par les primes, puisque l'option qui annule les primes d'une mise
-ratée ne l'annule pas.
+ratée ne l'annule pas. Le second barème suit la même règle — le corps classique
+a été déplacé tel quel dans une fonction privée, le Score Rascal en est une
+seconde, et `scoreRound` aiguille. Les huit cas de référence n'ont pas bougé
+d'une ligne.
+
+Le fantôme de Barbe Grise, lui, n'est pas passé par les options : à 2 joueurs il
+n'y a pas d'autre façon de jouer. Il porte un identifiant sentinelle et rejoint
+la liste des *porteurs de plis*, distincte de celle des joueurs. Tout ce qui
+parle de plis — le semis, la déduction du dernier non repris en main, la
+validation de la somme, le compteur de pied d'écran — prend la première ; tout
+ce qui parle de mise, de prime, de pari ou de score prend la seconde. Il n'a
+donc fallu écrire aucun mécanisme parallèle, seulement allonger une liste.
 
 Le stockage tient dans une clé `localStorage`, écrite avec 300 ms de debounce et
 vidée dès que l'onglet passe en arrière-plan. La lecture est défensive : un
@@ -144,13 +167,15 @@ version de schéma soit une addition et pas une réécriture.
 
 ## Tests
 
-220 tests unitaires couvrent le moteur de score — dont les huit cas de référence
-du cahier des charges —, la validation de saisie, le plafonnement du paquet, les
-variantes, les statistiques, le réducteur, le préremplissage et la complétion
-automatique du dernier joueur, la marche arrière entre manches, l'aller-retour
-export/import, la lecture défensive du stockage, les pluriels, la géométrie des
-graphiques, la configuration de déploiement, les icônes d'installation, les
-jetons de la palette et le système typographique — familles, échelle, fichiers de fonte
+293 tests unitaires couvrent les deux moteurs de score — dont les huit cas de
+référence du cahier des charges, et l'absence de tout point négatif ou
+fractionnaire sur toute la grille du Score Rascal —, la validation de saisie, le
+plafonnement du paquet, les variantes, le fantôme de Barbe Grise, les
+statistiques, le réducteur, le préremplissage et la complétion automatique du
+dernier joueur, la marche arrière entre manches, l'aller-retour export/import,
+la lecture défensive du stockage, les pluriels, la géométrie des graphiques, la
+configuration de déploiement, les icônes d'installation, les jetons de la
+palette et le système typographique — familles, échelle, fichiers de fonte
 embarqués, et l'absence de toute famille écrite en dur hors des jetons. Le
 parcours navigateur complète le tout sur l'app réellement construite.
 

@@ -264,5 +264,20 @@
   "bonus.rascal.none": "Aucun",
   "bonus.rascal.taken": "{name} a déjà posé le pari cette manche",
   "issue.rascal.multiple": "Il n'y a qu'un seul Rascal Jack dans le paquet",
-  "issue.rascal.value": "Le pari vaut 0, 10 ou 20 points"
+  "issue.rascal.value": "Le pari vaut 0, 10 ou 20 points",
+  "newGame.rascalScoring": "Score Rascal",
+  "newGame.rascalScoring.on": "Même potentiel pour tous : tout, la moitié, ou rien. Jamais de points négatifs.",
+  "newGame.rascalScoring.off": "Barème classique : 20 points par pli annoncé, et des points négatifs.",
+  "newGame.cannonball": "Boulet de canon",
+  "newGame.cannonball.on": "Chacun charge son canon après avoir misé : mitraille ou boulet.",
+  "newGame.cannonball.off": "Tout le monde tire à la mitraille.",
+  "game.greyBeard": "Barbe Grise",
+  "game.greyBeard.help": "Ne mise pas, ne marque pas.",
+  "a11y.greyBeard.decrease": "Retirer un pli à Barbe Grise",
+  "a11y.greyBeard.increase": "Ajouter un pli à Barbe Grise",
+  "game.charge.grapeshot": "Mitraille",
+  "game.charge.cannonball": "Boulet",
+  "a11y.charge": "Charge de {name}",
+  "game.bidCannonball": "Mise {bid} · Boulet",
+  "game.bidHalf": "Mise {bid} · Moitié"
 }

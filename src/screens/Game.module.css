@@ -256,8 +256,16 @@
   flex: none;
 }
 
-/* Le bonus est une action nommée, visible sans rien déplier. */
-.bonusButton {
+/*
+ * Le bonus est une action nommée, visible sans rien déplier.
+ *
+ * La charge du canon prend la même pastille : c'est le même geste, au même
+ * endroit de la tuile, à l'autre temps de la manche. Un groupe de choix
+ * exclusifs y aurait tenu deux rangées à 320 px, où la mosaïque n'offre qu'une
+ * demi-largeur — et la charge s'écrit en toutes lettres, donc rien n'est deviné.
+ */
+.bonusButton,
+.chargeButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -277,11 +285,13 @@
   transition: transform var(--dur-fast) var(--ease);
 }
 
-.bonusButton:active {
+.bonusButton:active,
+.chargeButton:active {
   transform: scale(0.96);
 }
 
-.bonusSet {
+.bonusSet,
+.chargeSet {
   border-color: transparent;
   background: var(--surface-on);
   color: var(--surface);

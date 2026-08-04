@@ -264,5 +264,20 @@
   "bonus.rascal.none": "None",
   "bonus.rascal.taken": "{name} already placed the wager this round",
   "issue.rascal.multiple": "The deck holds only one Rascal Jack",
-  "issue.rascal.value": "The wager is 0, 10 or 20 points"
+  "issue.rascal.value": "The wager is 0, 10 or 20 points",
+  "newGame.rascalScoring": "Rascal scoring",
+  "newGame.rascalScoring.on": "The same potential for everyone: all, half, or nothing. Never a negative score.",
+  "newGame.rascalScoring.off": "Classic scoring: 20 points per trick bid, and negative scores.",
+  "newGame.cannonball": "Cannonball",
+  "newGame.cannonball.on": "Everyone loads a charge after bidding: grapeshot or cannonball.",
+  "newGame.cannonball.off": "Everyone fires grapeshot.",
+  "game.greyBeard": "Greybeard",
+  "game.greyBeard.help": "Never bids, never scores.",
+  "a11y.greyBeard.decrease": "One less trick for Greybeard",
+  "a11y.greyBeard.increase": "One more trick for Greybeard",
+  "game.charge.grapeshot": "Grapeshot",
+  "game.charge.cannonball": "Cannonball",
+  "a11y.charge": "{name}'s charge",
+  "game.bidCannonball": "Bid {bid} · Cannonball",
+  "game.bidHalf": "Bid {bid} · Half"
 }

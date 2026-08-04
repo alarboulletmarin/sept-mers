@@ -20,6 +20,13 @@ export function deckSize(options: { seaMonsters: boolean }): number {
  * On ne peut pas distribuer plus que le paquet ne contient : à 8 joueurs les
  * manches 9 et 10 se jouent à 8 cartes — ou à 9 avec les monstres marins, que
  * les 2 cartes de plus suffisent à faire tenir la manche 9.
+ *
+ * `playerCount` reste le nombre de joueurs, y compris à 2 où le fantôme de
+ * Barbe Grise reçoit pourtant une troisième main. Le plafond ne mord qu'à
+ * partir de 8 mains — `⌊70/3⌋ = 23`, très au-dessus des 10 cartes de la
+ * dernière manche —, donc compter le fantôme ne changerait pas un chiffre, et
+ * obligerait les 4 appelants à s'accorder pour rien. `deck.test.ts` fige le
+ * raisonnement, pour que le jour où le paquet maigrit, l'oubli se voie.
  */
 export function cardsForRound(round: number, playerCount: number, cards = DECK_SIZE): number {
   return Math.min(round, Math.floor(cards / playerCount))

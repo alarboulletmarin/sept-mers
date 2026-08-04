@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { draftFor, reducer, runningGame, type Action } from './reducer.ts'
 import { emptyStore, normalise, parseStore, serialiseStore } from './storage.ts'
-import { DEFAULT_OPTIONS, makeBonus, type Store } from '../domain/types.ts'
+import { DEFAULT_OPTIONS, GREY_BEARD, makeBonus, type Store } from '../domain/types.ts'
 
 const run = (store: Store, ...actions: Action[]): Store =>
   actions.reduce((current, action) => reducer(current, action), store)
@@ -337,12 +337,14 @@ describe('export et import', () => {
 
 describe('options par défaut', () => {
   it("n'allume aucune option à l'installation", () => {
-    // Les trois bascules de l'écran de nouvelle partie sont éteintes tant que
+    // Les bascules de l'écran de nouvelle partie sont éteintes tant que
     // personne ne les a touchées, et l'écran part de ce réglage.
     expect(DEFAULT_OPTIONS).toEqual({
       bonusIfBidMissed: false,
       seaMonsters: false,
       advancedPirates: false,
+      rascalScoring: false,
+      cannonball: false,
     })
     expect(emptyStore().settings.defaultOptions).toEqual(DEFAULT_OPTIONS)
   })
@@ -708,10 +710,329 @@ describe('variantes', () => {
     })
     // Historique et non préférentiel : la partie a compté les bonus d'une mise
     // ratée, et le réglage par défaut de l'app ne la fait pas changer d'avis.
+    // Le Score Rascal, lui, part à faux : aucune partie enregistrée ne l'a
+    // jamais joué, donc son « comme avant » est « non ».
     expect(store.games[0].options).toEqual({
       bonusIfBidMissed: true,
       seaMonsters: false,
       advancedPirates: false,
+      rascalScoring: false,
+      cannonball: false,
     })
+  })
+})
+
+describe('le fantôme de Barbe Grise', () => {
+  /** Une table à 2, où le fantôme prend la troisième main. */
+  const twoPlayers = (options = {}) =>
+    run(seeded(), {
+      type: 'game/start',
+      playerIds: ['p1', 'p2'],
+      options: { ...DEFAULT_OPTIONS, ...options },
+      id: 'g2',
+      now: '2026-01-01T20:00:00.000Z',
+    })
+
+  /** La manche `round` ouverte en phase résultats, sur les mises données. */
+  const atResults = (store: Store, bids: [string, number][]) =>
+    run(
+      store,
+      ...bids.map(([playerId, bid]): Action => ({ type: 'game/setBid', playerId, bid })),
+      { type: 'game/phase', phase: 'results' },
+    )
+
+  it('reçoit le reste dès l entrée dans les résultats', () => {
+    // Manche 1 : 1 carte, mises à 0 et 0, le pli va donc au fantôme.
+    const store = atResults(twoPlayers(), [
+      ['p1', 0],
+      ['p2', 0],
+    ])
+    expect(store.draft?.tricks[GREY_BEARD]).toBe(1)
+    expect(store.draft?.autoTricks).toBe(GREY_BEARD)
+  })
+
+  it('laisse une manche où chacun tient sa mise se valider sans un geste', () => {
+    // C'est la propriété à ne pas perdre : mises 2 et 3 sur 6 cartes, il reste
+    // 1 pli au fantôme, et la somme tombe juste toute seule.
+    let store = twoPlayers()
+    store = playRound(store, [
+      ['p1', 0, 0],
+      ['p2', 1, 1],
+    ])
+    store = playRound(store, [
+      ['p1', 1, 1],
+      ['p2', 1, 1],
+    ])
+    store = atResults(store, [
+      ['p1', 2],
+      ['p2', 0],
+    ])
+    expect(store.draft?.tricks.p1).toBe(2)
+    expect(store.draft?.tricks.p2).toBe(0)
+    expect(store.draft?.tricks[GREY_BEARD]).toBe(1)
+  })
+
+  it('se repose quand un joueur pose ses plis', () => {
+    let store = atResults(twoPlayers(), [
+      ['p1', 0],
+      ['p2', 0],
+    ])
+    store = playRound(store, [
+      ['p1', 0, 0],
+      ['p2', 0, 0],
+    ])
+    // Manche 2, 2 cartes.
+    store = atResults(store, [
+      ['p1', 0],
+      ['p2', 0],
+    ])
+    expect(store.draft?.tricks[GREY_BEARD]).toBe(2)
+    store = run(store, { type: 'game/setTricks', playerId: 'p1', tricks: 1 })
+    expect(store.draft?.tricks[GREY_BEARD]).toBe(1)
+    expect(store.draft?.autoTricks).toBe(GREY_BEARD)
+  })
+
+  it('rend la déduction au second joueur quand on le reprend en main', () => {
+    let store = twoPlayers()
+    store = playRound(store, [
+      ['p1', 0, 0],
+      ['p2', 0, 0],
+    ])
+    store = atResults(store, [
+      ['p1', 0],
+      ['p2', 0],
+    ])
+    store = run(
+      store,
+      { type: 'game/setTricks', playerId: GREY_BEARD, tricks: 0 },
+      { type: 'game/setTricks', playerId: 'p1', tricks: 1 },
+    )
+    expect(store.draft?.autoTricks).toBe('p2')
+    expect(store.draft?.tricks.p2).toBe(1)
+  })
+
+  it('ne prend pas de plis à trois joueurs', () => {
+    const store = run(started(), { type: 'game/setTricks', playerId: GREY_BEARD, tricks: 1 })
+    expect(store.draft?.tricks[GREY_BEARD]).toBeUndefined()
+  })
+
+  it('se recalcule quand un pli est écarté par un monstre marin', () => {
+    let store = twoPlayers({ seaMonsters: true })
+    store = playRound(store, [
+      ['p1', 0, 0],
+      ['p2', 0, 0],
+    ])
+    store = playRound(store, [
+      ['p1', 0, 0],
+      ['p2', 0, 0],
+    ])
+    // Manche 3, 3 cartes : rien aux joueurs, tout au fantôme.
+    store = atResults(store, [
+      ['p1', 0],
+      ['p2', 0],
+    ])
+    expect(store.draft?.tricks[GREY_BEARD]).toBe(3)
+    store = run(store, { type: 'game/setVoided', voided: 1 })
+    expect(store.draft?.tricks[GREY_BEARD]).toBe(2)
+  })
+
+  it('n écrit ses plis dans la manche que s il en a pris', () => {
+    let store = twoPlayers()
+    // Manche 1, 1 carte, prise par p1 : le fantôme repart à zéro.
+    store = playRound(store, [
+      ['p1', 1, 1],
+      ['p2', 0, 0],
+    ])
+    expect(store.games[0].rounds[0].greyBeard).toBeUndefined()
+    // Manche 2, 2 cartes, une seule prise par p1.
+    store = playRound(store, [
+      ['p1', 1, 1],
+      ['p2', 0, 0],
+    ])
+    expect(store.games[0].rounds[1].greyBeard).toBe(1)
+  })
+
+  it('revient tel quel quand on rouvre la manche pour la corriger', () => {
+    let store = twoPlayers()
+    store = playRound(store, [
+      ['p1', 0, 0],
+      ['p2', 0, 0],
+    ])
+    store = run(store, { type: 'game/editRound', index: 1 })
+    expect(store.draft?.tricks[GREY_BEARD]).toBe(1)
+    // Une manche validée a été saisie en entier : le fantôme est touché, sinon
+    // la rouvrir pour relire un chiffre la réécrirait.
+    expect(store.draft?.touchedTricks).toContain(GREY_BEARD)
+    expect(store.draft?.autoTricks).toBeNull()
+  })
+
+  it('survit à la relecture d une saisie en cours', () => {
+    let store = twoPlayers()
+    store = playRound(store, [
+      ['p1', 0, 0],
+      ['p2', 0, 0],
+    ])
+    store = atResults(store, [
+      ['p1', 0],
+      ['p2', 0],
+    ])
+    store = run(store, { type: 'game/setTricks', playerId: GREY_BEARD, tricks: 1 })
+    const reread = normalise(JSON.parse(serialiseStore(store)))
+    expect(reread.draft?.tricks[GREY_BEARD]).toBe(1)
+    expect(reread.draft?.touchedTricks).toContain(GREY_BEARD)
+  })
+
+  it('vaut zéro et non « à renseigner » sur une saisie écrite avant lui', () => {
+    const store = normalise({
+      schemaVersion: 1,
+      players: [{ id: 'p1', name: 'Ana' }, { id: 'p2', name: 'Bo' }],
+      games: [{ id: 'g', playerIds: ['p1', 'p2'], options: {}, rounds: [] }],
+      draft: { gameId: 'g', roundIndex: 1, phase: 'results', tricks: { p1: 1, p2: 0 } },
+    })
+    expect(store.draft?.tricks[GREY_BEARD]).toBe(0)
+  })
+
+  it('ne peut pas s asseoir à la table par un fichier bricolé', () => {
+    const store = normalise({
+      schemaVersion: 1,
+      players: [{ id: 'p1', name: 'Ana' }, { id: 'p2', name: 'Bo' }],
+      games: [{ id: 'g', playerIds: ['p1', 'p2', GREY_BEARD], options: {}, rounds: [] }],
+    })
+    expect(store.games[0].playerIds).toEqual(['p1', 'p2'])
+  })
+
+  it('reste hors du score, du classement et des noms', () => {
+    let store = twoPlayers()
+    store = playRound(store, [
+      ['p1', 0, 0],
+      ['p2', 0, 0],
+    ])
+    const game = store.games[0]
+    expect(game.playerIds).toEqual(['p1', 'p2'])
+    expect(Object.keys(game.nameSnapshot)).toEqual(['p1', 'p2'])
+    expect(game.rounds[0].entries.map((entry) => entry.playerId)).toEqual(['p1', 'p2'])
+  })
+
+  it('traverse l aller-retour export/import', () => {
+    let store = twoPlayers()
+    store = playRound(store, [
+      ['p1', 0, 0],
+      ['p2', 0, 0],
+    ])
+    expect(parseStore(serialiseStore(store)).store).toEqual(store)
+  })
+
+  it('laisse une partie à deux d avant lui compter exactement pareil', () => {
+    // Décision assumée : le fantôme est d'office à 2, mais une partie
+    // enregistrée sans lui garde ses plis et ses totaux au bit près.
+    const store = normalise({
+      schemaVersion: 1,
+      players: [{ id: 'p1', name: 'Ana' }, { id: 'p2', name: 'Bo' }],
+      games: [
+        {
+          id: 'g',
+          playerIds: ['p1', 'p2'],
+          options: {},
+          rounds: [
+            {
+              index: 1,
+              cards: 1,
+              entries: [
+                { playerId: 'p1', bid: 1, tricks: 1, bonus: {} },
+                { playerId: 'p2', bid: 0, tricks: 0, bonus: {} },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    expect(store.games[0].rounds[0].greyBeard).toBeUndefined()
+    expect(store.games[0].rounds[0].entries[0].tricks).toBe(1)
+  })
+})
+
+describe('Boulet de canon', () => {
+  const rascalTable = (options = {}) =>
+    run(seeded(), {
+      type: 'game/start',
+      playerIds: ['p1', 'p2', 'p3'],
+      options: { ...DEFAULT_OPTIONS, rascalScoring: true, cannonball: true, ...options },
+      id: 'g3',
+      now: '2026-01-01T20:00:00.000Z',
+    })
+
+  it('se charge et se décharge', () => {
+    let store = run(rascalTable(), {
+      type: 'game/setCannonball',
+      playerId: 'p1',
+      loaded: true,
+    })
+    expect(store.draft?.cannonball.p1).toBe(true)
+    store = run(store, { type: 'game/setCannonball', playerId: 'p1', loaded: false })
+    expect(store.draft?.cannonball.p1).toBe(false)
+  })
+
+  it('est refusé tant que le barème Rascal n est pas en jeu', () => {
+    const store = run(rascalTable({ rascalScoring: false }), {
+      type: 'game/setCannonball',
+      playerId: 'p1',
+      loaded: true,
+    })
+    expect(store.draft?.cannonball.p1).toBe(false)
+  })
+
+  it('est refusé quand la table ne l a pas ouvert', () => {
+    const store = run(rascalTable({ cannonball: false }), {
+      type: 'game/setCannonball',
+      playerId: 'p1',
+      loaded: true,
+    })
+    expect(store.draft?.cannonball.p1).toBe(false)
+  })
+
+  it('ne s écrit dans la manche que lorsqu il est chargé', () => {
+    let store = run(rascalTable(), {
+      type: 'game/setCannonball',
+      playerId: 'p1',
+      loaded: true,
+    })
+    store = playRound(store, [
+      ['p1', 1, 1],
+      ['p2', 0, 0],
+      ['p3', 0, 0],
+    ])
+    const entries = store.games[0].rounds[0].entries
+    expect(entries[0].cannonball).toBe(true)
+    expect(entries[1].cannonball).toBeUndefined()
+  })
+
+  it('revient quand on rouvre la manche pour la corriger', () => {
+    let store = run(rascalTable(), {
+      type: 'game/setCannonball',
+      playerId: 'p1',
+      loaded: true,
+    })
+    store = playRound(store, [
+      ['p1', 1, 1],
+      ['p2', 0, 0],
+      ['p3', 0, 0],
+    ])
+    store = run(store, { type: 'game/editRound', index: 1 })
+    expect(store.draft?.cannonball.p1).toBe(true)
+    expect(store.draft?.cannonball.p2).toBe(false)
+  })
+
+  it('traverse l aller-retour export/import', () => {
+    let store = run(rascalTable(), {
+      type: 'game/setCannonball',
+      playerId: 'p1',
+      loaded: true,
+    })
+    store = playRound(store, [
+      ['p1', 1, 1],
+      ['p2', 0, 0],
+      ['p3', 0, 0],
+    ])
+    expect(parseStore(serialiseStore(store)).store).toEqual(store)
   })
 })
