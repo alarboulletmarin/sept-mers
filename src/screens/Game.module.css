@@ -3,10 +3,12 @@
  * joueur. Voir docs/design-system.md.
  */
 
+/*
+ * L'en-tête part au défilement, lui. Il porte près de trois cents pixels — la
+ * houle, le numéro, la frise, les totaux — et le coller en haut aurait pris à
+ * la mosaïque la place que la barre basse, elle, mérite de garder.
+ */
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
   background: var(--canvas);
   padding: calc(env(safe-area-inset-top) + var(--space-3)) var(--space-4) var(--space-2);
 }

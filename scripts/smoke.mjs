@@ -197,6 +197,34 @@ check(
   await page.getByRole('button', { name: 'Valider la manche' }).isDisabled(),
 )
 
+/*
+ * Les deux boutons du pied restent au pouce sans qu'on ait à descendre.
+ *
+ * L'écran court est le seul qui le prouve : à pleine hauteur la barre tient
+ * dans la fenêtre sans rien coller, et la vérification ne dirait rien. On
+ * rétrécit donc jusqu'à ce que la page défile pour de bon, puis on remonte
+ * tout en haut — là où une barre non collante est le plus loin du pouce.
+ *
+ * Et on mesure : `isVisible()` rend vrai pour un élément hors écran.
+ */
+await page.setViewportSize({ width: 390, height: 480 })
+await page.evaluate(() => window.scrollTo(0, 0))
+check(
+  'la manche est plus haute que l écran, il y a donc bien de quoi défiler',
+  await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight + 1),
+)
+const footerInView = async (name) => {
+  const box = await page.getByRole('button', { name }).boundingBox()
+  const height = await page.evaluate(() => window.innerHeight)
+  return box !== null && box.y >= 0 && box.y + box.height <= height
+}
+check(
+  '« Revenir aux mises » reste dans l écran, page en haut',
+  await footerInView('Revenir aux mises'),
+)
+check('« Valider la manche » aussi', await footerInView('Valider la manche'))
+await page.setViewportSize({ width: 390, height: 844 })
+
 await setValue(page.locator('[data-player-tile]').nth(0), 1)
 check('les plis saisis débloquent la manche', (await readValues()).join() === '1,0,0,0')
 await page.getByRole('button', { name: 'Valider la manche' }).click()
