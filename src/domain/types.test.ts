@@ -4,6 +4,7 @@ import {
   DEFAULT_OPTIONS,
   dealerFor,
   isComplete,
+  isCutShort,
   type Game,
 } from './types.ts'
 
@@ -64,5 +65,14 @@ describe('partie allée au bout', () => {
   it('lit le format de la partie et non une constante', () => {
     // Six manches jouées sur six : c'est une partie entière, à son format.
     expect(isComplete(game(6, 6, '2026-01-01T21:00:00.000Z'))).toBe(true)
+  })
+})
+
+describe('partie écourtée', () => {
+  it('ne regarde que les manches, pas la date de fin', () => {
+    // La dixième manche vient d'être validée, personne n'a encore touché
+    // « Terminer » : l'écran de fin doit la traiter comme une partie entière.
+    expect(isCutShort(game(10, 10))).toBe(false)
+    expect(isCutShort(game(10, 4))).toBe(true)
   })
 })

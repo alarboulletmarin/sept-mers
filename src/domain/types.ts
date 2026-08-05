@@ -385,7 +385,23 @@ export function dealerFor(roundIndex: number, playerIds: Id[]): Id | null {
  * disque, rien à migrer, et les parties déjà enregistrées se relisent juste.
  */
 export function isComplete(game: Game): boolean {
-  return Boolean(game.endedAt) && game.rounds.length >= game.format.rounds
+  return Boolean(game.endedAt) && !isCutShort(game)
+}
+
+/**
+ * La partie s'est-elle arrêtée avant la fin de son format ?
+ *
+ * C'est la moitié de `isComplete` qui parle des manches, et c'est celle-là que
+ * les écrans veulent : une partie dont la dernière manche est validée mais que
+ * personne n'a encore close est complète pour qui la regarde, et `isComplete`
+ * la refusait — l'écran de fin annonçait « partie écourtée : 10 manches jouées
+ * sur 10 » à qui venait de finir la dixième.
+ *
+ * L'autre moitié — la date de fin — n'intéresse que le palmarès, qui ne compte
+ * pas une partie en cours.
+ */
+export function isCutShort(game: Game): boolean {
+  return game.rounds.length < game.format.rounds
 }
 
 export function bonusIsEmpty(bonus: RoundBonus): boolean {

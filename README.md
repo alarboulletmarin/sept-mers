@@ -8,6 +8,17 @@ quatre questions, vite, sur un téléphone qui passe de main en main : qui a par
 quoi, qui a tenu son pari, qui mène, et quelle était déjà la règle sur les
 sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 
+<p>
+  <img src="docs/captures/accueil.png" alt="L'accueil au premier lancement : le nom, la baseline, et trois phrases qui disent comment ça marche." width="24%" />
+  <img src="docs/captures/manche.png" alt="Une manche en cours : une tuile par joueur, un compteur moins-plus, et le donneur nommé sur sa tuile." width="24%" />
+  <img src="docs/captures/fin-de-partie.png" alt="La fin de partie : le vainqueur en grand, le reste du classement, et l'évolution des scores." width="24%" />
+  <img src="docs/captures/reglages-sombre.png" alt="Les réglages en thème sombre : langue, thème, options par défaut, format." width="24%" />
+</p>
+
+Les images sont produites par le parcours navigateur lui-même —
+`node scripts/smoke.mjs --captures` —, donc elles montrent toujours l'app telle
+qu'elle est construite, jamais telle qu'elle était.
+
 ## Ce qu'elle fait
 
 - **Score classique**, 2 à 8 joueurs, 10 manches, tout calculé par l'app.
@@ -32,8 +43,8 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
   somme des plis des 2 joueurs ne fait donc plus le nombre de cartes de la
   manche. L'app lui donne une tuile, qui se remplit du reste et reste
   corrigeable — l'égalité qu'elle vérifie n'est pas relâchée, elle est élargie.
-- **Saisie sans clavier** : une grille de tuiles, une par joueur, avec un
-  contrôle moins / plus. Appui maintenu pour défiler. Les mises partent à zéro,
+- **Saisie sans clavier virtuel** : une grille de tuiles, une par joueur, avec
+  un contrôle moins / plus. Appui maintenu pour défiler. Les mises partent à zéro,
   les plis partent sur la mise de chacun, et le dernier joueur qu'on n'a pas
   repris en main se complète tout seul — une manche où tout le monde tient sa
   mise se valide sans un geste.
@@ -47,16 +58,17 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
   marins, que les 2 cartes de plus suffisent à faire tenir la manche 9.
 - **Reprise exacte** de la manche et de la phase après fermeture de l'app.
 - **Partage de table** : les autres joueurs suivent la partie en direct sur
-  leur propre téléphone, en lecture seule — mises, plis, totaux, la manche et
-  son temps, puis le résultat. Un code de six caractères ou un QR pour
+  leur propre téléphone, en lecture seule — mises, plis, totaux, la manche en
+  cours, puis le résultat. Un code de six caractères ou un QR pour
   rejoindre ; pair-à-pair et chiffré, sans compte ni serveur. Et un
   **lien-résumé** qui fige la partie dans l'adresse elle-même, à envoyer dans
   la conversation du groupe ou à faire scanner — celui-là marche même sans
   réseau.
 - **Marche arrière** : on revient à la manche précédente pour la corriger, et la
   saisie en cours est mise de côté le temps qu'on y retourne.
-- **Trois graphiques** en SVG écrit à la main, historique, joueurs récurrents et
-  statistiques par joueur.
+- **Quatre graphiques** en SVG écrit à la main : évolution des scores d'une
+  partie, précision des mises, palmarès des joueurs récurrents, et la tendance
+  d'un joueur d'une partie à l'autre.
 - **Règles réécrites**, consultables depuis l'accueil ou en feuille modale sans
   quitter la manche en cours.
 - **Français et anglais**, thème clair, sombre ou système, changeables à chaud.
@@ -70,12 +82,30 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
 - **Barre de navigation basse**, quatre destinations, présente y compris au
   milieu d'une manche : aller lire une règle ne fait perdre ni la partie ni la
   saisie en cours.
-- **Guidage permanent** : trois phrases au premier lancement, une consigne sous
-  chaque titre d'écran, la progression de la partie et le temps de la manche
-  affichés en continu, et un blocage qui se nomme avant de griser un bouton.
+- **Guidage permanent** : trois phrases au premier lancement — et un écran
+  **À propos** qui les redonne à tout moment, avec ce que fait l'app, comment
+  l'installer, et à qui elle appartient —, une consigne sous chaque titre
+  d'écran, la progression de la partie affichée en continu, et un blocage qui
+  se nomme avant de griser un bouton.
 - **Noms entiers partout**, jamais une initiale ni une pastille de couleur. Dans
   le tableau des scores, les huit noms sont écrits en diagonale pour tenir dans
   la largeur d'un téléphone. La couleur ne porte jamais seule une information.
+  Deux joueurs ne peuvent pas porter le même nom, où qu'on les ajoute.
+- **Le donneur**, qui tourne d'un siège par manche dans l'ordre à table et se
+  nomme sur sa tuile. Il se déduit de la manche : rien de plus sur le disque, et
+  une partie relue dans l'historique retrouve le même.
+- **Trois sorties de partie**, nommées : quitter sans rien fermer, voir le
+  résultat maintenant — la table qui s'arrête à la manche 6 sur 10 a un
+  résultat, et il le dit —, ou abandonner. Une partie qui n'est pas allée au
+  bout de son format est marquée *écourtée* : son classement reste vrai, et
+  elle ne pèse pas dans les statistiques.
+- **Statistiques par joueur** : victoires et moyenne, mais aussi la plus longue
+  série de mises tenues, la précision par taille de main — tenir sa mise à une
+  carte n'est pas la tenir à neuf —, le face-à-face contre chaque joueur croisé,
+  et l'évolution d'une partie à l'autre.
+- **Historique filtrable** par joueur, sous le nom qu'il portait alors.
+- **Tout se saisit au clavier** autant qu'au doigt : le compteur prend le focus
+  et répond aux flèches, à Origine et à Fin. Le parcours navigateur le vérifie.
 
 ## Faire tourner le projet
 
@@ -102,6 +132,7 @@ Node 22.12, que toute version 22 récente satisfait.
 | `node scripts/offline.mjs` | Mode avion et suivi du thème système, sur `dist/` |
 | `node scripts/nooverflow.mjs` | Absence de scroll latéral, à cinq largeurs |
 | `node scripts/contrast.mjs` | Absence de texte illisible, dans les deux thèmes |
+| `node scripts/licenses.mjs` | Licences distribuées avec le build : dépendances et fontes |
 | `python3 scripts/make-icons.py` | Regénère les icônes et le `favicon.ico` depuis le logotype |
 
 Les cinq parcours navigateur ont besoin d'un Chromium. Après
@@ -112,8 +143,11 @@ préinstallé se trouve d'ordinaire, et laisse Playwright résoudre à défaut.
 `scripts/smoke.mjs` joue une partie entière à quatre, vérifie la reprise après
 rechargement, le plafond à huit joueurs, la tuile du fantôme à deux joueurs, le
 Score Rascal et sa pastille de charge, le changement de thème et de langue,
-l'absence de requête réseau et l'absence d'emoji. Il attend un `dist/` à jour.
-L'option `--shots` écrit des captures dans `shots/`.
+l'absence de requête réseau et l'absence d'emoji. Il vérifie aussi que le
+compteur — mises, plis, format, primes — s'utilise entièrement au clavier, ce
+qu'aucun test ne voyait tant que tous les parcours cliquaient. Il attend un
+`dist/` à jour. L'option `--shots` écrit des captures pleine page dans
+`shots/` ; `--captures` écrit celles du README dans `docs/captures/`.
 
 `scripts/share.mjs` fait suivre une partie par une seconde page du même
 navigateur : salle ouverte depuis l'écran de manche, code et QR affichés, mises
@@ -145,21 +179,21 @@ texte, et dont le contenu devient blanc sur blanc.
 src/
   main.tsx
   app/          App, Router, Layout, TabBar, StoreProvider, ThemeProvider,
-                useWakeLock
+                useWakeLock, useInstall
   screens/      Home, NewGame, Game, GameSummary, History, Players, Rules,
-                Settings, Watch, Recap
+                Settings, Watch, Recap, About
   components/   Widget, Button, Stepper, Rail, PlayerChip, ScoreTable, Sheet,
                 Toast, Icon, EmptyState, BonusDrawer, OptionSwitch, QrCode
   domain/       scoring, deck, validation, stats, types
   store/        storage, reducer, migrations
   share/        protocol, codec, code, qr, transport, loopback, trystero,
                 session, ShareProvider, ShareSheet, Board, useSpectator
-  charts/       ScoreLines, AccuracyBars, RankingBars, primitives
+  charts/       ScoreLines, AccuracyBars, RankingBars, PlayerTrend, primitives
   i18n/         fr.json, en.json, index
-  content/      rules.fr, rules.en, RulesBody
+  content/      rules.fr, rules.en, RulesBody, HowItWorks
   styles/       tokens.css, fonts.css, base.css, fonts/*.woff2
 public/         manifest.webmanifest, sw.js, icons/
-docs/           design-system.md
+docs/           design-system.md, captures/
 ```
 
 **React 19 + TypeScript + Vite, et deux dépendances d'exécution, choisies pour
@@ -218,7 +252,7 @@ téléphone de la table.
 
 ## Tests
 
-339 tests unitaires couvrent les deux moteurs de score — dont les huit cas de
+416 tests unitaires couvrent les deux moteurs de score — dont les huit cas de
 référence du cahier des charges, et l'absence de tout point négatif ou
 fractionnaire sur toute la grille du Score Rascal —, la validation de saisie, le
 plafonnement du paquet, les variantes, le fantôme de Barbe Grise, les
@@ -229,9 +263,11 @@ durcissement de l'état reçu, aller-retour du lien-résumé jusqu'aux liens
 hostiles et à sa taille au pire de la grille, alphabet et tirage du code de
 salle, transport local, session de diffusion, géométrie des QR —, les
 pluriels, la géométrie des graphiques, la configuration de déploiement, les
-icônes d'installation, les jetons de la palette et le système typographique —
-familles, échelle, fichiers de fonte embarqués, et l'absence de toute famille
-écrite en dur hors des jetons. Les parcours navigateur complètent le tout sur
+icônes d'installation, le donneur et les parties écourtées, l'unicité des noms,
+les jetons de la palette et le système typographique — familles, échelle,
+fichiers de fonte embarqués, et l'absence de toute famille écrite en dur hors
+des jetons. Un test refuse aussi toute clé de traduction que plus personne
+n'emploie : dix-sept traînaient sans que rien ne le dise. Les parcours navigateur complètent le tout sur
 l'app réellement construite.
 
 ```bash
@@ -240,10 +276,11 @@ npm run verify \
   && node scripts/share.mjs \
   && node scripts/offline.mjs \
   && node scripts/nooverflow.mjs \
-  && node scripts/contrast.mjs
+  && node scripts/contrast.mjs \
+  && node scripts/licenses.mjs
 ```
 
-Ces six vérifications tournent à chaque poussée et à chaque pull request, dans
+Ces sept vérifications tournent à chaque poussée et à chaque pull request, dans
 [`.github/workflows/verification.yml`](.github/workflows/verification.yml), sur
 la même majeure de Node que le déploiement.
 
@@ -365,6 +402,14 @@ pavillon pirate, et il ressemble par force à ce qu'un jeu de pirates arbore : l
 formule qui précédait — « aucune reprise du logo du jeu » — ne tenait plus, elle
 est retirée. À vérifier avant toute publication sous ce nom.
 
+## Contribuer
+
+Le projet a des partis pris, et les connaître fait gagner du temps :
+[CONTRIBUTING.md](CONTRIBUTING.md) les liste, avec la barrière de qualité à
+passer et le style attendu. Les manquements de conduite se traitent selon le
+[code de conduite](CODE_OF_CONDUCT.md), et les failles se signalent en privé —
+voir [SECURITY.md](SECURITY.md).
+
 ## Licence
 
 MIT. Voir [LICENSE](LICENSE).
@@ -374,3 +419,12 @@ Instrument, et **JetBrains Mono**, publiée par JetBrains — sont sous SIL Open
 Font License 1.1. Leur texte de licence est conservé dans
 [`src/styles/fonts/`](src/styles/fonts/), et la licence de l'app ne s'y applique
 pas.
+
+**Ce qui est distribué porte sa licence.** Un site déployé est une
+distribution : les paquets sous MIT qu'il embarque demandent que leur mention
+de copyright l'accompagne, et l'OFL en demande autant pour chaque copie des
+fichiers de fonte. Le bundle minifié n'en portait aucune, et les deux textes
+d'OFL restaient dans `src/`. Le greffon [`scripts/vite-licenses.mjs`](scripts/vite-licenses.mjs)
+écrit donc `licenses.txt` à côté du bundle et y recopie les deux OFL ; l'écran
+« À propos » y renvoie, et `scripts/licenses.mjs` échoue si un paquet
+d'exécution s'ajoute sans passer par là.

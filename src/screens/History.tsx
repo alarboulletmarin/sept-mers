@@ -8,7 +8,7 @@ import { Icon } from '../components/Icon.tsx'
 import { ChipGrid, PlayerChip } from '../components/PlayerChip.tsx'
 import { useToast } from '../components/Toast.tsx'
 import { standings, winnerIds } from '../domain/stats.ts'
-import { isComplete, type Id } from '../domain/types.ts'
+import { isCutShort, type Id } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import styles from './History.module.css'
 
@@ -109,7 +109,7 @@ export function History({ go }: { go: (route: Route) => void }) {
                         {/* Une partie écourtée le dit ici : son classement est
                             vrai, mais elle ne compte pas au palmarès, et rien
                             ne le laissait deviner. */}
-                        {!isComplete(game) && (
+                        {isCutShort(game) && (
                           <span className={styles.partial}>
                             {t('history.partial', {
                               played: game.rounds.length,

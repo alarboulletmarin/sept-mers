@@ -10,7 +10,7 @@ import { ScoreTable } from '../components/ScoreTable.tsx'
 import { Sheet } from '../components/Sheet.tsx'
 import { Caption, Figure, Tag, Widget, WidgetTitle } from '../components/Widget.tsx'
 import { standings, tieBreakers, winnerIds } from '../domain/stats.ts'
-import { isComplete } from '../domain/types.ts'
+import { isCutShort } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import { ShareSheet } from '../share/ShareSheet.tsx'
 import { gameById, runningGame } from '../store/reducer.ts'
@@ -85,7 +85,7 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
       {/* Une partie qui s'arrête avant la fin de son format garde son
           classement — c'est ce que la table a joué — mais elle le dit, et elle
           ne pèsera pas dans les statistiques des joueurs. */}
-      {!isComplete(game) && (
+      {isCutShort(game) && (
         <p className={styles.partial}>
           {t('summary.partial', {
             played: game.rounds.length,

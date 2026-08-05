@@ -8,6 +8,15 @@ import { launchChromium, listen, serveDist } from './browser.mjs'
 import { mkdirSync } from 'node:fs'
 
 const SHOTS = process.argv.includes('--shots')
+/*
+ * `--captures` écrit les images du README, dans `docs/captures/`.
+ *
+ * Elles ne sont pas les mêmes que celles de `--shots` : celles-ci cadrent
+ * l'écran du téléphone, pas la page déroulée. Une capture pleine page fait
+ * deux mille pixels de haut, ce qui montre tout et ne se regarde pas.
+ */
+const CAPTURES = process.argv.includes('--captures')
+const CAPTURE_DIR = new URL('../docs/captures/', import.meta.url).pathname
 const SHOT_DIR = new URL('../shots/', import.meta.url).pathname
 
 const requests = []
@@ -35,6 +44,13 @@ page.on('pageerror', (error) => failures.push(`pageerror: ${error.message}`))
 page.on('request', (request) => requests.push(request.url()))
 
 if (SHOTS) mkdirSync(SHOT_DIR, { recursive: true })
+if (CAPTURES) mkdirSync(CAPTURE_DIR, { recursive: true })
+
+/** Une image du README : l'écran tel qu'il tient dans le téléphone. */
+const capture = async (name) => {
+  if (!CAPTURES) return
+  await page.screenshot({ path: `${CAPTURE_DIR}${name}.png` })
+}
 let shotIndex = 0
 const shot = async (name) => {
   if (!SHOTS) return
@@ -48,6 +64,7 @@ await page.goto(base)
 await page.waitForSelector('text=Sept Mers')
 check('l accueil guide au premier lancement', await page.getByText('Comment ça marche').isVisible())
 await shot('accueil-vide')
+await capture('accueil')
 
 // -------------------------------------------------------------- nouvelle partie
 
@@ -214,6 +231,7 @@ check(
   (await page.getByText('Manche 1 enregistrée').count()) === 0,
 )
 await shot('manche-2-mises')
+await capture('manche')
 
 // Manche 2, avec un 14 noir pour Ana.
 await playRound(2, [1, 1, 0, 0], [1, 1, 0, 0], { seat: 0, label: '14 noir', count: 1 })
@@ -254,7 +272,23 @@ check('l écran de fin s ouvre après la manche 10', await page.getByText('Fin d
 check('un vainqueur est annoncé', await page.getByText(/l'emporte/).isVisible())
 check('le graphique des scores est rendu', (await page.locator('svg path[stroke]').count()) > 0)
 check('le tableau manche par manche est là', await page.getByText('Manche par manche').isVisible())
+/*
+ * Une partie qui vient de jouer sa dernière manche est entière, même si
+ * personne n'a encore touché « Terminer » : la mention d'une partie écourtée
+ * s'appuyait sur la date de fin, et annonçait « 10 manches jouées sur 10 » à
+ * qui venait précisément de finir la dixième.
+ */
+check(
+  'une partie allée au bout ne se dit pas écourtée',
+  (await page.getByText('Partie écourtée').count()) === 0,
+)
 await shot('fin-de-partie')
+// Le bandeau de la dernière manche couvrirait le classement sur l'image.
+if ((await page.getByRole('button', { name: 'Fermer' }).count()) > 0) {
+  await page.getByRole('button', { name: 'Fermer' }).first().click()
+}
+await page.evaluate(() => window.scrollTo(0, 0))
+await capture('fin-de-partie')
 
 // -------------------------------------------------- reprise après fermeture
 
@@ -382,6 +416,7 @@ check(
   await page.getByRole('button', { name: 'Valider la manche' }).isEnabled(),
 )
 await shot('barbe-grise')
+await capture('barbe-grise')
 await page.getByRole('button', { name: 'Valider la manche' }).click()
 
 // Manche 2, 2 cartes : un pli à Ana, le second au fantôme.
@@ -554,6 +589,7 @@ await page.getByRole('radio', { name: 'Sombre' }).click()
 const theme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
 check('le thème sombre s applique', theme === 'dark')
 await shot('reglages-sombre')
+await capture('reglages-sombre')
 
 await page.getByRole('radio', { name: 'English' }).click()
 check('la langue bascule à chaud', await page.getByRole('heading', { name: 'Settings' }).isVisible())
@@ -571,6 +607,7 @@ await page.goto(`${base}/rules`)
 await page.waitForSelector('text=Règles')
 check('les règles s ouvrent', await page.getByText('Qui remporte le pli').isVisible())
 await shot('regles')
+await capture('regles')
 
 // ---------------------------------------------------------------- adresses
 
@@ -594,6 +631,23 @@ check('le bouton précédent revient à l écran d avant', (await url()) === '/r
 await page.goForward()
 await page.waitForSelector('text=Historique')
 check('le bouton suivant y retourne', (await url()) === '/history')
+
+/*
+ * L'écran qui explique, atteignable à tout moment. Le bloc « comment ça
+ * marche » ne vivait que sur l'accueil d'un premier lancement, et disparaissait
+ * pour toujours après la première partie : quelqu'un qui prête son téléphone
+ * n'avait plus rien à montrer.
+ */
+await page.goto(`${base}/about`)
+await page.waitForSelector('text=Comment ça marche')
+check('l explication se relit après la première partie', await page.getByText('Comment ça marche').isVisible())
+check('elle porte les mentions légales', await page.getByText('Hébergeur :').isVisible())
+check(
+  'et le lien vers le code source',
+  (await page.getByRole('link', { name: /GitHub/ }).count()) > 0,
+)
+await shot('a-propos')
+await capture('a-propos')
 
 // Une adresse de l'ancien routeur, telle qu'un signet la garde.
 await page.goto(`${base}/#/rules`)
