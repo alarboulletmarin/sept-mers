@@ -412,7 +412,8 @@ voir [SECURITY.md](SECURITY.md).
 
 ## Licence
 
-**Le code : AGPL-3.0-only.** Voir [LICENSE](LICENSE).
+**Le code : AGPL-3.0-only.** Voir [LICENSE](LICENSE) pour le texte, et
+[NOTICE](NOTICE) pour l'avis de copyright et ce qui n'en relève pas.
 
 L'app se lit, se copie, se modifie et se déploie — y compris pour en vivre. La
 seule contrepartie est celle qui compte : **une version modifiée mise à la
