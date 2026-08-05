@@ -35,6 +35,9 @@ const TYPES = {
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
   '.webmanifest': 'application/manifest+json',
+  // Les licences distribuées avec le build. Sans ce type, le navigateur les
+  // télécharge au lieu de les afficher, et le parcours ne peut pas les lire.
+  '.txt': 'text/plain; charset=utf-8',
 }
 
 /**

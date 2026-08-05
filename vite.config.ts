@@ -78,6 +78,14 @@ export default defineConfig({
          * une page blanche.
          */
         navigateFallback: 'index.html',
+        /*
+         * Sauf ceux-là. `navigateFallback` sert la coquille à *toute*
+         * navigation, et ouvrir `/licenses.txt` en est une : le lien de
+         * l'écran « À propos » aurait rendu l'app à la place du fichier, une
+         * fois le service worker en place. Les licences sont des fichiers, pas
+         * des routes.
+         */
+        navigateFallbackDenylist: [/^\/licenses/],
         // Le précache de la version précédente part à l'activation, sinon le
         // stockage grossit d'un build à l'autre sans jamais redescendre.
         cleanupOutdatedCaches: true,
