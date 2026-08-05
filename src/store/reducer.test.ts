@@ -34,12 +34,23 @@ function started(): Store {
 }
 
 /** Saisit une manche complète et la valide. */
-function playRound(store: Store, values: [string, number, number][]): Store {
+/**
+ * Une manche saisie de bout en bout : mises, puis plis. `greyBeard` est le
+ * compte du fantôme, à 2 joueurs — il se saisit à la main comme les autres.
+ */
+function playRound(
+  store: Store,
+  values: [string, number, number][],
+  greyBeard?: number,
+): Store {
   const actions: Action[] = []
   for (const [playerId, bid] of values) actions.push({ type: 'game/setBid', playerId, bid })
   actions.push({ type: 'game/phase', phase: 'results' })
   for (const [playerId, , tricks] of values) {
     actions.push({ type: 'game/setTricks', playerId, tricks })
+  }
+  if (greyBeard !== undefined) {
+    actions.push({ type: 'game/setTricks', playerId: GREY_BEARD, tricks: greyBeard })
   }
   actions.push({ type: 'game/commitRound' })
   return run(store, ...actions)
@@ -109,7 +120,7 @@ describe('déroulé d une partie', () => {
       ['p3', 0, 0],
     ])
     expect(store.draft?.bids).toEqual({ p1: 0, p2: 0, p3: 0 })
-    expect(store.draft?.touchedTricks).toEqual([])
+    expect(store.draft?.tricks).toEqual({ p1: 0, p2: 0, p3: 0 })
   })
 
   it('annule la dernière manche en restituant sa saisie', () => {
@@ -212,7 +223,12 @@ describe('déroulé d une partie', () => {
   })
 })
 
-describe('complétion automatique du dernier joueur', () => {
+/*
+ * Personne d'autre que la table n'écrit dans les plis. Ni semis depuis les
+ * mises, ni complétion du dernier joueur : ce qu'on lit aux résultats est ce
+ * qu'on y a saisi, et zéro partout tant qu'on n'a rien saisi.
+ */
+describe('les plis ne bougent que sous la main', () => {
   const setup = () =>
     run(
       started(),
@@ -222,66 +238,51 @@ describe('complétion automatique du dernier joueur', () => {
       { type: 'game/phase', phase: 'results' },
     )
 
-  it('déduit le dernier joueur dès qu il est seul à manquer', () => {
-    let store = run(
-      setup(),
-      { type: 'game/setTricks', playerId: 'p1', tricks: 1 },
-      { type: 'game/setTricks', playerId: 'p2', tricks: 0 },
-    )
-    // Manche 1 : une seule carte, donc un seul pli à distribuer.
-    expect(store.draft?.tricks.p3).toBe(0)
-    expect(store.draft?.autoTricks).toBe('p3')
-    store = run(store, { type: 'game/setTricks', playerId: 'p1', tricks: 0 })
-    expect(store.draft?.tricks.p3).toBe(1)
+  it('ouvre les résultats à zéro, quelles que soient les mises', () => {
+    expect(setup().draft?.tricks).toEqual({ p1: 0, p2: 0, p3: 0 })
   })
 
-  it('recalcule la déduction quand un autre joueur change encore', () => {
-    // Le cas du stepper : la déduction tombe pendant qu'on incrémente encore.
-    let store = run(
+  it('ne touche qu au porteur saisi', () => {
+    const store = run(setup(), { type: 'game/setTricks', playerId: 'p1', tricks: 1 })
+    expect(store.draft?.tricks).toEqual({ p1: 1, p2: 0, p3: 0 })
+  })
+
+  it('ne complète pas le dernier porteur quand il est seul à manquer', () => {
+    const store = run(
       setup(),
       { type: 'game/setTricks', playerId: 'p1', tricks: 0 },
       { type: 'game/setTricks', playerId: 'p2', tricks: 0 },
     )
-    expect(store.draft?.tricks.p3).toBe(1)
-    store = run(store, { type: 'game/setTricks', playerId: 'p2', tricks: 1 })
+    // Manche 1 : un pli à distribuer, et il reste à attribuer.
     expect(store.draft?.tricks.p3).toBe(0)
   })
 
-  it('rend la main quand on touche soi-même la valeur déduite', () => {
-    let store = run(
+  it('garde la saisie des plis à travers un aller-retour par les mises', () => {
+    const store = run(
       setup(),
       { type: 'game/setTricks', playerId: 'p1', tricks: 1 },
-      { type: 'game/setTricks', playerId: 'p2', tricks: 0 },
-    )
-    expect(store.draft?.autoTricks).toBe('p3')
-    store = run(store, { type: 'game/setTricks', playerId: 'p3', tricks: 1 })
-    expect(store.draft?.autoTricks).toBeNull()
-    expect(store.draft?.tricks.p3).toBe(1)
-  })
-
-  it('ne déduit rien tant que deux joueurs n ont pas été repris en main', () => {
-    const store = run(setup(), { type: 'game/setTricks', playerId: 'p1', tricks: 1 })
-    // Les deux autres gardent la valeur semée depuis leur mise.
-    expect(store.draft?.tricks.p2).toBe(1)
-    expect(store.draft?.tricks.p3).toBe(1)
-    expect(store.draft?.autoTricks).toBeNull()
-  })
-
-  it('borne la déduction plutôt que de rendre un nombre négatif', () => {
-    // Manche 3 : trois cartes, mais les deux premiers en annoncent déjà quatre.
-    let store = started()
-    store = playRound(store, [['p1', 1, 1], ['p2', 0, 0], ['p3', 0, 0]])
-    store = playRound(store, [['p1', 2, 2], ['p2', 0, 0], ['p3', 0, 0]])
-    store = run(
-      store,
-      { type: 'game/setBid', playerId: 'p1', bid: 3 },
+      { type: 'game/phase', phase: 'bids' },
       { type: 'game/setBid', playerId: 'p2', bid: 0 },
-      { type: 'game/setBid', playerId: 'p3', bid: 0 },
       { type: 'game/phase', phase: 'results' },
-      { type: 'game/setTricks', playerId: 'p1', tricks: 3 },
-      { type: 'game/setTricks', playerId: 'p2', tricks: 3 },
     )
-    expect(store.draft?.tricks.p3).toBe(0)
+    expect(store.draft?.tricks).toEqual({ p1: 1, p2: 0, p3: 0 })
+  })
+
+  it('ne réécrit pas les plis quand un monstre écarte un pli', () => {
+    const store = run(
+      run(seeded(), {
+        type: 'game/start',
+        playerIds: ['p1', 'p2', 'p3'],
+        options: { ...DEFAULT_OPTIONS, kraken: true },
+        id: 'g1',
+        now: '2026-01-01T20:00:00.000Z',
+      }),
+      { type: 'game/phase', phase: 'results' },
+      { type: 'game/setTricks', playerId: 'p1', tricks: 1 },
+      { type: 'game/setVoided', voided: 1 },
+    )
+    expect(store.draft?.voided).toBe(1)
+    expect(store.draft?.tricks).toEqual({ p1: 1, p2: 0, p3: 0 })
   })
 })
 
@@ -439,11 +440,11 @@ describe('lecture défensive', () => {
     expect(store.draft).toBeUndefined()
   })
 
-  it('jette un joueur inconnu de la liste des repris en main', () => {
-    const written = run(started(), { type: 'game/setTricks', playerId: 'p1', tricks: 0 })
+  it('jette les plis d un porteur inconnu', () => {
+    const written = run(started(), { type: 'game/setTricks', playerId: 'p1', tricks: 1 })
     const abîmé = JSON.parse(serialiseStore(written))
-    abîmé.draft.touchedTricks = ['p1', 'fantôme', 'p1']
-    expect(normalise(abîmé).draft?.touchedTricks).toEqual(['p1'])
+    abîmé.draft.tricks['fantôme'] = 3
+    expect(normalise(abîmé).draft?.tricks).toEqual({ p1: 1, p2: 0, p3: 0 })
   })
 
   it('écarte une réserve qui pointe sur la manche qu on corrige', () => {
@@ -465,29 +466,29 @@ describe('brouillon', () => {
   })
 })
 
-describe('saisie pré-remplie', () => {
-  it('ouvre la manche avec toutes les mises à zéro et rien de repris en main', () => {
+describe('saisie à zéro', () => {
+  it('ouvre la manche avec les mises et les plis à zéro', () => {
     const draft = started().draft
     expect(draft?.bids).toEqual({ p1: 0, p2: 0, p3: 0 })
-    expect(draft?.touchedTricks).toEqual([])
-    expect(draft?.autoTricks).toBeNull()
+    expect(draft?.tricks).toEqual({ p1: 0, p2: 0, p3: 0 })
   })
 
-  it('sème les plis sur la mise à l entrée dans les résultats', () => {
+  it('ne recopie pas les mises dans les plis à l entrée dans les résultats', () => {
     const store = run(
       started(),
       { type: 'game/setBid', playerId: 'p1', bid: 1 },
       { type: 'game/phase', phase: 'results' },
     )
-    expect(store.draft?.tricks).toEqual({ p1: 1, p2: 0, p3: 0 })
+    expect(store.draft?.tricks).toEqual({ p1: 0, p2: 0, p3: 0 })
   })
 
-  it('valide une manche sans toucher une seule tuile quand les mises tombent juste', () => {
-    // Manche 1, une carte : p1 mise 1, les autres 0. La somme est déjà bonne.
+  it('enregistre les plis saisis, et eux seuls', () => {
+    // Manche 1, une carte : p1 mise 1 et remporte le pli.
     const store = run(
       started(),
       { type: 'game/setBid', playerId: 'p1', bid: 1 },
       { type: 'game/phase', phase: 'results' },
+      { type: 'game/setTricks', playerId: 'p1', tricks: 1 },
       { type: 'game/commitRound' },
     )
     expect(runningGame(store)?.rounds[0].entries).toMatchObject([
@@ -497,13 +498,12 @@ describe('saisie pré-remplie', () => {
     ])
   })
 
-  it('resème les plis non repris en main après un retour aux mises', () => {
+  it('ne réécrit rien après un retour aux mises', () => {
     let store = run(
       started(),
       { type: 'game/setBid', playerId: 'p1', bid: 1 },
       { type: 'game/phase', phase: 'results' },
-      // p1 est repris en main, p2 et p3 restent semés.
-      { type: 'game/setTricks', playerId: 'p1', tricks: 0 },
+      { type: 'game/setTricks', playerId: 'p1', tricks: 1 },
     )
     store = run(
       store,
@@ -511,19 +511,19 @@ describe('saisie pré-remplie', () => {
       { type: 'game/setBid', playerId: 'p2', bid: 1 },
       { type: 'game/phase', phase: 'results' },
     )
-    expect(store.draft?.tricks.p1).toBe(0)
-    expect(store.draft?.tricks.p2).toBe(1)
+    // Corriger une mise ne coûte pas la saisie des plis, et n'en sème pas.
+    expect(store.draft?.tricks).toEqual({ p1: 1, p2: 0, p3: 0 })
   })
 
-  it('compte une manche rouverte comme entièrement reprise en main', () => {
+  it('rouvre une manche validée avec les chiffres qu elle porte', () => {
     const played = playRound(started(), [
       ['p1', 1, 1],
       ['p2', 0, 0],
       ['p3', 0, 0],
     ])
     const editing = run(played, { type: 'game/editRound', index: 1 })
-    expect(editing.draft?.touchedTricks).toEqual(['p1', 'p2', 'p3'])
-    expect(editing.draft?.autoTricks).toBeNull()
+    expect(editing.draft?.phase).toBe('results')
+    expect(editing.draft?.tricks).toEqual({ p1: 1, p2: 0, p3: 0 })
   })
 })
 
@@ -657,18 +657,18 @@ describe('variantes', () => {
     expect(store.draft?.tricks.p3).toBe(0)
   })
 
-  it('recalcule la déduction quand le nombre de plis écartés change', () => {
+  it('laisse les plis saisis en place quand le nombre d écartés change', () => {
     let store = withVariants()
     store = playRound(store, [['p1', 1, 1], ['p2', 0, 0], ['p3', 0, 0]])
     store = run(
       store,
       { type: 'game/phase', phase: 'results' },
-      { type: 'game/setTricks', playerId: 'p1', tricks: 0 },
-      { type: 'game/setTricks', playerId: 'p2', tricks: 0 },
+      { type: 'game/setTricks', playerId: 'p3', tricks: 2 },
     )
-    expect(store.draft?.tricks.p3).toBe(2)
     store = run(store, { type: 'game/setVoided', voided: 1 })
-    expect(store.draft?.tricks.p3).toBe(1)
+    // Écarter un pli ne redistribue pas ce que la table a déjà compté : c'est
+    // à elle de reprendre le chiffre qui ne tombe plus juste.
+    expect(store.draft?.tricks.p3).toBe(2)
   })
 
   it('écrit les plis écartés et le pari sur la manche validée', () => {
@@ -751,74 +751,26 @@ describe('le fantôme de Barbe Grise', () => {
       { type: 'game/phase', phase: 'results' },
     )
 
-  it('reçoit le reste dès l entrée dans les résultats', () => {
-    // Manche 1 : 1 carte, mises à 0 et 0, le pli va donc au fantôme.
+  it('ouvre les résultats à zéro comme tout le monde', () => {
+    // Manche 1 : 1 carte, mises à 0 et 0. Le pli lui reviendra sans doute,
+    // mais c'est la table qui le dit, pas l'app.
     const store = atResults(twoPlayers(), [
       ['p1', 0],
       ['p2', 0],
     ])
-    expect(store.draft?.tricks[GREY_BEARD]).toBe(1)
-    expect(store.draft?.autoTricks).toBe(GREY_BEARD)
+    expect(store.draft?.tricks[GREY_BEARD]).toBe(0)
   })
 
-  it('laisse une manche où chacun tient sa mise se valider sans un geste', () => {
-    // C'est la propriété à ne pas perdre : mises 2 et 3 sur 6 cartes, il reste
-    // 1 pli au fantôme, et la somme tombe juste toute seule.
-    let store = twoPlayers()
-    store = playRound(store, [
-      ['p1', 0, 0],
-      ['p2', 1, 1],
-    ])
-    store = playRound(store, [
-      ['p1', 1, 1],
-      ['p2', 1, 1],
-    ])
-    store = atResults(store, [
-      ['p1', 2],
-      ['p2', 0],
-    ])
-    expect(store.draft?.tricks.p1).toBe(2)
-    expect(store.draft?.tricks.p2).toBe(0)
-    expect(store.draft?.tricks[GREY_BEARD]).toBe(1)
-  })
-
-  it('se repose quand un joueur pose ses plis', () => {
+  it('porte les plis qu on lui saisit', () => {
     let store = atResults(twoPlayers(), [
       ['p1', 0],
       ['p2', 0],
     ])
-    store = playRound(store, [
-      ['p1', 0, 0],
-      ['p2', 0, 0],
-    ])
-    // Manche 2, 2 cartes.
-    store = atResults(store, [
-      ['p1', 0],
-      ['p2', 0],
-    ])
-    expect(store.draft?.tricks[GREY_BEARD]).toBe(2)
-    store = run(store, { type: 'game/setTricks', playerId: 'p1', tricks: 1 })
+    store = run(store, { type: 'game/setTricks', playerId: GREY_BEARD, tricks: 1 })
     expect(store.draft?.tricks[GREY_BEARD]).toBe(1)
-    expect(store.draft?.autoTricks).toBe(GREY_BEARD)
-  })
-
-  it('rend la déduction au second joueur quand on le reprend en main', () => {
-    let store = twoPlayers()
-    store = playRound(store, [
-      ['p1', 0, 0],
-      ['p2', 0, 0],
-    ])
-    store = atResults(store, [
-      ['p1', 0],
-      ['p2', 0],
-    ])
-    store = run(
-      store,
-      { type: 'game/setTricks', playerId: GREY_BEARD, tricks: 0 },
-      { type: 'game/setTricks', playerId: 'p1', tricks: 1 },
-    )
-    expect(store.draft?.autoTricks).toBe('p2')
-    expect(store.draft?.tricks.p2).toBe(1)
+    // Et saisir un joueur ne le déplace pas.
+    store = run(store, { type: 'game/setTricks', playerId: 'p1', tricks: 0 })
+    expect(store.draft?.tricks[GREY_BEARD]).toBe(1)
   })
 
   it('ne prend pas de plis à trois joueurs', () => {
@@ -826,7 +778,7 @@ describe('le fantôme de Barbe Grise', () => {
     expect(store.draft?.tricks[GREY_BEARD]).toBeUndefined()
   })
 
-  it('se recalcule quand un pli est écarté par un monstre marin', () => {
+  it('garde ses plis quand un monstre marin en écarte un', () => {
     let store = twoPlayers({ kraken: true })
     store = playRound(store, [
       ['p1', 0, 0],
@@ -836,12 +788,12 @@ describe('le fantôme de Barbe Grise', () => {
       ['p1', 0, 0],
       ['p2', 0, 0],
     ])
-    // Manche 3, 3 cartes : rien aux joueurs, tout au fantôme.
+    // Manche 3, 3 cartes : le fantôme en rafle deux, le Kraken écarte l'autre.
     store = atResults(store, [
       ['p1', 0],
       ['p2', 0],
     ])
-    expect(store.draft?.tricks[GREY_BEARD]).toBe(3)
+    store = run(store, { type: 'game/setTricks', playerId: GREY_BEARD, tricks: 2 })
     store = run(store, { type: 'game/setVoided', voided: 1 })
     expect(store.draft?.tricks[GREY_BEARD]).toBe(2)
   })
@@ -855,25 +807,29 @@ describe('le fantôme de Barbe Grise', () => {
     ])
     expect(store.games[0].rounds[0].greyBeard).toBeUndefined()
     // Manche 2, 2 cartes, une seule prise par p1.
-    store = playRound(store, [
-      ['p1', 1, 1],
-      ['p2', 0, 0],
-    ])
+    store = playRound(
+      store,
+      [
+        ['p1', 1, 1],
+        ['p2', 0, 0],
+      ],
+      1,
+    )
     expect(store.games[0].rounds[1].greyBeard).toBe(1)
   })
 
   it('revient tel quel quand on rouvre la manche pour la corriger', () => {
     let store = twoPlayers()
-    store = playRound(store, [
-      ['p1', 0, 0],
-      ['p2', 0, 0],
-    ])
+    store = playRound(
+      store,
+      [
+        ['p1', 0, 0],
+        ['p2', 0, 0],
+      ],
+      1,
+    )
     store = run(store, { type: 'game/editRound', index: 1 })
     expect(store.draft?.tricks[GREY_BEARD]).toBe(1)
-    // Une manche validée a été saisie en entier : le fantôme est touché, sinon
-    // la rouvrir pour relire un chiffre la réécrirait.
-    expect(store.draft?.touchedTricks).toContain(GREY_BEARD)
-    expect(store.draft?.autoTricks).toBeNull()
   })
 
   it('survit à la relecture d une saisie en cours', () => {
@@ -889,7 +845,6 @@ describe('le fantôme de Barbe Grise', () => {
     store = run(store, { type: 'game/setTricks', playerId: GREY_BEARD, tricks: 1 })
     const reread = normalise(JSON.parse(serialiseStore(store)))
     expect(reread.draft?.tricks[GREY_BEARD]).toBe(1)
-    expect(reread.draft?.touchedTricks).toContain(GREY_BEARD)
   })
 
   it('vaut zéro et non « à renseigner » sur une saisie écrite avant lui', () => {
@@ -1258,10 +1213,8 @@ describe('Harry le Géant', () => {
   })
 })
 
-describe('les plis partent de la mise', () => {
-  it('sème chaque tuile sur la mise de son joueur en entrant aux résultats', () => {
-    // Personne n'a été repris en main : la valeur la plus probable est la mise,
-    // et une manche où tout le monde la tient se valide sans un geste.
+describe('les plis ne partent pas de la mise', () => {
+  it('ouvre les résultats à zéro quelles que soient les mises posées', () => {
     let store = started()
     store = playRound(store, [
       ['p1', 1, 1],
@@ -1273,7 +1226,7 @@ describe('les plis partent de la mise', () => {
       ['p2', 0, 0],
       ['p3', 0, 0],
     ])
-    // Manche 3, 3 cartes : 2 pour p1, 1 pour p2, rien pour p3.
+    // Manche 3, 3 cartes : trois mises posées, et pas un pli attribué.
     store = run(
       store,
       { type: 'game/setBid', playerId: 'p1', bid: 2 },
@@ -1281,24 +1234,10 @@ describe('les plis partent de la mise', () => {
       { type: 'game/setBid', playerId: 'p3', bid: 0 },
       { type: 'game/phase', phase: 'results' },
     )
-    expect(store.draft?.tricks).toMatchObject({ p1: 2, p2: 1, p3: 0 })
-    expect(store.draft?.autoTricks).toBeNull()
+    expect(store.draft?.tricks).toMatchObject({ p1: 0, p2: 0, p3: 0 })
   })
 
-  it('resème après une correction de mise', () => {
-    const store = run(
-      started(),
-      { type: 'game/setBid', playerId: 'p1', bid: 1 },
-      { type: 'game/phase', phase: 'results' },
-      { type: 'game/phase', phase: 'bids' },
-      { type: 'game/setBid', playerId: 'p1', bid: 0 },
-      { type: 'game/setBid', playerId: 'p2', bid: 1 },
-      { type: 'game/phase', phase: 'results' },
-    )
-    expect(store.draft?.tricks).toMatchObject({ p1: 0, p2: 1, p3: 0 })
-  })
-
-  it('sème la mise déplacée par Harry, pas celle qu on avait annoncée', () => {
+  it('ne recopie pas non plus la mise déplacée par Harry', () => {
     const store = run(
       run(seeded(), {
         type: 'game/start',
@@ -1309,13 +1248,15 @@ describe('les plis partent de la mise', () => {
       }),
       { type: 'game/setBid', playerId: 'p1', bid: 1 },
       { type: 'game/phase', phase: 'results' },
+      { type: 'game/setTricks', playerId: 'p1', tricks: 1 },
       { type: 'game/setHarry', playerId: 'p1', step: -1 },
-      // Un aller-retour par les mises : les tuiles non reprises en main se
-      // resèment, et p1 repart de sa mise déplacée.
+      // Un aller-retour par les mises ne réécrit ni la mise défendue, ni le
+      // pli déjà saisi.
       { type: 'game/phase', phase: 'bids' },
       { type: 'game/phase', phase: 'results' },
     )
-    expect(store.draft?.tricks.p1).toBe(0)
+    expect(store.draft?.tricks.p1).toBe(1)
+    expect(store.draft?.harry.p1).toBe(-1)
   })
 })
 

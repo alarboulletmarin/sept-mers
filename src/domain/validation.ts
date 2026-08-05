@@ -2,7 +2,6 @@ import {
   BONUS_KEYS,
   BONUS_LIMITS,
   EMPTY_BONUS,
-  GREY_BEARD,
   HARRY_VALUES,
   RASCAL_VALUES,
   type Id,
@@ -205,37 +204,6 @@ export function validateHarry(
   }
   if (placed > 1) issues.push({ code: 'harry.multiple' })
   return issues
-}
-
-/**
- * Le joueur dont la valeur se déduit des autres, ou `null` s'il y en a
- * plusieurs. La phase résultats le complète automatiquement.
- *
- * Les plis partent semés sur les mises : plus personne n'est « non renseigné »,
- * et c'est donc le fait d'avoir été repris en main, et lui seul, qui distingue
- * celui qu'on déduit de ceux qu'on a posés.
- */
-export function soleUntouchedPlayer(touched: Id[], playerIds: Id[]): Id | null {
-  const untouched = playerIds.filter((id) => !touched.includes(id))
-  return untouched.length === 1 ? untouched[0] : null
-}
-
-/**
- * Le porteur dont les plis se déduisent des autres.
- *
- * Le fantôme passe devant : il n'annonce rien, et son compte est par nature ce
- * qui reste. Tant qu'on ne l'a pas repris en main, c'est donc lui qui absorbe,
- * quel que soit le nombre de tuiles déjà posées — sans quoi une manche à 2
- * joueurs n'aurait plus de déduction du tout, avec trois porteurs non touchés
- * et jamais un seul.
- *
- * Repris en main, il rend la place à la règle ordinaire, et c'est le second
- * joueur qui se met à bouger. La tuile le dit, comme n'importe quelle tuile
- * déduite.
- */
-export function deducedHolder(touched: Id[], holders: Id[]): Id | null {
-  if (holders.includes(GREY_BEARD) && !touched.includes(GREY_BEARD)) return GREY_BEARD
-  return soleUntouchedPlayer(touched, holders)
 }
 
 // -------------------------------------------------------------------- Bonus

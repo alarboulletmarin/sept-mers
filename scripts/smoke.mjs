@@ -121,8 +121,8 @@ await page.waitForSelector('[data-round="1"]')
 
 /**
  * Pose une valeur sur une tuile via les boutons moins et plus.
- * On lit `aria-valuenow` plutôt que de compter les taps : robuste même quand
- * la valeur a été posée automatiquement pour le dernier joueur.
+ * On lit `aria-valuenow` plutôt que de compter les taps : on part de ce que la
+ * tuile porte, quel qu'il soit.
  */
 async function setValue(tile, target) {
   const stepper = tile.locator('[role=spinbutton]')
@@ -138,7 +138,7 @@ async function setValue(tile, target) {
 }
 
 /** Saisit une manche : mises puis plis, dont la somme vaut le nombre de cartes. */
-async function playRound(round, bids, tricks, bonus = null, watchAuto = false) {
+async function playRound(round, bids, tricks, bonus = null) {
   await page.waitForSelector(`[data-round="${round}"]`)
   const tiles = page.locator('[data-player-tile]')
 
@@ -147,21 +147,9 @@ async function playRound(round, bids, tricks, bonus = null, watchAuto = false) {
   }
   await page.getByRole('button', { name: 'Valider les mises' }).click()
 
-  // Le dernier joueur se complète tout seul : on ne saisit que les autres.
-  for (let seat = 0; seat < tricks.length - 1; seat += 1) {
+  // Rien ne se remplit tout seul : chaque pli remporté se saisit.
+  for (let seat = 0; seat < tricks.length; seat += 1) {
     await setValue(tiles.nth(seat), tricks[seat])
-  }
-
-  if (watchAuto) {
-    const last = tricks.length - 1
-    check(
-      `la déduction remplit le dernier joueur à la manche ${round}`,
-      Number((await readValues())[last]) === tricks[last],
-    )
-    check(
-      'la tuile déduite dit qu elle est déduite',
-      await page.getByText('Complété automatiquement').isVisible(),
-    )
   }
 
   if (bonus) {
@@ -199,11 +187,18 @@ check(
   (await page.getByRole('link', { name: 'Accueil' }).getAttribute('aria-current')) === 'page',
 )
 
-// Manche 1 : une carte, un pli. Une seule mise à poser — les plis partent
-// ensuite semés sur les mises, donc la manche se valide sans y toucher.
+// Manche 1 : une carte, un pli. Ana mise 1, puis le remporte — les plis
+// s'ouvrent à zéro, la mise ne les précède pas.
 await setValue(page.locator('[data-player-tile]').nth(0), 1)
 await page.getByRole('button', { name: 'Valider les mises' }).click()
-check('les plis partent sur la mise de chacun', (await readValues()).join() === '1,0,0,0')
+check('les plis partent à zéro, pas sur la mise', (await readValues()).join() === '0,0,0,0')
+check(
+  'la manche ne se valide pas tant que les plis ne tombent pas juste',
+  await page.getByRole('button', { name: 'Valider la manche' }).isDisabled(),
+)
+
+await setValue(page.locator('[data-player-tile]').nth(0), 1)
+check('les plis saisis débloquent la manche', (await readValues()).join() === '1,0,0,0')
 await page.getByRole('button', { name: 'Valider la manche' }).click()
 check('la manche 1 est enregistrée', await page.getByText('Manche 1 enregistrée').isVisible())
 check(
@@ -250,19 +245,19 @@ await page.getByRole('button', { name: 'Reprendre la manche en cours' }).click()
 await page.waitForSelector('[data-round="3"]')
 check('la saisie en cours survit à l aller-retour', (await readValues())[0] === '3')
 
-// Le reste de la partie. La manche 5 laisse le dernier joueur à la déduction.
+// Le reste de la partie. La manche 5 est la seule où personne ne tient sa mise.
 const plan = [
   [3, [1, 1, 1, 0], [1, 1, 1, 0]],
   [4, [2, 1, 1, 0], [2, 1, 1, 0]],
-  [5, [2, 1, 1, 1], [0, 2, 2, 1], null, true],
+  [5, [2, 1, 1, 1], [0, 2, 2, 1]],
   [6, [2, 2, 1, 1], [2, 2, 1, 1]],
   [7, [3, 2, 1, 1], [3, 2, 1, 1]],
   [8, [3, 2, 2, 1], [3, 2, 2, 1]],
   [9, [3, 3, 2, 1], [3, 3, 2, 1]],
   [10, [4, 3, 2, 1], [4, 3, 2, 1]],
 ]
-for (const [round, bids, tricks, bonus, watchAuto] of plan) {
-  await playRound(round, bids, tricks, bonus, watchAuto)
+for (const [round, bids, tricks, bonus] of plan) {
+  await playRound(round, bids, tricks, bonus)
 }
 
 // ------------------------------------------------------------------ fin de partie
@@ -407,12 +402,17 @@ await page.getByRole('button', { name: 'Valider les mises' }).click()
 check('la tuile du fantôme paraît aux résultats', await ghost.isVisible())
 check('elle porte son nom', await ghost.getByText('Barbe Grise').isVisible())
 check(
-  'elle se remplit du reste toute seule',
-  (await ghost.locator('[role=spinbutton]').getAttribute('aria-valuenow')) === '1',
+  'elle s ouvre à zéro comme les autres',
+  (await ghost.locator('[role=spinbutton]').getAttribute('aria-valuenow')) === '0',
 )
-check('elle dit qu elle est déduite', await ghost.getByText('Complété automatiquement').isVisible())
+check('elle dit ce qu il est', await ghost.getByText('Ne mise pas, ne marque pas').isVisible())
 check(
-  'la manche se valide sans un geste de plus',
+  'la manche attend qu on lui attribue son pli',
+  await page.getByRole('button', { name: 'Valider la manche' }).isDisabled(),
+)
+await setValue(ghost, 1)
+check(
+  'le pli posé sur le fantôme fait tomber la somme juste',
   await page.getByRole('button', { name: 'Valider la manche' }).isEnabled(),
 )
 await shot('barbe-grise')
@@ -423,10 +423,8 @@ await page.getByRole('button', { name: 'Valider la manche' }).click()
 await page.waitForSelector('[data-round="2"]')
 await setValue(page.locator('[data-player-tile]').nth(0), 1)
 await page.getByRole('button', { name: 'Valider les mises' }).click()
-check(
-  'le fantôme se repose quand un joueur prend un pli',
-  (await ghost.locator('[role=spinbutton]').getAttribute('aria-valuenow')) === '1',
-)
+await setValue(page.locator('[data-player-tile]').nth(0), 1)
+await setValue(ghost, 1)
 await page.getByRole('button', { name: 'Valider la manche' }).click()
 await page.waitForSelector('[data-round="3"]')
 // L'écriture est debouncée à 300 ms : on la laisse passer avant de relire.
@@ -462,6 +460,7 @@ check('elle bascule au boulet', await rascalTiles.nth(0).getByText('Boulet').isV
 // Manche 1, 1 carte : Ana mise 1 et le prend, les autres misent 0.
 await setValue(rascalTiles.nth(0), 1)
 await page.getByRole('button', { name: 'Valider les mises' }).click()
+await setValue(rascalTiles.nth(0), 1)
 await page.getByRole('button', { name: 'Valider la manche' }).click()
 await page.waitForSelector('[data-round="2"]')
 

@@ -64,7 +64,6 @@
   "game.results.overOne": "{count} trick too many is assigned",
   "game.results.complete": "All {count} tricks are assigned",
   "game.results.completeOne": "The single trick is assigned",
-  "game.results.autofilled": "Filled in automatically",
   "game.bid": "Bid {bid}",
   "game.bonus": "Bonus",
   "game.bonusCount": "Bonus ({count})",

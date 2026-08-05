@@ -350,7 +350,6 @@ export function Game({ go }: { go: (route: Route) => void }) {
               onCannonball={(loaded) =>
                 dispatch({ type: 'game/setCannonball', playerId, loaded })
               }
-              auto={!isBids && draft.autoTricks === playerId}
               issues={
                 touched
                   ? issuesFor(isBids ? bidIssues : [...trickIssues, ...bonusIssues], playerId)
@@ -369,8 +368,8 @@ export function Game({ go }: { go: (route: Route) => void }) {
 
           {/* À 2 joueurs, une troisième main est distribuée au fantôme de
               Barbe Grise. Il rafle des plis sans miser ni marquer : sa tuile
-              n'est là que pour porter ce qui reste, et elle s'en remplit toute
-              seule. Une table qui ne le joue pas la laisse simplement à zéro. */}
+              porte ce qu'il a remporté, saisi comme celui de n'importe qui.
+              Une table qui ne le joue pas la laisse simplement à zéro. */}
           {!isBids && greyBeard && (
             <Widget surface="sunken" span="sm" tight marker="grey-beard-tile">
               <h2 className={styles.name}>{t('game.greyBeard')}</h2>
@@ -385,11 +384,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
                 increaseLabel={t('a11y.greyBeard.increase')}
               />
               <div className={styles.tileMeta}>
-                <span className={styles.bidRecall}>
-                  {draft.autoTricks === GREY_BEARD
-                    ? t('game.results.autofilled')
-                    : t('game.greyBeard.help')}
-                </span>
+                <span className={styles.bidRecall}>{t('game.greyBeard.help')}</span>
               </div>
               {(touched ? issuesFor(trickIssues, GREY_BEARD) : []).map((issue, index) => (
                 <p key={index} className={styles.tileIssue} role="alert">
@@ -444,8 +439,9 @@ export function Game({ go }: { go: (route: Route) => void }) {
 
       <div className="actionbar" ref={actionBar}>
         <div className="actionbar-inner">
-          {/* Plus rien n'est « manquant » : tout part rempli. Le pied d'écran
-              ne dit donc plus qui reste à saisir, mais où en est la manche. */}
+          {/* Le pied d'écran ne nomme pas qui reste à saisir — la tuile à zéro
+              le dit déjà — mais où en est la manche : combien de plis restent
+              à attribuer, ou combien sont en trop. */}
           <p className={styles.counter} role="status">
             {isBids
               ? t('game.bids.sum', { count: bidTotal, bid: bidTotal, cards })
@@ -632,8 +628,6 @@ interface PlayerTileProps {
   /** La table joue-t-elle le Boulet ? Sinon la pastille de charge n'a rien à dire. */
   showCharge: boolean
   onCannonball: (loaded: boolean) => void
-  /** Tuile dont la valeur se déduit des autres. */
-  auto: boolean
   issues: Issue[]
   onBid: (value: number) => void
   onTricks: (value: number) => void
@@ -662,7 +656,6 @@ function PlayerTile(props: PlayerTileProps) {
     cannonball,
     showCharge,
     onCannonball,
-    auto,
     issues,
     onBid,
     onTricks,
@@ -690,9 +683,8 @@ function PlayerTile(props: PlayerTileProps) {
   )
 
   return (
-    // Tout part rempli : le contraste ne peut plus dire « saisi ou non ». Il
-    // dit désormais ce qui reste vrai — qui porte un chiffre, et qui est à
-    // zéro.
+    // Le contraste dit qui porte un chiffre et qui est à zéro. Aux résultats,
+    // où tout repart de zéro, c'est aussi ce qui reste à saisir.
     <Widget surface={value ? 'accent' : 'card'} span="sm" tight marker="player-tile">
       {/* Le nom entier : deux joueurs en « D » doivent rester distinguables,
           et la couleur ne doit jamais porter seule l'information. */}
@@ -731,13 +723,12 @@ function PlayerTile(props: PlayerTileProps) {
       {!isBids && (
         <div className={styles.tileMeta}>
           <span className={styles.bidRecall}>
-            {/* La tuile déduite le dit : sinon son chiffre bouge tout seul
-                pendant qu'on saisit les autres, sans que rien l'explique. */}
-            {auto
-              ? t('game.results.autofilled')
-              : bid === null
-                ? ''
-                : bidRecall(t, { bid, harry, halved, cannonball: showCharge && cannonball })}
+            {/* Ce qui a été misé, rappelé sous le compteur de ce qui a été
+                remporté : c'est la seule chose que la phase des mises laisse
+                passer ici, et elle se lit sans rien réécrire. */}
+            {bid === null
+              ? ''
+              : bidRecall(t, { bid, harry, halved, cannonball: showCharge && cannonball })}
           </span>
           {score && <span className={styles.tileScore}>{signed(score.total)}</span>}
         </div>

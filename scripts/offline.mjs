@@ -79,13 +79,11 @@ const tiles = page.locator('[data-player-tile]')
 // Ana et Bo misent le pli, Cy non.
 await setValue(tiles.nth(1), 1)
 await page.getByRole('button', { name: 'Valider les mises' }).click()
-// C'est Cy qui l'emporte. On reprend Ana et Bo en main ; Cy, le seul qu'on
-// n'a pas touché, se complète tout seul — et sa valeur s'écarte donc du 0
-// qu'on lui avait semé depuis sa mise.
-await setValue(tiles.nth(0), 0)
-await setValue(tiles.nth(1), 0)
-const filled = await tiles.nth(2).locator('[role=spinbutton]').getAttribute('aria-valuenow')
-check('le dernier joueur est complété automatiquement, hors ligne', filled === '1')
+// C'est Cy qui l'emporte : les plis s'ouvrent à zéro, et c'est le sien qu'on
+// pose.
+const opened = await tiles.nth(1).locator('[role=spinbutton]').getAttribute('aria-valuenow')
+check('les plis s ouvrent à zéro, hors ligne aussi', opened === '0')
+await setValue(tiles.nth(2), 1)
 await page.getByRole('button', { name: 'Valider la manche' }).click()
 await page.waitForSelector('text=Les résultats', { timeout: 10000 }).catch(() => {})
 check('une manche se valide hors ligne', await page.locator('[data-round]').first().isVisible())

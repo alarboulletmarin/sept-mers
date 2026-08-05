@@ -41,13 +41,13 @@ qu'elle est construite, jamais telle qu'elle était.
 - **Le fantôme de Barbe Grise à 2 joueurs**, sans rien à régler. Le jeu y
   distribue une troisième main, qui rafle des plis sans miser ni marquer : la
   somme des plis des 2 joueurs ne fait donc plus le nombre de cartes de la
-  manche. L'app lui donne une tuile, qui se remplit du reste et reste
-  corrigeable — l'égalité qu'elle vérifie n'est pas relâchée, elle est élargie.
+  manche. L'app lui donne une tuile, qu'on saisit comme les autres —
+  l'égalité qu'elle vérifie n'est pas relâchée, elle est élargie.
 - **Saisie sans clavier virtuel** : une grille de tuiles, une par joueur, avec
-  un contrôle moins / plus. Appui maintenu pour défiler. Les mises partent à zéro,
-  les plis partent sur la mise de chacun, et le dernier joueur qu'on n'a pas
-  repris en main se complète tout seul — une manche où tout le monde tient sa
-  mise se valide sans un geste.
+  un contrôle moins / plus. Appui maintenu pour défiler. Tout part à zéro, les
+  mises comme les plis : ce qu'on a misé n'est pas ce qu'on a remporté, et
+  aucune tuile ne se remplit toute seule. La mise annoncée reste rappelée sous
+  le compteur des plis, et le pied d'écran dit combien il en reste à attribuer.
 - **Les cinq bonus** derrière un bouton nommé sur chaque tuile, avec leurs
   bornes matérielles : on ne peut pas attribuer trois sirènes ni faire capturer
   le Skull King deux fois. La même feuille porte le pari de Rascal Jack et le
@@ -222,8 +222,8 @@ d'une ligne.
 Le fantôme de Barbe Grise, lui, n'est pas passé par les options : à 2 joueurs il
 n'y a pas d'autre façon de jouer. Il porte un identifiant sentinelle et rejoint
 la liste des *porteurs de plis*, distincte de celle des joueurs. Tout ce qui
-parle de plis — le semis, la déduction du dernier non repris en main, la
-validation de la somme, le compteur de pied d'écran — prend la première ; tout
+parle de plis — la saisie, la validation de la somme, le compteur de pied
+d'écran — prend la première ; tout
 ce qui parle de mise, de prime, de pari ou de score prend la seconde. Il n'a
 donc fallu écrire aucun mécanisme parallèle, seulement allonger une liste.
 
@@ -252,12 +252,12 @@ téléphone de la table.
 
 ## Tests
 
-416 tests unitaires couvrent les deux moteurs de score — dont les huit cas de
+408 tests unitaires couvrent les deux moteurs de score — dont les huit cas de
 référence du cahier des charges, et l'absence de tout point négatif ou
 fractionnaire sur toute la grille du Score Rascal —, la validation de saisie, le
 plafonnement du paquet, les variantes, le fantôme de Barbe Grise, les
-statistiques, le réducteur, le préremplissage et la complétion automatique du
-dernier joueur, la marche arrière entre manches, l'aller-retour export/import,
+statistiques, le réducteur, la saisie qui ne bouge que sous la main, la marche
+arrière entre manches, l'aller-retour export/import,
 la lecture défensive du stockage, le partage de table — protocole et
 durcissement de l'état reçu, aller-retour du lien-résumé jusqu'aux liens
 hostiles et à sa taille au pire de la grille, alphabet et tirage du code de

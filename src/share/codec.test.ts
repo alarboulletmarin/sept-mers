@@ -125,8 +125,6 @@ describe('aller-retour du lien-résumé', () => {
       harry: { p1: 0, p2: 0 },
       cannonball: { p1: false, p2: false },
       voided: 1,
-      touchedTricks: ['p1'],
-      autoTricks: null,
     }
 
     const decoded = await decodeSnapshot(await encodeSnapshot({ game, draft }))
@@ -143,8 +141,6 @@ describe('aller-retour du lien-résumé', () => {
       voided: 1,
       // La main posée et la déduction ne se transportent pas : un spectateur
       // ne saisit rien, il n'a besoin que des valeurs.
-      touchedTricks: [],
-      autoTricks: null,
     })
   })
 
@@ -161,8 +157,6 @@ describe('aller-retour du lien-résumé', () => {
       harry: { p1: 0, p2: 0, p3: 0 },
       cannonball: { p1: false, p2: false, p3: false },
       voided: 0,
-      touchedTricks: [],
-      autoTricks: null,
     }
     const decoded = await decodeSnapshot(await encodeSnapshot({ game, draft }))
     expect(decoded.draft).toBeUndefined()
@@ -240,8 +234,6 @@ describe('taille du lien-résumé', () => {
       harry: Object.fromEntries(ids.map((id) => [id, 0] as const)),
       cannonball: Object.fromEntries(ids.map((id) => [id, false] as const)),
       voided: 1,
-      touchedTricks: [],
-      autoTricks: null,
     }
 
     const encoded = await encodeSnapshot({ game, draft })
@@ -286,8 +278,6 @@ describe('le format et Harry voyagent', () => {
       harry: { p1: 1, p2: 0, p3: 0 },
       cannonball: { p1: false, p2: false, p3: false },
       voided: 0,
-      touchedTricks: [],
-      autoTricks: null,
     }
     const decoded = await decodeSnapshot(await encodeSnapshot({ game, draft }))
     expect(decoded.draft?.harry).toEqual({ p1: 1, p2: 0, p3: 0 })

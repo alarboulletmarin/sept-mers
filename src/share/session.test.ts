@@ -71,8 +71,6 @@ const payloadWithBid = (bid: number): SpectatorPayload => ({
     harry: {},
     cannonball: {},
     voided: 0,
-    touchedTricks: [],
-    autoTricks: null,
   },
 })
 

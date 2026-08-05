@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   bonusCeiling,
-  deducedHolder,
   remainingTricks,
-  soleUntouchedPlayer,
   sumBids,
   validateBids,
   validateBonuses,
@@ -73,15 +71,6 @@ describe('plis', () => {
     expect(remainingTricks({ a: 2, b: null, c: 1 }, 5, players)).toBe(2)
   })
 
-  it('désigne le dernier joueur non repris en main', () => {
-    expect(soleUntouchedPlayer(['a', 'c'], players)).toBe('b')
-    expect(soleUntouchedPlayer(['a'], players)).toBeNull()
-    expect(soleUntouchedPlayer(['a', 'b', 'c'], players)).toBeNull()
-  })
-
-  it('ignore un joueur inconnu dans la liste des repris en main', () => {
-    expect(soleUntouchedPlayer(['a', 'c', 'fantôme'], players)).toBe('b')
-  })
 })
 
 describe('bonus', () => {
@@ -282,24 +271,6 @@ describe('le fantôme de Barbe Grise', () => {
   it('ne rend jamais la liste des joueurs elle-même', () => {
     const players = ['a', 'b', 'c']
     expect(trickHolders(players)).not.toBe(players)
-  })
-
-  it('prend la déduction même quand plusieurs joueurs sont non touchés', () => {
-    // `soleUntouchedPlayer` rendrait `null` : trois porteurs, aucun seul.
-    expect(soleUntouchedPlayer([], holders)).toBeNull()
-    expect(deducedHolder([], holders)).toBe(GREY_BEARD)
-    expect(deducedHolder(['a'], holders)).toBe(GREY_BEARD)
-  })
-
-  it('rend la place au second joueur quand on le reprend en main', () => {
-    expect(deducedHolder(['a', GREY_BEARD], holders)).toBe('b')
-    expect(deducedHolder([GREY_BEARD], holders)).toBeNull()
-  })
-
-  it('laisse la règle ordinaire intacte sans lui', () => {
-    expect(deducedHolder(['a'], players)).toBeNull()
-    expect(deducedHolder(['a', 'b'], players)).toBe('c')
-    expect(deducedHolder([], ['a'])).toBe('a')
   })
 
   it('entre dans la somme des plis', () => {

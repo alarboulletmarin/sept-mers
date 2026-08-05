@@ -161,7 +161,7 @@ for (const theme of ['light', 'dark']) {
   }
   for (let i = 0; i < 4; i += 1) await setValue(tiles.nth(i), i === 0 ? 1 : 0)
   await page.getByRole('button', { name: 'Valider les mises' }).click()
-  for (let i = 0; i < 3; i += 1) await setValue(tiles.nth(i), i === 0 ? 1 : 0)
+  for (let i = 0; i < 4; i += 1) await setValue(tiles.nth(i), i === 0 ? 1 : 0)
   await audit('manche 1, résultats')
 
   await tiles.nth(0).getByRole('button', { name: /^Bonus/ }).click()
