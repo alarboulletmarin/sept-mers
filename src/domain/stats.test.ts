@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import {
   accuracy,
+  accuracyByCards,
   bonusTotals,
+  countedGames,
   cumulativeSeries,
+  headToHead,
+  keptStreak,
   playerStats,
+  playerTimeline,
   ranking,
   standings,
+  tieBreakers,
   totals,
   winnerIds,
 } from './stats.ts'
@@ -21,7 +27,11 @@ function game(rounds: { cards: number; lines: Line[] }[], bonusIfBidMissed = tru
     endedAt: '2026-01-01T21:00:00.000Z',
     playerIds,
     options: { ...DEFAULT_OPTIONS, bonusIfBidMissed },
-    format: { ...DEFAULT_FORMAT },
+    // Le format suit le nombre de manches écrites : ces parties-là sont allées
+    // au bout, et c'est ce que le palmarès compte. Une partie de trois manches
+    // au format du livret serait une partie écourtée, ce qu'aucun de ces cas
+    // ne cherche à décrire.
+    format: { ...DEFAULT_FORMAT, rounds: Math.max(1, rounds.length) },
     nameSnapshot: Object.fromEntries(playerIds.map((id) => [id, id.toUpperCase()])),
     rounds: rounds.map((round, index) => ({
       index: index + 1,
@@ -293,5 +303,114 @@ describe('quand Harry le Géant a déplacé une mise', () => {
   it('compte la manche comme une mise à zéro tenue', () => {
     const row = accuracy(moved).find((candidate) => candidate.playerId === 'a')
     expect(row).toMatchObject({ exact: 1, zeroBids: 1, zeroBidsKept: 1 })
+  })
+})
+
+/*
+ * Le palmarès ne compte que les parties allées au bout de leur format.
+ *
+ * Une partie quittée pour en lancer une autre est close sur-le-champ : sans
+ * cette règle, une soirée abandonnée après une manche donnait une victoire
+ * pleine à qui menait, et tirait la moyenne de tout le monde.
+ */
+describe('parties écourtées', () => {
+  const cutShort: Game = { ...simple, format: { ...simple.format, rounds: 10 } }
+
+  it('sont écartées des parties comptées', () => {
+    expect(countedGames('a', [cutShort])).toHaveLength(0)
+    expect(countedGames('a', [simple])).toHaveLength(1)
+  })
+
+  it('ne donnent ni victoire ni moyenne', () => {
+    const stats = playerStats('a', [cutShort])
+    expect(stats.gamesPlayed).toBe(0)
+    expect(stats.wins).toBe(0)
+    expect(stats.averagePoints).toBe(0)
+  })
+
+  it('sortent du palmarès', () => {
+    expect(ranking([{ id: 'a', name: 'A', createdAt: '' }], [cutShort])).toHaveLength(0)
+  })
+
+  it('gardent leur classement, qui reste vrai', () => {
+    // L'historique continue de la montrer : c'est ce que la table a joué.
+    expect(winnerIds(cutShort)).toEqual(['a'])
+  })
+})
+
+describe('séries de mises tenues', () => {
+  it('compte la plus longue suite d une partie', () => {
+    // a : tenue, ratée, tenue → au mieux une d'affilée.
+    expect(keptStreak('a', [simple]).best).toBe(1)
+  })
+
+  it('ne traverse pas les parties', () => {
+    const first = { ...simple, id: 'g1', endedAt: '2026-01-01T21:00:00.000Z' }
+    const second = { ...simple, id: 'g2', endedAt: '2026-01-02T21:00:00.000Z' }
+    // Deux fois la même partie : la série ne se recoud pas d'une soirée à
+    // l'autre, sinon deux manches tenues de part et d'autre en feraient quatre.
+    expect(keptStreak('b', [first, second]).best).toBe(1)
+  })
+
+  it('suit l ordre des manches et non celui du fichier', () => {
+    const shuffled: Game = { ...simple, rounds: [...simple.rounds].reverse() }
+    expect(keptStreak('a', [shuffled]).best).toBe(1)
+  })
+
+  it('rend zéro pour un joueur sans partie comptée', () => {
+    expect(keptStreak('z', [simple])).toEqual({ best: 0, current: 0 })
+  })
+})
+
+describe('précision par taille de main', () => {
+  it('sépare les manches par nombre de cartes', () => {
+    const rows = accuracyByCards('a', [simple])
+    expect(rows.map((row) => row.cards)).toEqual([1, 2, 3])
+    expect(rows[0]).toMatchObject({ cards: 1, rounds: 1, kept: 1, rate: 1 })
+    expect(rows[1]).toMatchObject({ cards: 2, rounds: 1, kept: 0, rate: 0 })
+  })
+
+  it('ne cite que les tailles réellement jouées', () => {
+    expect(accuracyByCards('a', [simple]).some((row) => row.cards === 9)).toBe(false)
+  })
+})
+
+describe('face-à-face', () => {
+  it('compte les fins devant et derrière, pas les victoires', () => {
+    // a finit à 40, b à 20 : a est devant sur cette partie.
+    const [duel] = headToHead('a', [simple])
+    expect(duel).toMatchObject({ opponentId: 'b', shared: 1, ahead: 1, behind: 0, tied: 0 })
+  })
+
+  it('se lit dans les deux sens', () => {
+    expect(headToHead('b', [simple])[0]).toMatchObject({ ahead: 0, behind: 1 })
+  })
+
+  it('compte l égalité à part', () => {
+    const drawn = game([{ cards: 1, lines: [['a', 1, 1], ['b', 1, 1]] }])
+    expect(headToHead('a', [drawn])[0]).toMatchObject({ tied: 1, ahead: 0, behind: 0 })
+  })
+})
+
+describe('évolution dans le temps', () => {
+  it('range les parties de la plus ancienne à la plus récente', () => {
+    const older = { ...simple, id: 'g0', endedAt: '2026-01-01T21:00:00.000Z' }
+    const newer = { ...simple, id: 'g2', endedAt: '2026-02-01T21:00:00.000Z' }
+    const points = playerTimeline('a', [newer, older])
+    expect(points.map((point) => point.gameId)).toEqual(['g0', 'g2'])
+    expect(points[0]).toMatchObject({ total: 40, rank: 1, seats: 2 })
+  })
+})
+
+describe('départage d une égalité', () => {
+  it('pose les mises tenues et les primes, sans trancher', () => {
+    const drawn = game([
+      { cards: 1, lines: [['a', 1, 1], ['b', 1, 1]] },
+      { cards: 2, lines: [['a', 1, 2], ['b', 2, 1, { blackFourteen: 1 }]] },
+    ])
+    const rows = tieBreakers(drawn, ['a', 'b'])
+    expect(rows.map((row) => row.playerId)).toEqual(['a', 'b'])
+    expect(rows[0].bidsKept).toBe(1)
+    expect(rows[1].bonusPoints).toBe(20)
   })
 })

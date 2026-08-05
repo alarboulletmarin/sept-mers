@@ -46,6 +46,22 @@ await page.waitForFunction(() => navigator.serviceWorker.controller !== null, nu
 check('le service worker contrôle la page', true)
 await page.waitForTimeout(600)
 
+/*
+ * `navigateFallback` sert la coquille à *toute* navigation, et ouvrir les
+ * licences en est une : sans liste d'exception, le lien de l'écran « À
+ * propos » aurait rendu l'app à la place du fichier, mais seulement une fois le
+ * service worker en place — donc jamais en développement, et toujours en
+ * production.
+ */
+{
+  const sheet = await context.newPage()
+  await sheet.goto(`${base}/licenses.txt`)
+  const head = await sheet.evaluate(() => document.body.innerText.slice(0, 40))
+  check('les licences ne reçoivent pas la coquille', head.includes('Sept Mers'))
+  check('et ce sont bien les licences', head.includes('licences'))
+  await sheet.close()
+}
+
 // ------------------------------------------------------------- mode avion
 await context.setOffline(true)
 await page.reload()

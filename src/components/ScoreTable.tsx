@@ -80,12 +80,35 @@ export function ScoreTable({ game, currentRound, onEditRound }: ScoreTableProps)
                 onClick={clickable ? () => onEditRound?.(row.roundIndex) : undefined}
               >
                 <th scope="row" className={styles.roundCol}>
-                  <span className={styles.roundLabel}>
-                    <span className={styles.roundIndex}>{row.roundIndex}</span>
-                    <span className={styles.roundCards}>
-                      {t('table.cards', { count: row.cards })}
+                  {/* La ligne entière reste cliquable au doigt, mais c'est ce
+                      bouton qui la rend atteignable au clavier : un `onClick`
+                      posé sur un `<tr>` n'est ni focusable, ni annoncé, ni
+                      déclenchable autrement qu'au pointeur. */}
+                  {clickable ? (
+                    <button
+                      type="button"
+                      className={`${styles.roundLabel} ${styles.editButton}`}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onEditRound?.(row.roundIndex)
+                      }}
+                    >
+                      <span className={styles.roundIndex}>{row.roundIndex}</span>
+                      <span className={styles.roundCards}>
+                        {t('table.cards', { count: row.cards })}
+                      </span>
+                      <span className="sr-only">
+                        {t('game.editRound', { round: row.roundIndex })}
+                      </span>
+                    </button>
+                  ) : (
+                    <span className={styles.roundLabel}>
+                      <span className={styles.roundIndex}>{row.roundIndex}</span>
+                      <span className={styles.roundCards}>
+                        {t('table.cards', { count: row.cards })}
+                      </span>
                     </span>
-                  </span>
+                  )}
                   {isCurrent && <span className="sr-only">{t('table.currentRound')}</span>}
                 </th>
                 {row.cells.map((cell) => (

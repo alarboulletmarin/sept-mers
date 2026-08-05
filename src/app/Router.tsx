@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 /**
- * Dix routes, sur le chemin. Pas de librairie.
+ * Onze routes, sur le chemin. Pas de librairie.
  *
  * Sur le chemin et non sur le hash : le hash est un identifiant de fragment,
  * pas une adresse, et le navigateur ne l'envoie jamais au serveur. L'app y
@@ -25,6 +25,7 @@ export type Route =
   | { name: 'settings' }
   | { name: 'watch'; code?: string }
   | { name: 'recap' }
+  | { name: 'about' }
 
 export function parsePath(pathname: string): Route {
   // `filter` avale les segments vides : les barres obliques de tête, de queue
@@ -54,6 +55,7 @@ export function parsePath(pathname: string): Route {
     case 'rules':
     case 'settings':
     case 'recap':
+    case 'about':
       return tail ? { name: 'home' } : { name: head }
     default:
       return { name: 'home' }

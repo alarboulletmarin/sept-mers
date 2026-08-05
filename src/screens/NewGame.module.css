@@ -182,3 +182,18 @@
   color: var(--card-muted);
   margin-top: var(--space-3);
 }
+
+/* Le bloc de gauche du dépliant : son titre, et le résumé de ce qu'il cache. */
+.disclosureText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+
+.disclosureSummary {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--canvas-muted);
+}

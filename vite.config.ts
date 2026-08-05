@@ -1,10 +1,17 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { licenses } from './scripts/vite-licenses.mjs'
+
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
 
 export default defineConfig({
   plugins: [
     react(),
+    // Les licences de tout ce qui est embarqué, écrites à côté du bundle.
+    // Un site déployé est une distribution : elle doit porter ses mentions.
+    licenses(),
     {
       name: 'sept-mers-preload-fonts',
       transformIndexHtml: {
@@ -71,6 +78,14 @@ export default defineConfig({
          * une page blanche.
          */
         navigateFallback: 'index.html',
+        /*
+         * Sauf ceux-là. `navigateFallback` sert la coquille à *toute*
+         * navigation, et ouvrir `/licenses.txt` en est une : le lien de
+         * l'écran « À propos » aurait rendu l'app à la place du fichier, une
+         * fois le service worker en place. Les licences sont des fichiers, pas
+         * des routes.
+         */
+        navigateFallbackDenylist: [/^\/licenses/],
         // Le précache de la version précédente part à l'activation, sinon le
         // stockage grossit d'un build à l'autre sans jamais redescendre.
         cleanupOutdatedCaches: true,
@@ -102,6 +117,16 @@ export default defineConfig({
    * sur toute route à deux segments. C'est le prix du `#` en moins : l'app se
    * sert depuis la racine d'un domaine, plus depuis un sous-dossier.
    */
+  /*
+   * La version, injectée depuis `package.json`.
+   *
+   * L'écran « À propos » la portait en dur, dans une constante de composant :
+   * deux sources pour un même chiffre, dont une qu'on oublie de bouger à
+   * chaque publication.
+   */
+  define: {
+    APP_VERSION: JSON.stringify(pkg.version),
+  },
   base: '/',
   build: {
     target: 'es2022',

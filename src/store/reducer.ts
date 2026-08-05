@@ -15,6 +15,7 @@ import {
   type GameOptions,
   type Id,
   type Locale,
+  type Player,
   type Round,
   type RoundBonus,
   type Store,
@@ -32,6 +33,7 @@ export type Action =
   | { type: 'players/add'; name: string; id?: Id; now?: string }
   | { type: 'players/rename'; id: Id; name: string }
   | { type: 'players/remove'; id: Id }
+  | { type: 'players/restore'; player: Player; at: number }
   | {
       type: 'game/start'
       playerIds: Id[]
@@ -64,6 +66,26 @@ export type Action =
 
 export function runningGame(store: Store): Game | null {
   return store.games.find((game) => !game.endedAt) ?? null
+}
+
+/**
+ * Ce nom est-il déjà porté à cette table ?
+ *
+ * La comparaison ignore la casse et les espaces de bord, parce que « marie »
+ * et « Marie » désignent la même personne autour d'une table. `exceptId` est
+ * le joueur qu'on renomme : se comparer à soi-même interdirait de corriger une
+ * majuscule.
+ *
+ * L'écran de nouvelle partie le vérifiait déjà, seul. La liste des joueurs et
+ * le renommage ne le vérifiaient pas — et deux « Marie » sont indiscernables
+ * partout dans une app qui a fait le choix d'écrire les noms en entier.
+ */
+export function nameTaken(players: Player[], name: string, exceptId?: Id): boolean {
+  const wanted = name.trim().toLowerCase()
+  if (!wanted) return false
+  return players.some(
+    (player) => player.id !== exceptId && player.name.trim().toLowerCase() === wanted,
+  )
 }
 
 export function gameById(store: Store, id: Id): Game | null {
@@ -231,7 +253,9 @@ export function reducer(store: Store, action: Action): Store {
 
     case 'players/add': {
       const name = action.name.trim()
-      if (!name) return store
+      // L'invariant tient ici et pas seulement dans l'écran qui appelle : trois
+      // écrans ajoutent des joueurs, et le prochain n'aura pas à s'en souvenir.
+      if (!name || nameTaken(store.players, name)) return store
       const player = {
         id: action.id ?? newId(),
         name,
@@ -242,7 +266,8 @@ export function reducer(store: Store, action: Action): Store {
 
     case 'players/rename': {
       const name = action.name.trim()
-      if (!name) return store
+      // Se comparer à soi-même est exclu : corriger une majuscule reste permis.
+      if (!name || nameTaken(store.players, name, action.id)) return store
       return {
         ...store,
         players: store.players.map((player) =>
@@ -261,6 +286,17 @@ export function reducer(store: Store, action: Action): Store {
     case 'players/remove':
       // Les résultats passés restent, sous le nom porté à l'époque.
       return { ...store, players: store.players.filter((player) => player.id !== action.id) }
+
+    case 'players/restore': {
+      // Une suppression s'annule, comme celle d'une partie. On remet le joueur
+      // à sa place dans la liste et non à la fin : l'ordre est celui dans
+      // lequel la table s'est constituée, et le voir sauter dirait qu'on a
+      // recréé quelqu'un d'autre.
+      if (store.players.some((player) => player.id === action.player.id)) return store
+      const players = [...store.players]
+      players.splice(Math.min(Math.max(0, action.at), players.length), 0, action.player)
+      return { ...store, players }
+    }
 
     case 'game/start': {
       const now = action.now ?? new Date().toISOString()

@@ -4,7 +4,7 @@ import { useStore } from '../app/StoreProvider.tsx'
 import type { Route } from '../app/Router.tsx'
 import { Button } from '../components/Button.tsx'
 import { Icon } from '../components/Icon.tsx'
-import { OptionSwitch, visibleOptions } from '../components/OptionSwitch.tsx'
+import { OptionSwitch, activeOptions, visibleOptions } from '../components/OptionSwitch.tsx'
 import { ChipGrid, PlayerChip } from '../components/PlayerChip.tsx'
 import { Stepper } from '../components/Stepper.tsx'
 import { deckSize, lastRoundCards } from '../domain/deck.ts'
@@ -20,7 +20,7 @@ import {
   type Id,
 } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
-import { runningGame } from '../store/reducer.ts'
+import { nameTaken, runningGame } from '../store/reducer.ts'
 import { newId } from '../store/storage.ts'
 import styles from './NewGame.module.css'
 
@@ -65,10 +65,9 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
   const addPlayer = () => {
     const trimmed = name.trim()
     if (!trimmed) return
-    const exists = store.players.some(
-      (player) => player.name.toLowerCase() === trimmed.toLowerCase(),
-    )
-    if (exists) {
+    // Le même juge qu'ailleurs : la casse et les espaces de bord ne font pas
+    // deux personnes différentes.
+    if (nameTaken(store.players, trimmed)) {
       setNameError(t('newGame.duplicate'))
       return
     }
@@ -103,6 +102,7 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
   // Ce que le format donnera vraiment à cette table : le paquet peut mordre
   // avant la dernière manche, et c'est là qu'il faut le dire — pas au milieu
   // de la partie.
+  const chosen = activeOptions(options)
   const seats = Math.max(seated.length, MIN_PLAYERS)
   const deck = deckSize(options)
   const lastCards = lastRoundCards(seats, deck, format)
@@ -255,7 +255,24 @@ export function NewGame({ go }: { go: (route: Route) => void }) {
           aria-expanded={optionsOpen}
           onClick={() => setOptionsOpen((open) => !open)}
         >
-          <span className="section-title">{t('newGame.options')}</span>
+          <span className={styles.disclosureText}>
+            <span className="section-title">{t('newGame.options')}</span>
+            {/* Ce que le panneau replié cache. Une table qui joue toujours avec
+                le Kraken devait sinon le déplier à chaque partie pour vérifier
+                qu'il y était — et le format est le premier chiffre qu'on veut
+                confirmer avant de distribuer. */}
+            {!optionsOpen && (
+              <span className={styles.disclosureSummary}>
+                {[
+                  t('newGame.summary.format', {
+                    rounds: format.rounds,
+                    first: format.firstRoundCards,
+                  }),
+                  ...chosen.map((key) => t(`newGame.${key}`)),
+                ].join(' · ')}
+              </span>
+            )}
+          </span>
           <Icon name="chevron" rotate={optionsOpen ? 'up' : 'down'} size={16} />
         </button>
         {optionsOpen && (

@@ -15,9 +15,11 @@ import { useToast } from '../components/Toast.tsx'
 import { cardsForRound, deckSize, isCapped } from '../domain/deck.ts'
 import { scoreRound, type ScoreInput } from '../domain/scoring.ts'
 import { totals } from '../domain/stats.ts'
+import { activeOptions } from '../components/OptionSwitch.tsx'
 import {
   GREY_BEARD,
   bonusIsEmpty,
+  dealerFor,
   hasGreyBeard,
   trickHolders,
   voidedBy,
@@ -60,6 +62,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
   const [tableOpen, setTableOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [touched, setTouched] = useState(false)
+  const [confirmAbandon, setConfirmAbandon] = useState(false)
 
   useWakeLock(Boolean(game))
 
@@ -92,6 +95,10 @@ export function Game({ go }: { go: (route: Route) => void }) {
   const holders = trickHolders(game.playerIds)
   const greyBeard = hasGreyBeard(game.playerIds.length)
   const showCharge = game.options.rascalScoring && game.options.cannonball
+  // Le donneur tourne d'un siège par manche, dans l'ordre à table. Il se
+  // déduit, donc une manche relue dans l'historique retrouve le même.
+  const dealer = dealerFor(draft.roundIndex, game.playerIds)
+  const tableOptions = activeOptions(game.options)
 
   const bidIssues = validateBids(draft.bids, cards, game.playerIds)
   const trickIssues = [
@@ -127,12 +134,26 @@ export function Game({ go }: { go: (route: Route) => void }) {
       return
     }
     const savedRound = draft.roundIndex
+    /*
+     * Ce qu'« Annuler » doit défaire dépend de ce qu'on vient de faire, et
+     * c'est ce que le bandeau ignorait : il appelait toujours `undoRound`, qui
+     * supprime la *dernière* manche validée. Enregistrer une correction de la
+     * manche 1 au milieu d'une partie de dix effaçait donc la manche 9, sans
+     * défaire la correction, et emportait la saisie mise de côté.
+     *
+     * Deux cas, donc deux annulations : une correction se défait en reposant
+     * la manche telle qu'elle était, une manche neuve se défait en la retirant.
+     */
+    const previous = game.rounds.find((round) => round.index === savedRound)
     dispatch({ type: 'game/commitRound' })
     setOpenBonus(null)
     setTouched(false)
-    toast.show(t('game.saved', { round: savedRound }), {
+    toast.show(t(previous ? 'game.corrected' : 'game.saved', { round: savedRound }), {
       label: t('action.undo'),
-      run: () => dispatch({ type: 'game/undoRound' }),
+      run: () =>
+        previous
+          ? dispatch({ type: 'game/replaceRound', round: previous })
+          : dispatch({ type: 'game/undoRound' }),
     })
   }
 
@@ -238,6 +259,20 @@ export function Game({ go }: { go: (route: Route) => void }) {
             {/* Les deux temps de la manche, toujours affichés : on mise, puis
                 on compte. Personne ne doit avoir à deviner lequel on lui
                 demande. */}
+            {/* Les règles de la table, rappelées là où on joue. Un appui ouvre
+                le chapitre des variantes : ce qui explique un chiffre
+                surprenant doit être à une touche, pas à un souvenir. */}
+            {tableOptions.length > 0 && (
+              <button
+                type="button"
+                className={styles.tableRules}
+                onClick={() => setRulesOpen(true)}
+              >
+                <Icon name="book" size={12} />
+                {tableOptions.map((key) => t(`newGame.${key}`)).join(' · ')}
+              </button>
+            )}
+
             <PhaseRail
               steps={[
                 {
@@ -302,6 +337,7 @@ export function Game({ go }: { go: (route: Route) => void }) {
             <PlayerTile
               key={playerId}
               name={game.nameSnapshot[playerId] ?? ''}
+              dealer={playerId === dealer}
               phase={draft.phase}
               cards={isBids ? cards : target}
               bid={draft.bids[playerId] ?? null}
@@ -501,15 +537,75 @@ export function Game({ go }: { go: (route: Route) => void }) {
               setTouched(false)
             }}
           />
-          <Button
-            variant="quiet"
-            onClick={() => {
-              setTableOpen(false)
-              go({ name: 'home' })
-            }}
-          >
-            {t('game.leave')}
-          </Button>
+          {/*
+            Les trois sorties d'une partie, nommées, au même endroit.
+            Jusqu'ici il n'y en avait qu'une — « Quitter », qui ne quitte rien
+            et laisse la partie ouverte. Une table qui s'arrête à la manche 6
+            n'avait donc aucun moyen de clore proprement : il fallait en lancer
+            une autre, ce qui refermait la première en silence et la faisait
+            compter comme jouée.
+          */}
+          <div className="stack-tight">
+            <Button
+              variant="quiet"
+              onClick={() => {
+                setTableOpen(false)
+                go({ name: 'home' })
+              }}
+            >
+              {t('game.leave')}
+            </Button>
+            <p className={styles.exitHelp}>{t('game.leave.help')}</p>
+          </div>
+
+          {game.rounds.length > 0 && (
+            <div className="stack-tight">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setTableOpen(false)
+                  go({ name: 'summary' })
+                }}
+              >
+                {t('game.finish')}
+              </Button>
+              <p className={styles.exitHelp}>
+                {t('game.finish.help', {
+                  played: game.rounds.length,
+                  total: game.format.rounds,
+                })}
+              </p>
+            </div>
+          )}
+
+          <div className="stack-tight">
+            {confirmAbandon ? (
+              <div className="row" style={{ gap: 'var(--space-2)' }}>
+                <Button full onClick={() => setConfirmAbandon(false)}>
+                  {t('action.cancel')}
+                </Button>
+                <Button
+                  variant="danger"
+                  full
+                  onClick={() => {
+                    dispatch({ type: 'game/abandon' })
+                    setConfirmAbandon(false)
+                    setTableOpen(false)
+                    toast.show(t('game.abandon.confirm'))
+                    go({ name: 'home' })
+                  }}
+                >
+                  {t('game.abandon')}
+                </Button>
+              </div>
+            ) : (
+              <Button variant="danger" onClick={() => setConfirmAbandon(true)}>
+                <Icon name="trash" />
+                {t('game.abandon')}
+              </Button>
+            )}
+            <p className={styles.exitHelp}>{t('game.abandon.help')}</p>
+          </div>
         </div>
       </Sheet>
     </div>
@@ -520,6 +616,8 @@ export function Game({ go }: { go: (route: Route) => void }) {
 
 interface PlayerTileProps {
   name: string
+  /** Vrai pour celui qui donne cette manche. */
+  dealer: boolean
   phase: 'bids' | 'results'
   cards: number
   bid: number | null
@@ -553,6 +651,7 @@ interface PlayerTileProps {
 function PlayerTile(props: PlayerTileProps) {
   const {
     name,
+    dealer,
     phase,
     cards,
     bid,
@@ -597,7 +696,13 @@ function PlayerTile(props: PlayerTileProps) {
     <Widget surface={value ? 'accent' : 'card'} span="sm" tight marker="player-tile">
       {/* Le nom entier : deux joueurs en « D » doivent rester distinguables,
           et la couleur ne doit jamais porter seule l'information. */}
-      <h2 className={styles.name}>{name}</h2>
+      <h2 className={styles.name}>
+        {name}
+        {/* Le donneur, dit en toutes lettres et pas par une pastille : la
+            couleur ne porte jamais d'information, et « qui donne ? » est la
+            question qu'on repose à chaque manche autour d'une table. */}
+        {dealer && <span className={styles.dealer}>{t('game.dealer')}</span>}
+      </h2>
 
       <Stepper
         max={cards}

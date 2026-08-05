@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { draftFor, reducer, runningGame, type Action } from './reducer.ts'
+import { draftFor, nameTaken, reducer, runningGame, type Action } from './reducer.ts'
 import { emptyStore, normalise, parseStore, serialiseStore } from './storage.ts'
 import {
   DEFAULT_FORMAT,
@@ -1316,5 +1316,114 @@ describe('les plis partent de la mise', () => {
       { type: 'game/phase', phase: 'results' },
     )
     expect(store.draft?.tricks.p1).toBe(0)
+  })
+})
+
+/*
+ * Deux « Marie » à la même table seraient indiscernables partout : l'app écrit
+ * les noms en entier précisément pour ne jamais avoir à les distinguer
+ * autrement. L'écran de nouvelle partie le vérifiait seul ; la liste des
+ * joueurs et le renommage, non.
+ */
+describe('noms uniques', () => {
+  it('reconnaît un doublon à la casse et aux espaces près', () => {
+    const players = seeded().players
+    expect(nameTaken(players, 'ana')).toBe(true)
+    expect(nameTaken(players, '  Ana  ')).toBe(true)
+    expect(nameTaken(players, 'Dee')).toBe(false)
+  })
+
+  it('laisse un joueur garder son propre nom', () => {
+    // Sans quoi corriger une majuscule serait impossible.
+    expect(nameTaken(seeded().players, 'Ana', 'p1')).toBe(false)
+  })
+
+  it('refuse un ajout en double', () => {
+    const store = run(seeded(), { type: 'players/add', name: 'ANA', id: 'p9' })
+    expect(store.players).toHaveLength(3)
+  })
+
+  it('refuse un renommage vers un nom déjà pris', () => {
+    const store = run(seeded(), { type: 'players/rename', id: 'p1', name: 'Bo' })
+    expect(store.players[0].name).toBe('Ana')
+  })
+
+  it('accepte un renommage qui ne change que la casse', () => {
+    const store = run(seeded(), { type: 'players/rename', id: 'p1', name: 'ANA' })
+    expect(store.players[0].name).toBe('ANA')
+  })
+})
+
+describe('suppression d un joueur', () => {
+  it('se rejoue à sa place dans la liste', () => {
+    const store = seeded()
+    const player = store.players[1]
+    const removed = run(store, { type: 'players/remove', id: 'p2' })
+    expect(removed.players.map((entry) => entry.name)).toEqual(['Ana', 'Cy'])
+
+    const restored = run(removed, { type: 'players/restore', player, at: 1 })
+    expect(restored.players.map((entry) => entry.name)).toEqual(['Ana', 'Bo', 'Cy'])
+  })
+
+  it('ne rejoue pas un joueur déjà présent', () => {
+    const store = seeded()
+    const again = run(store, { type: 'players/restore', player: store.players[0], at: 0 })
+    expect(again.players).toHaveLength(3)
+  })
+})
+
+/*
+ * « Annuler » après une correction.
+ *
+ * Le bandeau appelait `undoRound`, qui retire la *dernière* manche validée :
+ * corriger la manche 1 d'une partie de trois et toucher « Annuler » effaçait
+ * la manche 3, gardait la correction, et emportait la saisie mise de côté.
+ * L'écran choisit désormais son annulation, et `replaceRound` est celle d'une
+ * correction.
+ */
+describe('annulation d une correction', () => {
+  const threeRounds = (): Store => {
+    let store = started()
+    for (const round of [1, 2, 3]) {
+      store = playRound(store, [
+        ['p1', 0, round === 1 ? 1 : 0],
+        ['p2', 0, 0],
+        ['p3', 0, round === 1 ? 0 : round === 2 ? 1 : 0],
+      ])
+    }
+    return store
+  }
+
+  it('repose la manche corrigée sans toucher aux autres', () => {
+    const store = threeRounds()
+    const before = runningGame(store)!.rounds.find((round) => round.index === 1)!
+
+    const corrected = run(
+      store,
+      { type: 'game/editRound', index: 1 },
+      { type: 'game/setTricks', playerId: 'p1', tricks: 0 },
+      { type: 'game/setTricks', playerId: 'p2', tricks: 1 },
+      { type: 'game/commitRound' },
+    )
+    expect(runningGame(corrected)!.rounds).toHaveLength(3)
+    const changed = runningGame(corrected)!.rounds.find((round) => round.index === 1)!
+    expect(changed.entries.find((entry) => entry.playerId === 'p2')?.tricks).toBe(1)
+
+    const undone = run(corrected, { type: 'game/replaceRound', round: before })
+    expect(runningGame(undone)!.rounds).toHaveLength(3)
+    expect(runningGame(undone)!.rounds.find((round) => round.index === 1)).toEqual(before)
+    // Et surtout : les manches 2 et 3 n'ont pas bougé d'une ligne.
+    expect(runningGame(undone)!.rounds.map((round) => round.index)).toEqual([1, 2, 3])
+  })
+
+  it('rend la main à la manche en cours après une correction validée', () => {
+    const store = threeRounds()
+    const corrected = run(
+      store,
+      { type: 'game/editRound', index: 1 },
+      { type: 'game/commitRound' },
+    )
+    expect(corrected.draft?.roundIndex).toBe(4)
+    expect(corrected.liveDraft).toBeUndefined()
   })
 })

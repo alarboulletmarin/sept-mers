@@ -18,11 +18,49 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
   const [drag, setDrag] = useState(0)
   const startY = useRef<number | null>(null)
 
+  /** Ce qu'on peut atteindre au clavier dans la feuille, dans l'ordre du DOM. */
+  const focusables = (): HTMLElement[] => {
+    const root = sheetRef.current
+    if (!root) return []
+    return [
+      ...root.querySelectorAll<HTMLElement>(
+        'a[href], button:not(:disabled), input:not(:disabled), select, textarea, [tabindex]:not([tabindex="-1"])',
+      ),
+    ]
+  }
+
   useEffect(() => {
     if (!open) return
+
+    /*
+     * Le focus reste dans la feuille tant qu'elle est ouverte, et revient d'où
+     * il venait quand elle se ferme.
+     *
+     * Sans ça, la tabulation sortait derrière le voile : on continuait à
+     * parcourir l'écran caché, dont les commandes restaient actives, sans
+     * qu'aucun repère visible ne suive. Une feuille modale qui laisse filer le
+     * focus n'est modale que pour la souris.
+     */
+    const restoreTo = document.activeElement as HTMLElement | null
+
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') return onClose()
+      if (event.key !== 'Tab') return
+      const stops = focusables()
+      if (stops.length === 0) return
+      const first = stops[0]
+      const last = stops[stops.length - 1]
+      const active = document.activeElement
+      // Le bord franchi ramène à l'autre bout : la boucle est le piège.
+      if (event.shiftKey && (active === first || active === sheetRef.current)) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
+
     document.addEventListener('keydown', onKey)
     // Le fond ne défile pas pendant qu'on lit la feuille.
     const previous = document.body.style.overflow
@@ -31,6 +69,9 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = previous
+      // Le bouton qui a ouvert la feuille reprend le focus : sans ça, il
+      // repart au début du document et on a perdu sa place.
+      if (restoreTo && document.contains(restoreTo)) restoreTo.focus()
     }
   }, [open, onClose])
 

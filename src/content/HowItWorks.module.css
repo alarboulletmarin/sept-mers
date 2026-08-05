@@ -1,0 +1,45 @@
+/*
+ * Trois phrases numérotées, sans widget ni fond : c'est du texte, il doit
+ * ressembler à du texte.
+ *
+ * Ces règles vivaient dans l'accueil, où le bloc n'apparaissait qu'au tout
+ * premier lancement et disparaissait ensuite pour toujours. Elles vivent ici
+ * depuis qu'il se relit aussi depuis « À propos » — le geste de prêter son
+ * téléphone à quelqu'un qui ne connaît pas l'app.
+ */
+
+.how {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.index {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline);
+  color: var(--canvas-muted);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.text {
+  min-width: 0;
+  font-size: var(--size-body);
+  line-height: 1.5;
+  text-wrap: pretty;
+}

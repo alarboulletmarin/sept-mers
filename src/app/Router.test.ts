@@ -11,7 +11,7 @@ import { hrefFor, parsePath, type Route } from './Router.tsx'
  *   l'écran qu'elles nommaient.
  */
 
-/** Les dix routes, dans leur forme la plus complète. */
+/** Les onze routes, dans leur forme la plus complète. */
 const ROUTES: Route[] = [
   { name: 'home' },
   { name: 'new' },
@@ -26,6 +26,7 @@ const ROUTES: Route[] = [
   { name: 'watch' },
   { name: 'watch', code: 'AB2C3D' },
   { name: 'recap' },
+  { name: 'about' },
 ]
 
 describe('routeur', () => {

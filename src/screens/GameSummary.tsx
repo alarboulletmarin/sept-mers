@@ -9,7 +9,8 @@ import { Icon } from '../components/Icon.tsx'
 import { ScoreTable } from '../components/ScoreTable.tsx'
 import { Sheet } from '../components/Sheet.tsx'
 import { Caption, Figure, Tag, Widget, WidgetTitle } from '../components/Widget.tsx'
-import { standings, winnerIds } from '../domain/stats.ts'
+import { standings, tieBreakers, winnerIds } from '../domain/stats.ts'
+import { isCutShort } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import { ShareSheet } from '../share/ShareSheet.tsx'
 import { gameById, runningGame } from '../store/reducer.ts'
@@ -81,6 +82,18 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
         </div>
       }
     >
+      {/* Une partie qui s'arrête avant la fin de son format garde son
+          classement — c'est ce que la table a joué — mais elle le dit, et elle
+          ne pèsera pas dans les statistiques des joueurs. */}
+      {isCutShort(game) && (
+        <p className={styles.partial}>
+          {t('summary.partial', {
+            played: game.rounds.length,
+            total: game.format.rounds,
+          })}
+        </p>
+      )}
+
       <div className="mosaic">
         {/* Le vainqueur en héros : c'est la seule chose qu'on regarde d'abord. */}
         <Widget surface="accent" span="md">
@@ -111,6 +124,27 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
             )}
           </Widget>
         ))}
+
+        {/* L'égalité en tête : l'app ne tranche pas — le livret ne le fait pas
+            non plus — mais elle pose les deux chiffres qu'une table regarde
+            spontanément pour se départager elle-même. */}
+        {winners.length > 1 && (
+          <Widget surface="sunken" span="md">
+            <Tag>{t('summary.tie.title')}</Tag>
+            <p className={styles.tieHelp}>{t('summary.tie.help')}</p>
+            <dl className={styles.tie}>
+              {tieBreakers(game, winners).map((row) => (
+                <div key={row.playerId} className={styles.tieRow}>
+                  <dt className={styles.tieName}>{game.nameSnapshot[row.playerId]}</dt>
+                  <dd className={styles.tieValue}>
+                    {t('summary.tie.kept', { count: row.bidsKept })} ·{' '}
+                    {t('summary.tie.bonus', { points: number(row.bonusPoints) })}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </Widget>
+        )}
 
         <Widget surface="accent" span="md">
           <Tag>{t('chart.scores.title')}</Tag>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, type KeyboardEvent, type MouseEvent } from 'react'
 import { Icon } from './Icon.tsx'
 import styles from './Stepper.module.css'
 
@@ -78,6 +78,51 @@ export function Stepper({
     }, HOLD_DELAY)
   }
 
+  /**
+   * L'activation qui ne vient pas d'un doigt ni d'une souris.
+   *
+   * Les deux boutons n'écoutaient que `pointerdown`, qu'aucune touche du
+   * clavier n'émet et qu'aucun lecteur d'écran ne synthétise : toute la saisie
+   * de l'app — mises, plis, format, primes — était donc hors d'atteinte sans
+   * pointeur. Une activation au clavier ou par une technologie d'assistance
+   * arrive en `click` avec un `detail` à zéro, là où un vrai clic compte ses
+   * pressions. C'est ce zéro qui distingue les deux, et qui évite de compter
+   * deux fois le clic de souris déjà servi par `pointerdown`.
+   */
+  const activate = (direction: 1 | -1) => (event: MouseEvent) => {
+    if (event.detail !== 0) return
+    tick()
+    step(direction)
+  }
+
+  /**
+   * Les flèches, comme sur n'importe quel compteur. C'est le chemin rapide :
+   * une seule tabulation par tuile, puis on monte et on descend sans quitter
+   * la valeur des yeux. `Origine` et `Fin` vont aux bornes, parce qu'à neuf
+   * cartes la dernière manche coûterait autrement neuf pressions.
+   */
+  const onKeyDown = (event: KeyboardEvent) => {
+    const current = value ?? 0
+    const jump = (next: number) => {
+      event.preventDefault()
+      const bounded = Math.min(max, Math.max(min, next))
+      if (bounded !== value) onChange(bounded)
+    }
+    switch (event.key) {
+      case 'ArrowUp':
+      case 'ArrowRight':
+        return jump(current + 1)
+      case 'ArrowDown':
+      case 'ArrowLeft':
+        return jump(current - 1)
+      case 'Home':
+        return jump(min)
+      case 'End':
+        return jump(max)
+      default:
+    }
+  }
+
   const atMin = value !== null && value <= min
   const atMax = value !== null && value >= max
 
@@ -85,6 +130,10 @@ export function Stepper({
     <div
       className={styles.stepper}
       role="spinbutton"
+      // Focusable, donc utilisable : un `spinbutton` qu'on ne peut pas
+      // atteindre annonce une commande qui n'existe pas.
+      tabIndex={0}
+      onKeyDown={onKeyDown}
       aria-label={label}
       aria-valuemin={min}
       aria-valuemax={max}
@@ -95,6 +144,12 @@ export function Stepper({
         className={styles.button}
         aria-label={decreaseLabel}
         disabled={atMin}
+        // Hors du parcours de tabulation : la valeur, juste à côté, est le
+        // seul arrêt du compteur et les flèches y font le même travail. Le
+        // bouton reste dans l'arbre d'accessibilité, donc atteignable au
+        // curseur virtuel d'un lecteur d'écran comme au balayage.
+        tabIndex={-1}
+        onClick={activate(-1)}
         onPointerDown={() => hold(-1)}
         onPointerUp={stop}
         onPointerLeave={stop}
@@ -112,6 +167,8 @@ export function Stepper({
         className={styles.button}
         aria-label={increaseLabel}
         disabled={atMax}
+        tabIndex={-1}
+        onClick={activate(1)}
         onPointerDown={() => hold(1)}
         onPointerUp={stop}
         onPointerLeave={stop}

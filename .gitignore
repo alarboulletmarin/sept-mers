@@ -5,6 +5,9 @@ dist-ssr
 .DS_Store
 .vite
 coverage
+# Les captures pleine page du parcours, pour déboguer. Celles du README, elles,
+# sont versionnées : elles vivent dans `docs/captures/` et se regénèrent avec
+# `node scripts/smoke.mjs --captures`.
 shots
 
 # Artefacts de compilation incrémentale de TypeScript.

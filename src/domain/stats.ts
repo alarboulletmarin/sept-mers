@@ -1,6 +1,7 @@
 import { finalBid, scoreRound, type ScoreResult } from './scoring.ts'
 import {
   BONUS_KEYS,
+  isComplete,
   type Game,
   type Id,
   type Player,
@@ -203,10 +204,23 @@ const EMPTY_STATS = (playerId: Id): PlayerStats => ({
   bonusPoints: 0,
 })
 
-/** Statistiques d'un joueur sur les parties terminées. */
+/**
+ * Les parties d'un joueur qui comptent au palmarès : celles qui sont allées au
+ * bout de leur format.
+ *
+ * Une partie écourtée reste dans l'historique et garde son classement — c'est
+ * ce que la table a joué —, mais elle ne pèse ni dans les moyennes ni dans les
+ * victoires : une partie quittée après une manche donnerait sinon une victoire
+ * pleine à qui menait au premier coup de chance.
+ */
+export function countedGames(playerId: Id, games: Game[]): Game[] {
+  return games.filter((game) => isComplete(game) && game.playerIds.includes(playerId))
+}
+
+/** Statistiques d'un joueur sur les parties allées au bout. */
 export function playerStats(playerId: Id, games: Game[]): PlayerStats {
   const stats = EMPTY_STATS(playerId)
-  const finished = games.filter((game) => game.endedAt && game.playerIds.includes(playerId))
+  const finished = countedGames(playerId, games)
   if (finished.length === 0) return stats
 
   let pointsSum = 0
@@ -242,4 +256,176 @@ export function ranking(players: Player[], games: Game[]): PlayerStats[] {
     .map((player) => playerStats(player.id, games))
     .filter((stats) => stats.gamesPlayed > 0)
     .sort((a, b) => b.wins - a.wins || b.averagePoints - a.averagePoints)
+}
+
+// ------------------------------------------------------ Le détail d'un joueur
+
+/**
+ * La plus longue série de mises tenues d'affilée, et celle qui court encore.
+ *
+ * Une série ne traverse pas les parties : deux mises tenues à la fin d'une
+ * soirée et deux au début de la suivante ne font pas quatre. Les manches sont
+ * relues dans l'ordre de leur numéro, jamais dans celui du fichier.
+ */
+export interface Streak {
+  best: number
+  /** Série en cours à la fin de la dernière partie comptée. */
+  current: number
+}
+
+export function keptStreak(playerId: Id, games: Game[]): Streak {
+  const counted = countedGames(playerId, games).sort((a, b) =>
+    (a.endedAt ?? a.startedAt).localeCompare(b.endedAt ?? b.startedAt),
+  )
+
+  let best = 0
+  let current = 0
+  for (const game of counted) {
+    // La série repart à zéro d'une partie à l'autre : on la remet ici et non
+    // à la fin, pour que `current` garde celle de la dernière partie.
+    current = 0
+    const rounds = [...game.rounds].sort((a, b) => a.index - b.index)
+    for (const round of rounds) {
+      const entry = round.entries.find((candidate) => candidate.playerId === playerId)
+      if (!entry) continue
+      const kept = entryScore(entry, round, game).outcome === 'exact'
+      current = kept ? current + 1 : 0
+      if (current > best) best = current
+    }
+  }
+  return { best, current }
+}
+
+/**
+ * La précision par taille de main.
+ *
+ * Tenir sa mise à une carte et la tenir à neuf ne sont pas le même exercice :
+ * la moyenne globale mélange les deux et ne dit rien. Une ligne par nombre de
+ * cartes, dans l'ordre croissant, et seulement les tailles réellement jouées.
+ */
+export interface CardsAccuracy {
+  cards: number
+  rounds: number
+  kept: number
+  /** Part de mises tenues à cette taille de main, 0..1. */
+  rate: number
+}
+
+export function accuracyByCards(playerId: Id, games: Game[]): CardsAccuracy[] {
+  const buckets = new Map<number, { rounds: number; kept: number }>()
+
+  for (const game of countedGames(playerId, games)) {
+    for (const round of game.rounds) {
+      const entry = round.entries.find((candidate) => candidate.playerId === playerId)
+      if (!entry) continue
+      const bucket = buckets.get(round.cards) ?? { rounds: 0, kept: 0 }
+      bucket.rounds += 1
+      if (entryScore(entry, round, game).outcome === 'exact') bucket.kept += 1
+      buckets.set(round.cards, bucket)
+    }
+  }
+
+  return [...buckets.entries()]
+    .map(([cards, bucket]) => ({
+      cards,
+      rounds: bucket.rounds,
+      kept: bucket.kept,
+      rate: bucket.rounds > 0 ? bucket.kept / bucket.rounds : 0,
+    }))
+    .sort((a, b) => a.cards - b.cards)
+}
+
+/**
+ * Le face-à-face : contre chaque joueur croisé, combien de fois on a fini
+ * devant, derrière, ou à égalité de points.
+ *
+ * « Devant » et non « gagné » : à quatre, terminer deuxième devant quelqu'un
+ * dit quelque chose de la rivalité, alors que la victoire ne dit rien des
+ * trois autres.
+ */
+export interface HeadToHead {
+  opponentId: Id
+  shared: number
+  ahead: number
+  behind: number
+  tied: number
+}
+
+export function headToHead(playerId: Id, games: Game[]): HeadToHead[] {
+  const rows = new Map<Id, HeadToHead>()
+
+  for (const game of countedGames(playerId, games)) {
+    const scores = totals(game)
+    const mine = scores[playerId] ?? 0
+    for (const opponentId of game.playerIds) {
+      if (opponentId === playerId) continue
+      const row = rows.get(opponentId) ?? {
+        opponentId,
+        shared: 0,
+        ahead: 0,
+        behind: 0,
+        tied: 0,
+      }
+      const theirs = scores[opponentId] ?? 0
+      row.shared += 1
+      if (mine > theirs) row.ahead += 1
+      else if (mine < theirs) row.behind += 1
+      else row.tied += 1
+      rows.set(opponentId, row)
+    }
+  }
+
+  return [...rows.values()].sort((a, b) => b.shared - a.shared || b.ahead - a.ahead)
+}
+
+/**
+ * L'évolution dans le temps : un point par partie comptée, du plus ancien au
+ * plus récent. De quoi voir si l'on progresse, ce qu'aucune moyenne ne dit.
+ */
+export interface TimelinePoint {
+  gameId: Id
+  /** Date de fin, ou de début pour une partie sans date de fin lisible. */
+  at: string
+  total: number
+  rank: number
+  seats: number
+}
+
+export function playerTimeline(playerId: Id, games: Game[]): TimelinePoint[] {
+  return countedGames(playerId, games)
+    .map((game) => {
+      const row = standings(game).find((candidate) => candidate.playerId === playerId)
+      return {
+        gameId: game.id,
+        at: game.endedAt ?? game.startedAt,
+        total: row?.total ?? 0,
+        rank: row?.rank ?? game.playerIds.length,
+        seats: game.playerIds.length,
+      }
+    })
+    .sort((a, b) => a.at.localeCompare(b.at))
+}
+
+/**
+ * Le départage d'une égalité en tête, pour information seulement.
+ *
+ * Le livret ne tranche pas les égalités, et l'app n'inventera pas de règle :
+ * elle pose côte à côte les deux chiffres qu'une table regarde spontanément —
+ * les mises tenues, puis les points de prime — et laisse décider. Le
+ * classement, lui, garde ses deux premiers ex æquo.
+ */
+export interface TieRow {
+  playerId: Id
+  bidsKept: number
+  bonusPoints: number
+}
+
+export function tieBreakers(game: Game, playerIds: Id[]): TieRow[] {
+  const accuracies = accuracy(game)
+  const bonuses = bonusTotals(game)
+  return playerIds.map((playerId) => ({
+    playerId,
+    bidsKept: accuracies.find((row) => row.playerId === playerId)?.exact ?? 0,
+    bonusPoints: bonuses.find((row) => row.playerId === playerId)?.points ?? 0,
+  }))
 }

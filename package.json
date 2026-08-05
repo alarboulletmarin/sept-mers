@@ -4,6 +4,14 @@
   "description": "Compteur de points non officiel pour Skull King. Front only, hors ligne, sans compte.",
   "license": "MIT",
   "author": "Andréa Larboullet Marin",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alarboulletmarin/sept-mers.git"
+  },
+  "bugs": {
+    "url": "https://github.com/alarboulletmarin/sept-mers/issues"
+  },
+  "homepage": "https://github.com/alarboulletmarin/sept-mers#readme",
   "type": "module",
   "private": true,
   "engines": {

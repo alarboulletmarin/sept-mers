@@ -32,8 +32,6 @@ import {
 const LOCALES: Locale[] = ['fr', 'en']
 const THEMES: Theme[] = ['light', 'dark', 'system']
 
-const APP_VERSION = '1.0.0'
-
 export function Settings({ go }: { go: (route: Route) => void }) {
   const { store, dispatch } = useStore()
   const { t } = useT()
@@ -42,7 +40,6 @@ export function Settings({ go }: { go: (route: Route) => void }) {
   const fileInput = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState<{ store: Store; summary: ImportSummary } | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [aboutOpen, setAboutOpen] = useState(false)
   const [confirmClear, setConfirmClear] = useState(false)
 
   const exportData = () => {
@@ -246,8 +243,11 @@ export function Settings({ go }: { go: (route: Route) => void }) {
         <p className={styles.note}>{t('settings.storage')}</p>
       </section>
 
+      {/* « À propos » a son écran depuis qu'il porte aussi l'explication du
+          jeu, l'installation et les mentions : une feuille modale n'est pas un
+          endroit où l'on revient. */}
       <section className="stack-tight">
-        <Button variant="quiet" onClick={() => setAboutOpen(true)}>
+        <Button variant="quiet" onClick={() => go({ name: 'about' })}>
           {t('settings.about')}
         </Button>
       </section>
@@ -275,16 +275,6 @@ export function Settings({ go }: { go: (route: Route) => void }) {
         )}
       </Sheet>
 
-      <Sheet open={aboutOpen} onClose={() => setAboutOpen(false)} title={t('about.title')}>
-        <div className="stack">
-          <p className="t-body">{t('about.what')}</p>
-          <p className="t-body">{t('about.offline')}</p>
-          <hr className={styles.divider} />
-          <p className={styles.help}>{t('about.trademark')}</p>
-          <p className={styles.help}>{t('about.rulesRewritten')}</p>
-          <p className={styles.help}>{t('about.version', { version: APP_VERSION })}</p>
-        </div>
-      </Sheet>
     </Screen>
   )
 }

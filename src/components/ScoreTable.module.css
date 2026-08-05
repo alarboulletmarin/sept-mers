@@ -188,6 +188,19 @@
   cursor: pointer;
 }
 
+/* Le bouton qui rend la ligne atteignable au clavier. Il n'a pas d'allure à
+   lui : c'est la ligne qu'on voit, pas lui. Seul le focus le révèle. */
+.editButton {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+}
+
 /* Six joueurs ou plus : on resserre, et le cumul cède la place. */
 .dense .roundCol {
   width: 13%;

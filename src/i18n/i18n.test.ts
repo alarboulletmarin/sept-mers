@@ -1,3 +1,4 @@
+import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { dictionaries, makeI18n, translate } from './index.ts'
 
@@ -90,5 +91,51 @@ describe('mise en forme', () => {
 
   it('rend la chaîne telle quelle si la date est illisible', () => {
     expect(fr.date('pas-une-date')).toBe('pas-une-date')
+  })
+})
+
+/*
+ * Aucune clé morte.
+ *
+ * Dix-sept libellés traînaient dans les deux dictionnaires sans qu'une seule
+ * ligne de code les demande : des écrans abandonnés, des formulations
+ * remplacées. Rien ne les signalait, et chacun coûtait une traduction à
+ * maintenir. Le test lit le code plutôt que de se fier à une liste, parce
+ * qu'une liste aurait le même défaut que ce qu'elle surveille.
+ */
+describe('clés employées', () => {
+  const sources = (): string => {
+    const root = new URL('../', import.meta.url)
+    const files: string[] = []
+    const walk = (dir: URL) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = new URL(`${entry.name}${entry.isDirectory() ? '/' : ''}`, dir)
+        if (entry.isDirectory()) walk(path)
+        else if (/\.tsx?$/.test(entry.name) && !entry.name.includes('.test.')) {
+          files.push(readFileSync(path, 'utf8'))
+        }
+      }
+    }
+    walk(root)
+    return files.join('\n')
+  }
+
+  it('ne laisse aucune clé sans emploi', () => {
+    const code = sources()
+    const used = (key: string): boolean => {
+      // La variante de pluriel suit sa clé de base : c'est `translate` qui la
+      // choisit, jamais l'appelant.
+      const base = key.endsWith('One') && dictionaries.fr[key.slice(0, -3)] ? key.slice(0, -3) : key
+      if (code.includes(`'${base}'`) || code.includes(`"${base}"`)) return true
+      // Les clés composées à la volée : `t(\`issue.${code}\`)`, `t(\`newGame.${key}\`)`.
+      const parts = base.split('.')
+      for (let cut = 1; cut < parts.length; cut += 1) {
+        if (code.includes(`\`${parts.slice(0, cut).join('.')}.`)) return true
+      }
+      return false
+    }
+
+    const orphans = Object.keys(dictionaries.fr).filter((key) => !used(key))
+    expect(orphans, `clés jamais employées : ${orphans.join(', ')}`).toEqual([])
   })
 })
