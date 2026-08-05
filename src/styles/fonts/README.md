@@ -28,4 +28,4 @@ mention de copyright de chacune sont conservés ici, comme la licence l'exige :
 - [`OFL-instrument-sans.txt`](OFL-instrument-sans.txt)
 - [`OFL-jetbrains-mono.txt`](OFL-jetbrains-mono.txt)
 
-La licence de l'app elle-même (MIT) ne s'applique pas à ces fichiers.
+La licence de l'app elle-même (AGPL-3.0) ne s'applique pas à ces fichiers.

@@ -380,10 +380,11 @@
   "about.privacy.share": "Table sharing is the only exception, and only opens on purpose: the game state travels encrypted from phone to phone. Matchmaking goes through public relays, which see the phones' IP addresses without seeing the game.",
   "about.privacy.host": "The site's host logs requests, IP addresses included, as any host does.",
   "about.source.title": "Source code and licences",
-  "about.source": "Sept Mers is free software, under the MIT licence. The code can be read, copied and modified.",
+  "about.source": "Sept Mers is free software, under the AGPL-3.0 licence. The code can be read, copied and modified — and any modified version made available, even over a network, must open its own source in turn.",
   "about.source.link": "See the code on GitHub",
   "about.licenses.link": "Licences of bundled components",
-  "about.fonts": "The two embedded typefaces — Instrument Sans and JetBrains Mono — are under the SIL Open Font License 1.1. The app's MIT licence does not apply to them.",
+  "about.content": "The rules text shown here is also available under the Creative Commons BY-SA 4.0 licence, so it can be used outside this app.",
+  "about.fonts": "The two embedded typefaces — Instrument Sans and JetBrains Mono — are under the SIL Open Font License 1.1. The app's AGPL-3.0 licence does not apply to them.",
   "about.legal.title": "Legal notice",
   "about.publisher": "Publisher: Andréa Larboullet Marin. Contact: through the project repository.",
   "about.host": "Host: Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, United States."

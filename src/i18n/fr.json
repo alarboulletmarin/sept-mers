@@ -380,10 +380,11 @@
   "about.privacy.share": "Le partage de table est la seule exception, et ne s'ouvre qu'à la main : l'état de la partie circule chiffré d'un téléphone à l'autre. La mise en relation passe par des relais publics, qui voient les adresses IP des téléphones sans voir la partie.",
   "about.privacy.host": "L'hébergeur du site journalise les requêtes, adresses IP comprises, comme tout hébergeur.",
   "about.source.title": "Code source et licences",
-  "about.source": "Sept Mers est un logiciel libre, sous licence MIT. Le code se lit, se copie et se modifie.",
+  "about.source": "Sept Mers est un logiciel libre, sous licence AGPL-3.0. Le code se lit, se copie et se modifie — et toute version modifiée mise à disposition, même en ligne, doit rouvrir sa source à son tour.",
   "about.source.link": "Voir le code sur GitHub",
   "about.licenses.link": "Licences des composants embarqués",
-  "about.fonts": "Les deux familles typographiques embarquées — Instrument Sans et JetBrains Mono — sont sous SIL Open Font License 1.1. La licence MIT de l'app ne s'y applique pas.",
+  "about.content": "Le texte des règles présenté ici est aussi disponible sous licence Creative Commons BY-SA 4.0, pour servir ailleurs que dans cette app.",
+  "about.fonts": "Les deux familles typographiques embarquées — Instrument Sans et JetBrains Mono — sont sous SIL Open Font License 1.1. La licence AGPL-3.0 de l'app ne s'y applique pas.",
   "about.legal.title": "Mentions légales",
   "about.publisher": "Éditeur : Andréa Larboullet Marin. Contact : par le dépôt du projet.",
   "about.host": "Hébergeur : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis."
