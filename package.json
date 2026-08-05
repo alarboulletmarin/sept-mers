@@ -2,7 +2,7 @@
   "name": "sept-mers",
   "version": "1.0.0",
   "description": "Compteur de points non officiel pour Skull King. Front only, hors ligne, sans compte.",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "author": "Andréa Larboullet Marin",
   "repository": {
     "type": "git",
