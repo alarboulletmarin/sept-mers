@@ -69,9 +69,10 @@ function render(root) {
     '',
     "Ce fichier accompagne l'application distribuée. Il porte les mentions de",
     'copyright et les licences de tout ce que le site sert et qui ne relève pas',
-    "de la licence MIT de l'app elle-même.",
+    "de la licence de l'app elle-même.",
     '',
-    "L'app : MIT, voir le dépôt.",
+    "L'app : AGPL-3.0-only, voir le dépôt. Le texte des règles, le design system",
+    'et les captures y sont aussi disponibles sous CC BY-SA 4.0.',
     '',
   ]
 

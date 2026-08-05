@@ -412,13 +412,32 @@ voir [SECURITY.md](SECURITY.md).
 
 ## Licence
 
-MIT. Voir [LICENSE](LICENSE).
+**Le code : AGPL-3.0-only.** Voir [LICENSE](LICENSE) pour le texte, et
+[NOTICE](NOTICE) pour l'avis de copyright et ce qui n'en relève pas.
 
-Les deux familles typographiques embarquées — **Instrument Sans**, publiée par
-Instrument, et **JetBrains Mono**, publiée par JetBrains — sont sous SIL Open
-Font License 1.1. Leur texte de licence est conservé dans
+L'app se lit, se copie, se modifie et se déploie — y compris pour en vivre. La
+seule contrepartie est celle qui compte : **une version modifiée mise à la
+disposition de qui que ce soit, ne serait-ce qu'à travers un réseau, doit publier
+sa source sous la même licence.** C'est le §13 de l'AGPL, et c'est ce qui la
+distingue de la GPL pour une app comme celle-ci : un front seul ne se
+« distribue » pas au sens classique, il se visite. L'écran « À propos » porte le
+lien vers la source, et c'est ce lien qui rend le déploiement conforme.
+
+**Le contenu rédactionnel : CC BY-SA 4.0.** Voir
+[LICENSE-CONTENT](LICENSE-CONTENT). Le texte des règles — une réécriture
+originale, pas une copie —, le design system et les captures sont *aussi*
+disponibles sous Creative Commons Attribution-ShareAlike 4.0, pour qu'ils
+servent ailleurs que dans un logiciel. Les fichiers concernés sont disponibles au
+choix sous l'une ou l'autre licence.
+
+**Les fontes : SIL Open Font License 1.1.** Les deux familles embarquées —
+**Instrument Sans**, publiée par Instrument, et **JetBrains Mono**, publiée par
+JetBrains — sont sous OFL 1.1. Leur texte de licence est conservé dans
 [`src/styles/fonts/`](src/styles/fonts/), et la licence de l'app ne s'y applique
 pas.
+
+Rien de tout cela ne concède de droit sur la marque « Skull King », déposée par
+Grandpa Beck's Games, Inc., à qui le projet n'est ni affilié ni approuvé.
 
 **Ce qui est distribué porte sa licence.** Un site déployé est une
 distribution : les paquets sous MIT qu'il embarque demandent que leur mention

@@ -7,7 +7,14 @@ import { HowItWorks } from '../content/HowItWorks.tsx'
 import { useT } from '../i18n/index.ts'
 import styles from './About.module.css'
 
-/** L'adresse du code, une bonne fois : l'app est libre, elle doit le dire. */
+/**
+ * L'adresse du code, une bonne fois : l'app est libre, elle doit le dire.
+ *
+ * Ce lien n'est pas décoratif depuis le passage sous AGPL-3.0. Un front seul ne
+ * se distribue pas, il se visite — et c'est exactement le cas que couvre le §13,
+ * qui demande que l'utilisateur atteint par le réseau puisse atteindre la source.
+ * Retirer ce lien rendrait le déploiement non conforme.
+ */
 export const SOURCE_URL = 'https://github.com/alarboulletmarin/sept-mers'
 
 /**
@@ -96,8 +103,13 @@ export function About({ go }: { go: (route: Route) => void }) {
       {/*
         L'app est libre, et le disait seulement dans son dépôt. Le lien vers la
         source est ce qui rend la licence utile à qui lit l'app plutôt que le
-        code — et le fichier des licences tierces est ce qui rend la
-        distribution conforme au MIT de ce qu'elle embarque.
+        code — et, sous AGPL, ce qui satisfait le §13 pour un site qu'on visite
+        sans rien télécharger. Le fichier des licences tierces, lui, est ce qui
+        rend la distribution conforme au MIT de ce qu'elle embarque.
+
+        La mention du contenu est distincte de celle du code, parce que les deux
+        ne relèvent pas de la même licence : le texte des règles est aussi
+        disponible sous CC BY-SA 4.0.
        */}
       <section className="stack-tight">
         <h2 className="section-title">{t('about.source.title')}</h2>
@@ -110,6 +122,7 @@ export function About({ go }: { go: (route: Route) => void }) {
           <Icon name="chevron" size={16} />
           {t('about.licenses.link')}
         </a>
+        <p className={styles.note}>{t('about.content')}</p>
         <p className={styles.note}>{t('about.fonts')}</p>
       </section>
 

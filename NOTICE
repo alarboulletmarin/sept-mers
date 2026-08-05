@@ -1,0 +1,34 @@
+Sept Mers — compteur de points non officiel pour Skull King.
+Copyright (C) 2026 Andréa Larboullet Marin
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, version 3.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with this program. If not, see <https://www.gnu.org/licenses/>.
+
+The source of the deployed application is available at
+<https://github.com/alarboulletmarin/sept-mers>, as required by section 13.
+
+
+Ce qui ne relève pas de cette licence
+-------------------------------------
+
+  - Le texte des règles (src/content/rules.fr.ts, src/content/rules.en.ts), le
+    design system (docs/design-system.md) et les captures (docs/captures/*.png)
+    sont *aussi* disponibles sous CC BY-SA 4.0 — voir LICENSE-CONTENT.
+
+  - Les quatre fichiers de fonte (src/styles/fonts/*.woff2) sont sous SIL Open
+    Font License 1.1, et l'AGPL ne s'y applique pas — voir src/styles/fonts/.
+
+  - Les dépendances embarquées dans le build restent sous leurs propres
+    licences, recopiées dans licenses.txt à côté du bundle distribué.
+
+  - « Skull King » est une marque déposée de Grandpa Beck's Games, Inc. Sept
+    Mers n'est ni affilié à, ni approuvé par son éditeur, et aucune licence de
+    ce dépôt ne concède le moindre droit sur cette marque.

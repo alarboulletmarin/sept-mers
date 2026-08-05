@@ -72,5 +72,14 @@ comprendra pourquoi.
 
 ## Licence
 
-En contribuant, vous acceptez que votre contribution soit publiée sous la
-licence MIT du projet.
+En contribuant, vous acceptez que votre contribution soit publiée sous les
+licences du projet, sans autre formalité — pas de CLA à signer, ce qui entre est
+ce qui sort :
+
+- **le code, sous AGPL-3.0-only** ([LICENSE](LICENSE)) ;
+- **le texte des règles, le design system et les captures, sous CC BY-SA 4.0**
+  ([LICENSE-CONTENT](LICENSE-CONTENT)), en plus de l'AGPL.
+
+L'AGPL est un choix, et il tient en une phrase : le projet doit rester ouvert
+chez celui qui le reprend. Vous pouvez le déployer, le modifier, le vendre même
+— mais pas le refermer.

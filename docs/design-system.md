@@ -645,3 +645,8 @@ qu'on met à distance.
 Le thème s'applique par `data-theme` sur `<html>`. En mode système, un
 `matchMedia('(prefers-color-scheme: dark)')` met l'attribut à jour en direct,
 sans rechargement. La `theme-color` du manifeste suit le canevas actif.
+
+---
+
+Ce document et les captures de [`docs/captures/`](captures/) sont disponibles au
+choix sous [CC BY-SA 4.0](../LICENSE-CONTENT) ou sous l'AGPL-3.0-only du dépôt.
