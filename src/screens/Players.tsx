@@ -301,19 +301,27 @@ function PlayerDetail({ playerId, go }: { playerId: string; go: (route: Route) =
         <section className="stack-tight">
           <h2 className="section-title">{t('players.duels')}</h2>
           <p className={styles.hint}>{t('players.duels.help')}</p>
-          <dl className={styles.stats}>
+          {/* Une ligne par adversaire, et non une tuile : la tuile est faite
+              pour un chiffre en héros, et il y en a trois ici. En chasse fixe
+              elle occupait trois lignes par joueur, pour une phrase. */}
+          <dl className={styles.duels}>
             {duels.map((duel) => (
-              <div key={duel.opponentId} className={styles.stat}>
-                <dt className={styles.statLabel}>
+              <div key={duel.opponentId} className={styles.duel}>
+                <dt className={styles.duelName}>
                   {store.players.find((candidate) => candidate.id === duel.opponentId)?.name ??
                     t('players.unknown')}
                 </dt>
-                <dd className={styles.statValue}>
-                  {t('players.duels.record', {
-                    ahead: duel.ahead,
-                    behind: duel.behind,
-                    shared: duel.shared,
-                  })}
+                <dd className={styles.duelValue}>
+                  <span className={styles.duelScore}>
+                    {duel.ahead}–{duel.behind}
+                  </span>
+                  <span className={styles.duelMeta}>
+                    {t('players.duels.record', {
+                      ahead: duel.ahead,
+                      behind: duel.behind,
+                      shared: duel.shared,
+                    })}
+                  </span>
                 </dd>
               </div>
             ))}
