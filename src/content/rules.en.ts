@@ -4,6 +4,16 @@ import type { RuleSection } from './rulesTypes.ts'
  * Original text. Game mechanics are not protectable, the booklet's prose is:
  * nothing here is lifted from the official rulebook, neither its wording nor
  * its chapter structure.
+ *
+ * Ce fichier mêle deux choses de nature différente, et donc deux licences. Le
+ * code TypeScript est sous AGPL-3.0-only, comme le reste du dépôt. Les chaînes
+ * de texte des règles, elles, sont disponibles **au choix** sous CC BY-SA 4.0
+ * (voir `LICENSE-CONTENT`) ou sous AGPL-3.0-only.
+ *
+ * Le choix, plutôt qu'un partage strict, parce que la frontière passerait au
+ * milieu de chaque littéral : qui compile l'app prend tout sous AGPL et n'a
+ * aucune incompatibilité à arbitrer, qui ne veut que le texte prend CC BY-SA et
+ * n'a pas à ouvrir son propre code.
  */
 export const rulesEn: RuleSection[] = [
   {
