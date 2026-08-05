@@ -8,6 +8,7 @@ import { scoreRound } from '../domain/scoring.ts'
 import { standings, totals, winnerIds } from '../domain/stats.ts'
 import {
   GREY_BEARD,
+  dealerFor,
   hasGreyBeard,
   voidedBy,
   voidsTricks,
@@ -56,6 +57,9 @@ function RunningBoard({ game, draft }: { game: Game; draft?: Draft }) {
   const greyBeard = hasGreyBeard(game.playerIds.length)
   const showCharge = game.options.rascalScoring && game.options.cannonball
   const editing = Boolean(draft) && isEditingRound(game, draft as Draft)
+  // Le même donneur que sur le téléphone de la table : il se déduit de la
+  // manche et de l'ordre à table, donc rien n'a besoin de voyager pour lui.
+  const dealer = dealerFor(roundIndex, game.playerIds)
 
   return (
     <div className="stack">
@@ -116,6 +120,7 @@ function RunningBoard({ game, draft }: { game: Game; draft?: Draft }) {
               game={game}
               draft={draft}
               playerId={playerId}
+              dealer={playerId === dealer}
               cards={cards}
               isBids={isBids}
               showCharge={showCharge}
@@ -227,6 +232,8 @@ interface WatchTileProps {
   game: Game
   draft: Draft
   playerId: Id
+  /** Vrai pour celui qui donne cette manche. */
+  dealer: boolean
   cards: number
   isBids: boolean
   showCharge: boolean
@@ -234,7 +241,17 @@ interface WatchTileProps {
   t: (key: string, vars?: Record<string, string | number>) => string
 }
 
-function WatchTile({ game, draft, playerId, cards, isBids, showCharge, signed, t }: WatchTileProps) {
+function WatchTile({
+  game,
+  draft,
+  playerId,
+  dealer,
+  cards,
+  isBids,
+  showCharge,
+  signed,
+  t,
+}: WatchTileProps) {
   const bid = draft.bids[playerId] ?? null
   const tricks = draft.tricks[playerId] ?? null
   const bonus = draft.bonus[playerId]
@@ -260,7 +277,10 @@ function WatchTile({ game, draft, playerId, cards, isBids, showCharge, signed, t
     // Le même contraste que la tuile de saisie : il dit qui porte un chiffre,
     // pas qui a fini de saisir.
     <Widget surface={value ? 'accent' : 'card'} span="sm" tight marker="watch-tile">
-      <h3 className={styles.name}>{game.nameSnapshot[playerId] ?? ''}</h3>
+      <h3 className={styles.name}>
+        {game.nameSnapshot[playerId] ?? ''}
+        {dealer && <span className={styles.dealer}>{t('game.dealer')}</span>}
+      </h3>
 
       <ReadOnlyValue value={value} />
 

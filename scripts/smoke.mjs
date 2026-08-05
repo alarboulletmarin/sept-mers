@@ -69,6 +69,38 @@ await startButton.click()
 
 await page.waitForSelector('[data-round="1"]')
 
+/*
+ * La saisie au clavier, avant tout le reste.
+ *
+ * Les deux boutons du compteur n'écoutaient que `pointerdown`, qu'aucune
+ * touche n'émet et qu'aucun lecteur d'écran ne synthétise : mises, plis,
+ * format et primes étaient hors d'atteinte sans pointeur. Rien ne le voyait,
+ * puisque tous les parcours cliquent. Ce bloc est ce qui l'empêche de revenir.
+ */
+{
+  const first = page.locator('[data-player-tile] [role=spinbutton]').first()
+  await first.focus()
+  check('le compteur prend le focus', await first.evaluate((node) => node === document.activeElement))
+
+  await page.keyboard.press('ArrowUp')
+  check('la flèche haute monte la valeur', (await first.getAttribute('aria-valuenow')) === '1')
+  await page.keyboard.press('ArrowDown')
+  check('la flèche basse la redescend', (await first.getAttribute('aria-valuenow')) === '0')
+  await page.keyboard.press('End')
+  check('Fin va à la borne haute', (await first.getAttribute('aria-valuenow')) === '1')
+  await page.keyboard.press('Home')
+  check('Origine revient à la borne basse', (await first.getAttribute('aria-valuenow')) === '0')
+
+  // Et le bouton lui-même, activé comme le ferait une technologie d'assistance.
+  const plus = page
+    .locator('[data-player-tile]')
+    .first()
+    .getByRole('button', { name: /(Ajouter un pli|One more trick)/ })
+  await plus.evaluate((node) => node.click())
+  check('le bouton répond à une activation sans pointeur', (await first.getAttribute('aria-valuenow')) === '1')
+  await page.keyboard.press('Home')
+}
+
 
 /**
  * Pose une valeur sur une tuile via les boutons moins et plus.
@@ -161,10 +193,24 @@ check(
   'le bandeau porte une croix pour le chasser',
   (await page.getByRole('button', { name: 'Fermer' }).count()) > 0,
 )
-// Une seconde, pas cinq : le bandeau confirme, il ne réclame pas de lecture.
+/*
+ * Le bandeau qui porte « Annuler » reste. C'est le seul chemin de retour sur
+ * une manche validée : une seconde ne suffit ni à lire la phrase, ni à
+ * comprendre qu'on peut revenir, ni à viser le bouton.
+ */
+check(
+  'le bandeau propose d annuler la manche',
+  (await page.getByRole('button', { name: 'Annuler' }).count()) > 0,
+)
 await page.waitForTimeout(1400)
 check(
-  'le bandeau s efface de lui-même en une seconde',
+  'et il reste le temps qu on s en serve',
+  await page.getByText('Manche 1 enregistrée').isVisible(),
+)
+// Il se chasse à la main, de trois façons : la croix, le glissé, un appui.
+await page.getByRole('button', { name: 'Fermer' }).click()
+check(
+  'la croix le chasse tout de suite',
   (await page.getByText('Manche 1 enregistrée').count()) === 0,
 )
 await shot('manche-2-mises')

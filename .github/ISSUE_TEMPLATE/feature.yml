@@ -1,0 +1,23 @@
+name: Idée
+description: Une fonctionnalité, une amélioration.
+labels: ['idée']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Le projet a des partis pris — hors ligne, sans compte, monochrome, peu
+        de dépendances. Ils sont dans le [README](../../README.md) et dans
+        [CONTRIBUTING](../../CONTRIBUTING.md), et une idée qui les respecte a
+        beaucoup plus de chances d'aboutir.
+  - type: textarea
+    id: need
+    attributes:
+      label: Le besoin
+      description: Ce qui manque à table, et à quel moment de la partie.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: L'idée
+      description: Ce que ferait l'app. Une piste d'écran, si vous en avez une.

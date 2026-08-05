@@ -102,3 +102,57 @@
   line-height: 1.45;
   color: var(--canvas-muted);
 }
+
+/* La précision par taille de main : le chiffre d'abord, la barre derrière. */
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: minmax(0, 4.5rem) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.barLabel {
+  font-size: 12px;
+  color: var(--canvas-muted);
+}
+
+.barValue {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.barTrack {
+  display: block;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--hairline);
+  overflow: hidden;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.barText {
+  font-size: 11px;
+  color: var(--canvas-muted);
+}
+
+/* Le refus d'un doublon, dit là où on l'écrit. Sans teinte : c'est la graisse
+   qui alerte, comme partout ailleurs dans l'app. */
+.error {
+  font-size: var(--size-caption);
+  font-weight: 600;
+  color: var(--canvas-on);
+}

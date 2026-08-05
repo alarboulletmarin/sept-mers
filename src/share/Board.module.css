@@ -188,3 +188,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Le donneur de la manche, comme sur le téléphone de la table. */
+.dealer {
+  margin-left: var(--space-1);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--surface-muted);
+  white-space: nowrap;
+}

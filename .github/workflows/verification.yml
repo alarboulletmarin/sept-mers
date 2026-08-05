@@ -1,6 +1,6 @@
 # La barrière de qualité du projet, exécutée à chaque poussée.
 #
-# Le README annonce six vérifications ; jusqu'ici rien ne les lançait, et les
+# Le README annonce sept vérifications ; jusqu'ici rien ne les lançait, et les
 # parcours navigateur pointaient un Chromium qui n'existait que sur une
 # machine. Ce workflow est la seule chose qui fasse de ces scripts une garantie
 # plutôt qu'une intention.
@@ -21,7 +21,7 @@ concurrency:
 jobs:
   verifier:
     runs-on: ubuntu-latest
-    # Six vérifications dont cinq parcours navigateur : le budget d'avant, 15,
+    # Sept vérifications dont cinq parcours navigateur : le budget d'avant, 15,
     # était taillé pour quatre.
     timeout-minutes: 25
 
@@ -59,3 +59,9 @@ jobs:
 
       - name: Contraste dans les deux thèmes
         run: node scripts/contrast.mjs
+
+      # Ce qui est distribué doit porter sa licence : les paquets MIT
+      # embarqués, et les fontes sous OFL. Le greffon les écrit, ce script
+      # empêche la réparation de disparaître en silence.
+      - name: Licences distribuées
+        run: node scripts/licenses.mjs

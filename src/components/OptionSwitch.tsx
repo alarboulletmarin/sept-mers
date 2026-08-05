@@ -32,6 +32,20 @@ export function visibleOptions(options: GameOptions) {
   return OPTIONS.filter(({ showIf }) => !showIf || showIf(options))
 }
 
+/**
+ * Les règles réellement en jeu, dans l'ordre de la liste.
+ *
+ * Elles se choisissent au lancement puis disparaissent : au milieu d'une
+ * partie, plus rien ne disait qu'on comptait au Score Rascal ou que le Kraken
+ * était au paquet, alors que c'est ce qui explique un chiffre surprenant. La
+ * même liste sert donc à les régler et à les rappeler.
+ */
+export function activeOptions(options: GameOptions): (keyof GameOptions)[] {
+  return visibleOptions(options)
+    .map(({ key }) => key)
+    .filter((key) => options[key])
+}
+
 interface OptionSwitchProps {
   label: string
   /** La phrase qui dit ce que l'état choisi change dans la partie. */

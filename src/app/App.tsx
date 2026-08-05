@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react'
 import { ToastProvider } from '../components/Toast.tsx'
+import { About } from '../screens/About.tsx'
 import { Game } from '../screens/Game.tsx'
 import { GameSummary } from '../screens/GameSummary.tsx'
 import { History } from '../screens/History.tsx'
@@ -83,6 +84,8 @@ function Screen({ route, go }: { route: Route; go: (next: Route) => void }) {
       return <Watch code={route.code} go={go} />
     case 'recap':
       return <Recap go={go} />
+    case 'about':
+      return <About go={go} />
     default:
       return <Home go={go} />
   }

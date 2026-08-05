@@ -29,6 +29,9 @@ function activeTab(route: Route): Route['name'] {
     // Suivre une table ou lire un résumé partagé part aussi de l'accueil.
     case 'watch':
     case 'recap':
+    // « À propos » explique l'app : on y va depuis l'accueil ou les réglages,
+    // et l'accueil reste le repère.
+    case 'about':
       return 'home'
     default:
       return route.name

@@ -108,6 +108,7 @@ describe('vercel.json', () => {
       // l'adresse nue a besoin d'être servie.
       '/watch/AB2C3D',
       '/recap',
+      '/about',
     ]) {
       expect(pattern.test(route), `${route} ne serait pas servi`).toBe(true)
     }
@@ -128,6 +129,9 @@ describe('vercel.json', () => {
       // l'initiale du titre, et l'écran d'accueil iOS sur une capture de page.
       '/favicon.ico',
       '/apple-touch-icon.png',
+      // Les licences des composants embarqués, écrites par le build à côté du
+      // bundle : un fichier, pas une route.
+      '/licenses.txt',
     ]) {
       expect(pattern.test(real), `${real} serait réécrit`).toBe(false)
     }

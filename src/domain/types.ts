@@ -353,6 +353,41 @@ export function makeBonus(partial: Partial<RoundBonus> = {}): RoundBonus {
   return { ...EMPTY_BONUS, ...partial }
 }
 
+/**
+ * Le donneur de la manche.
+ *
+ * Il tourne d'un siège par manche, dans l'ordre à table — celui qu'on a réglé
+ * au lancement et qui ne sert jusqu'ici qu'à l'affichage. La manche 1 est
+ * donnée par le premier assis, la 2 par son voisin, et ainsi de suite.
+ *
+ * Rien n'est enregistré : le donneur se déduit du numéro de manche et de la
+ * longueur de la table, donc une partie relue dans l'historique retrouve le
+ * même donneur qu'à la table, et aucun fichier n'a besoin de grandir.
+ *
+ * Le fantôme de Barbe Grise n'en est pas : il ne donne pas, il ramasse.
+ */
+export function dealerFor(roundIndex: number, playerIds: Id[]): Id | null {
+  if (playerIds.length === 0 || roundIndex < 1) return null
+  return playerIds[(roundIndex - 1) % playerIds.length]
+}
+
+/**
+ * Une partie est-elle allée au bout de son format ?
+ *
+ * `endedAt` ne suffit pas à le dire : une partie qu'on quitte pour en lancer
+ * une autre est close sur-le-champ, à la manche où elle en était. Elle reste
+ * dans l'historique, avec ses manches et son classement — mais elle n'a pas
+ * été jouée, et la faire peser dans les moyennes, les victoires et la
+ * précision fausserait tout le palmarès d'une table qui a une fois changé
+ * d'avis après une manche.
+ *
+ * C'est une propriété qui se calcule, pas un champ : rien à écrire sur le
+ * disque, rien à migrer, et les parties déjà enregistrées se relisent juste.
+ */
+export function isComplete(game: Game): boolean {
+  return Boolean(game.endedAt) && game.rounds.length >= game.format.rounds
+}
+
 export function bonusIsEmpty(bonus: RoundBonus): boolean {
   return BONUS_KEYS.every((key) => bonus[key] === 0)
 }

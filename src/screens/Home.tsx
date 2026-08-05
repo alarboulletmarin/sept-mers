@@ -1,4 +1,5 @@
 import { Button } from '../components/Button.tsx'
+import { HowItWorks } from '../content/HowItWorks.tsx'
 import { Icon, Logo } from '../components/Icon.tsx'
 import { RoundRail } from '../components/Rail.tsx'
 import { Caption, Figure, Tag, Widget, WidgetTitle } from '../components/Widget.tsx'
@@ -49,7 +50,7 @@ export function Home({ go }: { go: (route: Route) => void }) {
         {running && <ResumeSection go={go} />}
 
         {isFirstLaunch ? (
-          <HowItWorks go={go} />
+          <FirstLaunch go={go} />
         ) : (
           <>
             <h2 className="section-title">{t('home.section.table')}</h2>
@@ -90,6 +91,16 @@ export function Home({ go }: { go: (route: Route) => void }) {
                 )
               })}
             </div>
+            {finished.length > 2 && (
+              <button
+                type="button"
+                className={styles.howLink}
+                onClick={() => go({ name: 'history' })}
+              >
+                <Icon name="history" size={16} />
+                {t('home.seeAll', { count: finished.length })}
+              </button>
+            )}
           </>
         )}
 
@@ -98,6 +109,14 @@ export function Home({ go }: { go: (route: Route) => void }) {
         <button type="button" className={styles.howLink} onClick={() => go({ name: 'watch' })}>
           <Icon name="live" size={16} />
           {t('home.watch')}
+        </button>
+
+        {/* L'explication ne disparaît plus avec le premier lancement : elle a
+            son écran, et cette porte est celle qu'on ouvre en prêtant le
+            téléphone à quelqu'un qui n'a jamais joué. */}
+        <button type="button" className={styles.howLink} onClick={() => go({ name: 'about' })}>
+          <Icon name="book" size={16} />
+          {t('about.title')}
         </button>
       </main>
 
@@ -113,25 +132,21 @@ export function Home({ go }: { go: (route: Route) => void }) {
 }
 
 /**
- * Trois phrases au premier lancement. Quelqu'un qui ouvre l'app avant de savoir
- * jouer doit comprendre, en dix secondes, ce que l'app fait et ce qu'elle
- * attend de lui — sinon le premier écran est un mur.
+ * Trois phrases au premier lancement.
+ *
+ * Quelqu'un qui ouvre l'app avant de savoir jouer doit comprendre, en dix
+ * secondes, ce qu'elle fait et ce qu'elle attend de lui — sinon le premier
+ * écran est un mur. Le texte lui-même vit dans `content/HowItWorks`, parce
+ * qu'il se relit aussi depuis « À propos » : il disparaissait ici pour
+ * toujours dès la première partie jouée, et rien ne permettait d'y revenir.
  */
-function HowItWorks({ go }: { go: (route: Route) => void }) {
+function FirstLaunch({ go }: { go: (route: Route) => void }) {
   const { t } = useT()
-  const steps = [t('home.how.step1'), t('home.how.step2'), t('home.how.step3')]
 
   return (
     <>
       <h2 className="section-title">{t('home.how.title')}</h2>
-      <ol className={styles.how}>
-        {steps.map((step, index) => (
-          <li key={step} className={styles.howStep}>
-            <span className={styles.howIndex}>{index + 1}</span>
-            <span className={styles.howText}>{step}</span>
-          </li>
-        ))}
-      </ol>
+      <HowItWorks />
       <button type="button" className={styles.howLink} onClick={() => go({ name: 'rules' })}>
         <Icon name="book" size={16} />
         {t('home.how.rules')}

@@ -36,11 +36,18 @@ export function useToast(): ToastApi {
   return context
 }
 
-/** Une seconde. Le bandeau confirme, il ne réclame pas de lecture. */
+/**
+ * Deux durées, parce qu'il y a deux bandeaux.
+ *
+ * Celui qui confirme ne réclame pas de lecture : il passe. Celui qui porte
+ * « Annuler » réclame de lire une phrase, de comprendre qu'on peut revenir en
+ * arrière, et de viser un bouton — une seconde n'y suffit pas, et l'annulation
+ * qui était le seul chemin de retour sur une manche validée restait
+ * inatteignable. Sept secondes tiennent aussi le critère de temps ajustable
+ * des WCAG, puisque le bandeau se chasse à la main de trois façons.
+ */
 const DURATION = 1000
-
-/** Au-delà de ce glissé vers le bas, le geste vaut fermeture. */
-const SWIPE_TO_CLOSE = 28
+const DURATION_WITH_ACTION = 7000
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const { t } = useT()
@@ -70,7 +77,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       counter.current += 1
       setDrag(0)
       setToast({ id: counter.current, message, ...(action ? { action } : {}) })
-      timer.current = setTimeout(() => setToast(null), DURATION)
+      timer.current = setTimeout(
+        () => setToast(null),
+        action ? DURATION_WITH_ACTION : DURATION,
+      )
     },
     [clear],
   )
@@ -83,12 +93,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
    * Trois façons de s'en débarrasser sans attendre : la croix, le glissé vers
    * le bas, et un appui n'importe où sur le bandeau. Un message qui ne se
    * chasse pas devient un obstacle, surtout posé au-dessus du bouton suivant.
+   *
+   * Il n'y a plus de seuil de glissé : au relâchement le bandeau part, que le
+   * doigt ait parcouru trente pixels ou aucun. Les deux gestes disaient la même
+   * chose, et le seuil n'ajoutait qu'un cas où le geste ne produisait rien.
    */
   const endDrag = () => {
     if (startY.current === null) return
     startY.current = null
-    if (drag > SWIPE_TO_CLOSE) dismiss()
-    else setDrag(0)
+    dismiss()
   }
 
   return (
@@ -101,6 +114,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={toast.id}
             style={drag > 0 ? { transform: `translateY(${drag}px)`, transition: 'none' } : undefined}
             onPointerDown={(event) => {
+              /*
+               * Un appui qui commence sur un bouton n'est pas un glissé, et
+               * capturer le pointeur ici le rendait inopérant : la capture
+               * fait porter le `click` qui suit par l'élément capturant, donc
+               * par le bandeau, et jamais par le bouton visé. Ni la croix ni
+               * « Annuler » ne recevaient quoi que ce soit — l'annulation
+               * d'une manche validée, qui est le seul chemin de retour, n'a
+               * jamais été atteignable au doigt.
+               */
+              if ((event.target as HTMLElement).closest('button')) return
               startY.current = event.clientY
               // Le glissé se suit même si le doigt sort du bandeau.
               event.currentTarget.setPointerCapture(event.pointerId)

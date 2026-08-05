@@ -1,0 +1,44 @@
+name: Bug
+description: Un chiffre faux, un écran cassé, un blocage.
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Une partie de Skull King est reproductible : la manche, le nombre de
+        joueurs et les mises valent tous les récits.
+  - type: textarea
+    id: what
+    attributes:
+      label: Ce qui se passe
+      description: Et ce que vous attendiez à la place.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Comment le reproduire
+      placeholder: |
+        1. Nouvelle partie à 4 joueurs, format du livret
+        2. Manche 3, mises 1 / 0 / 2 / 0
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: context
+    attributes:
+      label: Téléphone et navigateur
+      placeholder: iPhone 13, Safari 18 — ou Pixel 7, Chrome 130
+  - type: dropdown
+    id: options
+    attributes:
+      label: Variantes en jeu
+      multiple: true
+      options:
+        - Aucune
+        - Primes gardées sur mise ratée
+        - Kraken
+        - Baleine blanche
+        - Pouvoirs des pirates
+        - Score Rascal
+        - Boulet de canon

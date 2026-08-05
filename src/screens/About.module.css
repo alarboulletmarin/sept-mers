@@ -1,0 +1,34 @@
+/*
+ * L'écran qui explique. Du texte, des liens, aucune tuile : la mosaïque sert
+ * aux chiffres, et il n'y en a pas un seul ici.
+ */
+
+.link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  font-size: var(--size-body);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--canvas-on);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--hairline);
+}
+
+/* Les mentions : plus petites, en sourdine, mais jamais illisibles. */
+.note {
+  font-size: var(--size-caption);
+  line-height: 1.5;
+  color: var(--canvas-muted);
+  text-wrap: pretty;
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  width: 100%;
+}
