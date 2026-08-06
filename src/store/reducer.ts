@@ -21,8 +21,6 @@ import {
   type Store,
   type Theme,
 } from '../domain/types.ts'
-import { finalBid } from '../domain/scoring.ts'
-import { deducedHolder, trickTarget } from '../domain/validation.ts'
 import { newId } from './storage.ts'
 
 export type Action =
@@ -123,8 +121,6 @@ function emptyDraft(game: Game, roundIndex: number): Draft {
     harry,
     cannonball,
     voided: 0,
-    touchedTricks: [],
-    autoTricks: null,
   }
 }
 
@@ -132,7 +128,6 @@ function emptyDraft(game: Game, roundIndex: number): Draft {
 function draftFromRound(game: Game, round: Round): Draft {
   const draft = emptyDraft(game, round.index)
   draft.phase = 'results'
-  draft.autoTricks = null
   draft.voided = round.voided ?? 0
   for (const entry of round.entries) {
     draft.bids[entry.playerId] = entry.bid
@@ -143,55 +138,8 @@ function draftFromRound(game: Game, round: Round): Draft {
     draft.cannonball[entry.playerId] = entry.cannonball ?? false
   }
   if (hasGreyBeard(game.playerIds.length)) draft.tricks[GREY_BEARD] = round.greyBeard ?? 0
-  // Une manche validée a été saisie en entier : ni resemis, ni déduction. Le
-  // fantôme en est, sans quoi la rouvrir pour relire un chiffre le recalculerait
-  // et réécrirait la manche.
-  draft.touchedTricks = trickHolders(game.playerIds)
   return draft
 }
-
-/**
- * Les plis repartent de la mise de chacun : c'est la valeur la plus probable,
- * et une manche où tout le monde tient sa mise se valide alors sans un geste.
- * On ne touche pas à ceux qui ont déjà été posés à la main.
- *
- * La mise semée est celle qu'on défend, pas celle qu'on a annoncée : un joueur
- * qui a déplacé la sienne avec Harry le Géant puis fait un aller-retour par les
- * mises repart de son chiffre déplacé.
- */
-function seedTricks(draft: Draft, playerIds: Id[]): Record<Id, number | null> {
-  const tricks = { ...draft.tricks }
-  for (const id of playerIds) {
-    if (draft.touchedTricks.includes(id)) continue
-    tricks[id] = finalBid(draft.bids[id] ?? 0, draft.harry[id] ?? 0)
-  }
-  return tricks
-}
-
-/**
- * Repose la déduction du dernier joueur non repris en main. À appeler après
- * chaque écriture dans les plis : la valeur déduite est un reste, elle périme
- * dès qu'un autre joueur bouge.
- */
-function withDeduction(
-  tricks: Record<Id, number | null>,
-  touchedTricks: Id[],
-  holders: Id[],
-  cards: number,
-): { tricks: Record<Id, number | null>; autoTricks: Id | null } {
-  const auto = deducedHolder(touchedTricks, holders)
-  if (auto === null) return { tricks, autoTricks: null }
-  const assigned = holders.reduce(
-    (total, id) => (id === auto ? total : total + (tricks[id] ?? 0)),
-    0,
-  )
-  return {
-    tricks: { ...tricks, [auto]: Math.min(cards, Math.max(0, cards - assigned)) },
-    autoTricks: auto,
-  }
-}
-
-const marked = (list: Id[], id: Id): Id[] => (list.includes(id) ? list : [...list, id])
 
 /** Cartes distribuées à la manche du brouillon, paquet et format compris. */
 function cardsOf(game: Game, draft: Draft): number {
@@ -206,11 +154,6 @@ function cardsOf(game: Game, draft: Draft): number {
 /** Les porteurs de plis de la partie : les joueurs, et le fantôme à 2. */
 function holdersOf(game: Game): Id[] {
   return trickHolders(game.playerIds)
-}
-
-/** Plis réellement attribuables : les cartes, moins ce que les monstres ont pris. */
-function targetOf(game: Game, draft: Draft): number {
-  return trickTarget(cardsOf(game, draft), draft.voided)
 }
 
 export function nextRoundIndex(game: Game): number {
@@ -341,21 +284,10 @@ export function reducer(store: Store, action: Action): Store {
       // identifiant n'a rien à faire dans les plis.
       if (!holders.includes(action.playerId)) return store
       const draft = draftFor(store, game)
-
-      // Poser une valeur, c'est la reprendre en main — y compris sur la tuile
-      // que la déduction remplissait jusque-là.
-      const touchedTricks = marked(draft.touchedTricks, action.playerId)
-
-      // On recalcule la déduction à chaque saisie, pas seulement au moment où
-      // elle apparaît : sinon un incrément de plus la laisserait périmée.
-      const deduced = withDeduction(
-        { ...draft.tricks, [action.playerId]: action.tricks },
-        touchedTricks,
-        holders,
-        targetOf(game, draft),
-      )
-
-      return { ...store, draft: { ...draft, ...deduced, touchedTricks } }
+      return {
+        ...store,
+        draft: { ...draft, tricks: { ...draft.tricks, [action.playerId]: action.tricks } },
+      }
     }
 
     case 'game/setVoided': {
@@ -366,14 +298,7 @@ export function reducer(store: Store, action: Action): Store {
       const draft = draftFor(store, game)
       const cards = cardsOf(game, draft)
       const voided = Math.min(cards, Math.max(0, action.voided))
-      // Écarter un pli change le total à distribuer : la déduction périme.
-      const deduced = withDeduction(
-        draft.tricks,
-        draft.touchedTricks,
-        holdersOf(game),
-        trickTarget(cards, voided),
-      )
-      return { ...store, draft: { ...draft, ...deduced, voided } }
+      return { ...store, draft: { ...draft, voided } }
     }
 
     case 'game/setRascal': {
@@ -433,29 +358,24 @@ export function reducer(store: Store, action: Action): Store {
       }
     }
 
+    /*
+     * Changer de temps ne fait que changer de temps. Les plis restent où ils
+     * sont — c'est-à-dire à zéro tant que personne ne les a saisis, puisque
+     * c'est là que `emptyDraft` les pose.
+     *
+     * Ils partaient jusqu'ici semés sur les mises, et le dernier joueur se
+     * complétait du reste. Une manche s'ouvrait donc pleine de chiffres que
+     * personne n'avait annoncés : ce qu'on a misé n'est pas ce qu'on a
+     * remporté, et la table relisait des plis qu'elle croyait avoir saisis.
+     *
+     * Ne rien écrire ici a un second mérite : revenir aux mises pour corriger
+     * une annonce ne coûte plus la saisie des plis déjà posée.
+     */
     case 'game/phase': {
       const game = runningGame(store)
       if (!game) return store
       const draft = draftFor(store, game)
-      if (action.phase === 'bids') return { ...store, draft: { ...draft, phase: 'bids' } }
-
-      // Entrée dans les résultats : les plis repartent des mises, sauf ceux
-      // qu'on a déjà posés. Un aller-retour vers les mises pour en corriger
-      // une doit donc se répercuter, et la déduction se reposer derrière —
-      // sinon le joueur déduit garderait sa mise au lieu du reste, la somme
-      // ne tomberait pas juste, et le bouton resterait mort.
-      //
-      // Le fantôme, lui, n'a pas de mise à semer : il reste donc à la déduction
-      // et prend le reste. C'est ce qui garde, à 2 joueurs comme ailleurs, la
-      // propriété qu'une manche où tout le monde tient sa mise se valide sans
-      // un geste.
-      const deduced = withDeduction(
-        seedTricks(draft, game.playerIds),
-        draft.touchedTricks,
-        holdersOf(game),
-        targetOf(game, draft),
-      )
-      return { ...store, draft: { ...draft, ...deduced, phase: 'results' } }
+      return { ...store, draft: { ...draft, phase: action.phase } }
     }
 
     case 'game/commitRound': {

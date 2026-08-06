@@ -10,7 +10,6 @@ import {
   RASCAL_VALUES,
   clampFormat,
   hasGreyBeard,
-  trickHolders,
   type Draft,
   type GameFormat,
   type GameOptions,
@@ -365,22 +364,11 @@ export function normalise(input: unknown): Store {
     // à 2 joueurs, distribuait déjà tous les plis aux deux joueurs, et un
     // `null` ferait apparaître une anomalie sur une manche qui n'en avait
     // aucune.
-    const holders = trickHolders(game.playerIds)
     if (hasGreyBeard(game.playerIds.length)) {
       const value = readMap(source.tricks)[GREY_BEARD]
       tricks[GREY_BEARD] = isCount(value) ? Math.min(cards, value) : 0
     }
 
-    // On repart de la liste des porteurs, pas de celle du fichier : les
-    // doublons et les identifiants inconnus tombent d'eux-mêmes. Le fantôme en
-    // est, sans quoi un rechargement en pleine manche le « détoucherait » et
-    // recalculerait en silence une valeur posée à la main.
-    const touched = source.touchedTricks
-    const touchedTricks = Array.isArray(touched)
-      ? holders.filter((id) => touched.includes(id))
-      : []
-
-    const auto = source.autoTricks
     return {
       gameId: game.id,
       roundIndex: source.roundIndex,
@@ -392,8 +380,6 @@ export function normalise(input: unknown): Store {
       harry,
       cannonball,
       voided,
-      touchedTricks,
-      autoTricks: typeof auto === 'string' && holders.includes(auto) ? auto : null,
     }
   }
 

@@ -129,6 +129,8 @@ await guest.waitForFunction(() =>
 )
 check('le passage aux résultats se voit en face', true)
 
+// Le pli remporté se saisit : rien ne part de la mise.
+await setValue(host.locator('[data-player-tile]').nth(0), 1)
 await host.getByRole('button', { name: 'Valider la manche' }).click()
 await guest.waitForFunction(
   () => document.querySelector('[class*="roundNumber"]')?.textContent === '2',
@@ -192,6 +194,7 @@ check('la salle revit après un rechargement de la table', true)
 
 await setValue(host.locator('[data-player-tile]').nth(0), 10)
 await host.getByRole('button', { name: 'Valider les mises' }).click()
+await setValue(host.locator('[data-player-tile]').nth(0), 10)
 await host.getByRole('button', { name: 'Valider la manche' }).click()
 await host.waitForSelector('text=Fin de partie')
 

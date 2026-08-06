@@ -239,9 +239,9 @@ export interface Draft {
   bids: Record<Id, number | null>
   /**
    * Plis par porteur. À 2 joueurs le fantôme y a sa place, sous `GREY_BEARD` :
-   * c'est ce qui laisse la déduction, la validation, le compteur de pied
-   * d'écran et l'action `game/setTricks` marcher sur lui sans une ligne de
-   * plus — seule la liste de porteurs qu'on leur passe s'allonge.
+   * c'est ce qui laisse la validation, le compteur de pied d'écran et l'action
+   * `game/setTricks` marcher sur lui sans une ligne de plus — seule la liste de
+   * porteurs qu'on leur passe s'allonge.
    */
   tricks: Record<Id, number | null>
   bonus: Record<Id, RoundBonus>
@@ -259,18 +259,6 @@ export interface Draft {
   cannonball: Record<Id, boolean>
   /** Plis écartés de la manche par le Kraken ou la Baleine blanche. */
   voided: number
-  /**
-   * Porteurs dont les plis ont été posés à la main. Les autres gardent la
-   * valeur semée depuis leur mise : c'est ce qui permet à la fois de resemer
-   * après une correction de mise, et de désigner celui dont la valeur se déduit.
-   */
-  touchedTricks: Id[]
-  /**
-   * Porteur dont les plis sont déduits des autres. On le retient pour pouvoir
-   * recalculer sa valeur à chaque saisie : sans ça, un `+` de plus sur un autre
-   * joueur laisserait une déduction périmée.
-   */
-  autoTricks?: Id | null
 }
 
 export interface Store {

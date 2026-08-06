@@ -23,7 +23,19 @@ html {
 
 body {
   max-width: 100%;
-  overflow-x: hidden;
+  /*
+   * `clip` et non `hidden`. Une boîte en `overflow: hidden` est une boîte qui
+   * défile — même quand rien n'y défile — et `position: sticky` se cale sur la
+   * première de ses aïeules qui défile. `body` en `hidden` devenait donc le
+   * repère de toutes les barres collantes de l'app, un repère immobile : la
+   * barre basse des actions et les barres hautes partaient au défilement, et
+   * il fallait descendre au pied de l'écran pour valider une manche.
+   *
+   * `clip` rogne exactement pareil sans créer de boîte qui défile. La règle
+   * « aucun scroll latéral » tient donc des deux côtés : ici, et sur le
+   * viewport par `html` plus haut.
+   */
+  overflow-x: clip;
   font-family: var(--font-sans);
   font-size: var(--size-body);
   line-height: 1.6;

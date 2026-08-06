@@ -130,7 +130,7 @@ for (const width of WIDTHS) {
     const cards = Math.min(round, 9)
     for (let i = 0; i < 8; i += 1) await setValue(tiles.nth(i), i === 0 ? cards : 0)
     await page.getByRole('button', { name: 'Valider les mises' }).click()
-    for (let i = 0; i < 7; i += 1) await setValue(tiles.nth(i), i === 0 ? cards : 0)
+    for (let i = 0; i < 8; i += 1) await setValue(tiles.nth(i), i === 0 ? cards : 0)
     await page.getByRole('button', { name: 'Valider la manche' }).click()
   }
 
@@ -141,7 +141,7 @@ for (const width of WIDTHS) {
   // La feuille de bonus ouverte.
   for (let i = 0; i < 8; i += 1) await setValue(tiles.nth(i), i === 0 ? 9 : 0)
   await page.getByRole('button', { name: 'Valider les mises' }).click()
-  for (let i = 0; i < 7; i += 1) await setValue(tiles.nth(i), i === 0 ? 9 : 0)
+  for (let i = 0; i < 8; i += 1) await setValue(tiles.nth(i), i === 0 ? 9 : 0)
   await tiles.nth(0).getByRole('button', { name: /^(Bonus|\+ ?Bonus)/ }).click()
   await page.waitForSelector('text=14 noir')
   await audit('feuille de bonus ouverte')

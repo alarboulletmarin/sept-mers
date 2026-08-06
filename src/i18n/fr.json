@@ -64,7 +64,6 @@
   "game.results.overOne": "{count} pli de trop est attribué",
   "game.results.complete": "Les {count} plis sont attribués",
   "game.results.completeOne": "Le pli est attribué",
-  "game.results.autofilled": "Complété automatiquement",
   "game.bid": "Mise {bid}",
   "game.bonus": "Bonus",
   "game.bonusCount": "Bonus ({count})",
