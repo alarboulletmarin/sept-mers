@@ -161,6 +161,9 @@ function PlayerDetail({ playerId, go }: { playerId: string; go: (route: Route) =
   const rows: { label: string; value: string }[] = [
     { label: t('ranking.gamesPlayed'), value: number(stats.gamesPlayed) },
     { label: t('players.wins'), value: number(stats.wins) },
+    // Les défaites en face des victoires : trois victoires ne disent rien tant
+    // qu'on ignore si c'est sur quatre parties ou sur trente.
+    { label: t('players.losses'), value: number(stats.losses) },
     {
       label: t('players.averagePoints'),
       value: stats.gamesPlayed > 0 ? number(Math.round(stats.averagePoints)) : '—',

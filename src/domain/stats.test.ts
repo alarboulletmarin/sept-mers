@@ -145,6 +145,7 @@ describe('statistiques de joueur', () => {
     const stats = playerStats('a', [simple])
     expect(stats.gamesPlayed).toBe(1)
     expect(stats.wins).toBe(1)
+    expect(stats.losses).toBe(0)
     expect(stats.averagePoints).toBe(40)
     expect(stats.bestGame).toBe(40)
     expect(stats.roundsPlayed).toBe(3)
@@ -153,6 +154,30 @@ describe('statistiques de joueur', () => {
     expect(stats.zeroBids).toBe(1)
     expect(stats.zeroBidsKept).toBe(0)
     expect(stats.zeroAccuracyRate).toBe(0)
+  })
+
+  it('compte une défaite à qui finit derrière', () => {
+    const stats = playerStats('b', [simple])
+    expect(stats.gamesPlayed).toBe(1)
+    expect(stats.wins).toBe(0)
+    expect(stats.losses).toBe(1)
+  })
+
+  it('ne compte aucune défaite sur une victoire partagée', () => {
+    // Le livret ne départage pas les égalités : les deux l'emportent, et aucun
+    // ne repart avec une défaite.
+    const tie = game([{ cards: 2, lines: [['a', 1, 1], ['b', 1, 1]] }])
+    for (const id of ['a', 'b']) {
+      const stats = playerStats(id, [tie])
+      expect(stats.wins).toBe(1)
+      expect(stats.losses).toBe(0)
+    }
+  })
+
+  it('ne compte victoires et défaites que sur les parties allées au bout', () => {
+    const stats = playerStats('b', [simple, { ...simple, id: 'g2', endedAt: undefined }])
+    expect(stats.gamesPlayed).toBe(1)
+    expect(stats.losses).toBe(1)
   })
 
   it('ignore les parties en cours', () => {
@@ -326,6 +351,10 @@ describe('parties écourtées', () => {
     expect(stats.gamesPlayed).toBe(0)
     expect(stats.wins).toBe(0)
     expect(stats.averagePoints).toBe(0)
+  })
+
+  it('ne donnent pas non plus de défaite à ceux qui suivaient', () => {
+    expect(playerStats('b', [cutShort]).losses).toBe(0)
   })
 
   it('sortent du palmarès', () => {

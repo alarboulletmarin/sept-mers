@@ -176,6 +176,12 @@ export interface PlayerStats {
   playerId: Id
   gamesPlayed: number
   wins: number
+  /**
+   * Parties comptées terminées ailleurs qu'en tête. Une victoire partagée n'en
+   * est pas une : le livret ne départage pas les égalités, et l'app ne va pas
+   * inventer une défaite à qui finit premier ex æquo.
+   */
+  losses: number
   averagePoints: number
   bestGame: number | null
   roundsPlayed: number
@@ -193,6 +199,7 @@ const EMPTY_STATS = (playerId: Id): PlayerStats => ({
   playerId,
   gamesPlayed: 0,
   wins: 0,
+  losses: 0,
   averagePoints: 0,
   bestGame: null,
   roundsPlayed: 0,
@@ -231,6 +238,7 @@ export function playerStats(playerId: Id, games: Game[]): PlayerStats {
     pointsSum += total
     stats.bestGame = stats.bestGame === null ? total : Math.max(stats.bestGame, total)
     if (winnerIds(game).includes(playerId)) stats.wins += 1
+    else stats.losses += 1
 
     const row = accuracy(game).find((candidate) => candidate.playerId === playerId)
     if (row) {

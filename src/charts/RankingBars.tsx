@@ -8,11 +8,29 @@ import styles from './chart.module.css'
 const ROW_HEIGHT = 26
 const BOX = { width: 320, top: 6, right: 34, bottom: 18, left: 76 }
 
-type MetricKey = 'gamesPlayed' | 'wins' | 'averagePoints' | 'accuracyRate' | 'zeroAccuracyRate'
+type MetricKey =
+  | 'gamesPlayed'
+  | 'wins'
+  | 'losses'
+  | 'averagePoints'
+  | 'accuracyRate'
+  | 'zeroAccuracyRate'
 
-const METRICS: { key: MetricKey; label: string; kind: 'count' | 'points' | 'rate' }[] = [
+interface Metric {
+  key: MetricKey
+  label: string
+  kind: 'count' | 'points' | 'rate'
+  /** Mesure où le petit chiffre est le bon, et qui se trie donc à l'envers. */
+  lowerIsBetter?: boolean
+}
+
+const METRICS: Metric[] = [
   { key: 'gamesPlayed', label: 'ranking.gamesPlayed', kind: 'count' },
   { key: 'wins', label: 'ranking.wins', kind: 'count' },
+  // Les défaites sont la seule mesure qu'on ne veut pas voir décroître depuis
+  // le haut : un palmarès qui s'ouvre sur celui qui en a le plus se lit à
+  // l'envers de tous les autres.
+  { key: 'losses', label: 'ranking.losses', kind: 'count', lowerIsBetter: true },
   { key: 'averagePoints', label: 'ranking.averagePoints', kind: 'points' },
   { key: 'accuracyRate', label: 'ranking.accuracyRate', kind: 'rate' },
   { key: 'zeroAccuracyRate', label: 'ranking.zeroAccuracyRate', kind: 'rate' },
@@ -41,7 +59,9 @@ export function RankingBars({ rows, names }: RankingBarsProps) {
         ? number(Math.round(value))
         : number(value)
 
-  const sorted = [...rows].sort((a, b) => b[metric] - a[metric])
+  const sorted = [...rows].sort((a, b) =>
+    active.lowerIsBetter ? a[metric] - b[metric] : b[metric] - a[metric],
+  )
   const height = BOX.top + BOX.bottom + sorted.length * ROW_HEIGHT
   const area = plotArea({ ...BOX, width: BOX.width, height })
 
