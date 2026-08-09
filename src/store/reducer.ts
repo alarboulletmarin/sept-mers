@@ -59,6 +59,7 @@ export type Action =
   | { type: 'game/rematch'; id?: Id; now?: string }
   | { type: 'history/remove'; gameId: Id }
   | { type: 'history/restore'; game: Game; at: number }
+  | { type: 'history/names'; gameId: Id; names: Record<Id, string> }
   | { type: 'store/replace'; store: Store }
   | { type: 'store/clear'; store: Store }
 
@@ -79,15 +80,52 @@ export function runningGame(store: Store): Game | null {
  * partout dans une app qui a fait le choix d'écrire les noms en entier.
  */
 export function nameTaken(players: Player[], name: string, exceptId?: Id): boolean {
-  const wanted = name.trim().toLowerCase()
+  const wanted = normalisedName(name)
   if (!wanted) return false
   return players.some(
-    (player) => player.id !== exceptId && player.name.trim().toLowerCase() === wanted,
+    (player) => player.id !== exceptId && normalisedName(player.name) === wanted,
   )
+}
+
+/**
+ * La forme sous laquelle deux noms se comparent : sans bords, sans casse.
+ *
+ * Elle vit ici, seule, parce que la fusion de deux fichiers rapproche les
+ * joueurs par leur nom et doit poser exactement la même question que
+ * `nameTaken` : « est-ce la même personne autour de la table ? ». Deux
+ * réponses différentes rapprocheraient un joueur que la liste refuserait
+ * ensuite d'ajouter.
+ */
+export function normalisedName(name: string): string {
+  return name.trim().toLowerCase()
 }
 
 export function gameById(store: Store, id: Id): Game | null {
   return store.games.find((game) => game.id === id) ?? null
+}
+
+/**
+ * Les noms que porteraient aujourd'hui les joueurs d'une partie enregistrée,
+ * ou `null` quand elle est déjà à jour.
+ *
+ * Une partie terminée garde le nom porté le soir où elle a été jouée : c'est
+ * ce qu'on veut d'un historique, et `players/rename` le protège exprès. Mais
+ * une table qui s'est inscrite sous des noms de blague, puis s'est renommée,
+ * se retrouve avec une soirée illisible que rien ne rattrapait. D'où cette
+ * proposition, faite là où on la lit, et jamais appliquée d'office.
+ *
+ * Un joueur supprimé garde son nom d'époque : il n'y a plus rien à emprunter.
+ */
+export function currentNames(store: Store, game: Game): Record<Id, string> | null {
+  const names = { ...game.nameSnapshot }
+  let changed = false
+  for (const id of game.playerIds) {
+    const player = store.players.find((candidate) => candidate.id === id)
+    if (!player || player.name === names[id]) continue
+    names[id] = player.name
+    changed = true
+  }
+  return changed ? names : null
 }
 
 function emptyDraft(game: Game, roundIndex: number): Draft {
@@ -535,6 +573,21 @@ export function reducer(store: Store, action: Action): Store {
         draft: store.draft?.gameId === action.gameId ? undefined : store.draft,
         liveDraft: store.liveDraft?.gameId === action.gameId ? undefined : store.liveDraft,
       }
+
+    case 'history/names': {
+      const game = gameById(store, action.gameId)
+      if (!game) return store
+      // Seuls les sièges de la partie se réécrivent : une clé venue d'ailleurs
+      // n'a rien à faire dans le tableau qui pilote tout l'affichage. Un nom
+      // vide n'efface rien non plus — la partie garde celui qu'elle portait,
+      // ce qui rend l'annulation exacte quel que soit le tableau rejoué.
+      const nameSnapshot = { ...game.nameSnapshot }
+      for (const id of game.playerIds) {
+        const name = action.names[id]?.trim()
+        if (name) nameSnapshot[id] = name
+      }
+      return withGame(store, game.id, (current) => ({ ...current, nameSnapshot }))
+    }
 
     case 'history/restore': {
       if (store.games.some((game) => game.id === action.game.id)) return store

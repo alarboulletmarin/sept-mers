@@ -469,3 +469,9 @@ export function exportFileName(now = new Date()): string {
 export function serialiseStore(store: Store): string {
   return JSON.stringify(store, null, 2)
 }
+
+export const EXPORT_MIME = 'application/json'
+
+export function exportBlob(store: Store): Blob {
+  return new Blob([serialiseStore(store)], { type: EXPORT_MIME })
+}

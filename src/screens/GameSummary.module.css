@@ -52,3 +52,21 @@
   font-size: 12px;
   color: var(--surface-muted);
 }
+
+/* La mention des noms périmés. Même registre que la partie écourtée — une
+   phrase au-dessus du classement — avec le bouton qui la règle à côté. */
+.stale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-1);
+}
+
+.staleText {
+  flex: 1;
+  min-width: 200px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--canvas-muted);
+}

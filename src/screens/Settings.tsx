@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { Fragment, useMemo, useRef, useState } from 'react'
 import { Screen } from '../app/Layout.tsx'
 import type { Route } from '../app/Router.tsx'
 import { useStore } from '../app/StoreProvider.tsx'
@@ -13,19 +13,23 @@ import {
   MAX_ROUNDS,
   MIN_FIRST_CARDS,
   MIN_ROUNDS,
+  type Id,
   type Locale,
   type Store,
   type Theme,
 } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import styles from './Settings.module.css'
+import { canShareFile, downloadFile, shareFile } from '../share/file.ts'
+import { findTwins, mergeStores, planMerge, type MergePlan } from '../store/merge.ts'
 import {
+  EXPORT_MIME,
   ImportError,
   emptyStore,
+  exportBlob,
   exportFileName,
   flushStore,
   parseStore,
-  serialiseStore,
   type ImportSummary,
 } from '../store/storage.ts'
 
@@ -34,30 +38,90 @@ const THEMES: Theme[] = ['light', 'dark', 'system']
 
 export function Settings({ go }: { go: (route: Route) => void }) {
   const { store, dispatch } = useStore()
-  const { t } = useT()
+  const { t, date } = useT()
   const toast = useToast()
 
   const fileInput = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState<{ store: Store; summary: ImportSummary } | null>(null)
+  // Le rapprochement proposé reste tel quel : ce que la table en fait vit à
+  // côté, dans `links`. Une ligne touchée à la main se reconnaît ainsi, et sa
+  // mention (« rapproché par son nom ») cesse de mentir.
+  const [plan, setPlan] = useState<MergePlan | null>(null)
+  const [links, setLinks] = useState<Record<Id, Id | null>>({})
+  const [keep, setKeep] = useState<Id[]>([])
   const [error, setError] = useState<string | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
+  // Sondé une fois, au premier rendu : la réponse tient au navigateur et au
+  // type du fichier, pas à l'état de l'écran. Un bouton mort — présent,
+  // cliquable, sans effet — serait pire que pas de bouton du tout.
+  const [canSend] = useState(() => canShareFile(exportFileName(), EXPORT_MIME))
+
+  const chosen = useMemo<MergePlan | null>(() => {
+    if (!plan || !pending) return null
+    const players = plan.players.map((seat) =>
+      seat.id in links ? { ...seat, linkTo: links[seat.id] } : seat,
+    )
+    // Les jumelles se recomptent à chaque rapprochement : tant qu'« Alex »
+    // n'est pas rattaché à « Bibi le Boss », la même soirée marquée sur les
+    // deux téléphones n'a pas la même table de part et d'autre.
+    return { players, twins: findTwins(store, pending.store, players) }
+  }, [plan, pending, links, store])
+
+  // L'aperçu et le résultat sont le même calcul : ce que la feuille annonce
+  // est exactement ce qui part dans le stockage.
+  const preview = useMemo(
+    () => (pending && chosen ? mergeStores(store, pending.store, chosen, new Set(keep)) : null),
+    [store, pending, chosen, keep],
+  )
+
+  const claimed = useMemo(
+    () => new Set(chosen?.players.flatMap((seat) => (seat.linkTo ? [seat.linkTo] : [])) ?? []),
+    [chosen],
+  )
 
   const exportData = () => {
     flushStore()
-    const blob = new Blob([serialiseStore(store)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = exportFileName()
-    link.click()
-    URL.revokeObjectURL(url)
+    downloadFile(exportBlob(store), exportFileName())
     toast.show(t('settings.exported'))
+  }
+
+  /**
+   * Le même fichier, remis à la feuille du système plutôt qu'au disque : c'est
+   * le chemin le plus court d'un téléphone à l'autre, et le seul qui ne passe
+   * pas par le dossier des téléchargements.
+   *
+   * Rien d'asynchrone avant l'appel : l'activation du clic ne survit pas à une
+   * attente, et Safari iOS refuse alors d'ouvrir la feuille.
+   */
+  const sendData = () => {
+    flushStore()
+    const blob = exportBlob(store)
+    const name = exportFileName()
+    void shareFile(new File([blob], name, { type: EXPORT_MIME })).then((result) => {
+      // Feuille refermée : rien n'est parti, et il n'y a rien à en dire.
+      if (result === 'dismissed') return
+      if (result === 'shared') return toast.show(t('settings.sent'))
+      // Le partage n'a pas abouti : il reste le disque, qui ne rate pas.
+      // Personne ne doit repartir de ce bouton les mains vides, et il faut le
+      // dire — sans quoi on cherche le fichier sur l'autre téléphone.
+      downloadFile(blob, name)
+      toast.show(t('settings.send.failed'))
+    })
+  }
+
+  const closeImport = () => {
+    setPending(null)
+    setPlan(null)
+    setLinks({})
+    setKeep([])
   }
 
   const readFile = async (file: File) => {
     setError(null)
     try {
-      setPending(parseStore(await file.text()))
+      const parsed = parseStore(await file.text())
+      closeImport()
+      setPending(parsed)
     } catch (cause) {
       const reason = cause instanceof ImportError ? cause.reason : 'shape'
       setError(t(`settings.import.error.${reason}`))
@@ -67,8 +131,26 @@ export function Settings({ go }: { go: (route: Route) => void }) {
   const applyImport = () => {
     if (!pending) return
     dispatch({ type: 'store/replace', store: pending.store })
-    setPending(null)
+    closeImport()
     toast.show(t('settings.import.done'))
+  }
+
+  const startMerge = () => {
+    if (!pending) return
+    const proposal = planMerge(store, pending.store)
+    // Rien à rapprocher, rien à écarter : la fusion n'a aucune question à
+    // poser, et une feuille vide serait une étape de plus pour rien.
+    if (proposal.players.length === 0 && proposal.twins.length === 0) {
+      applyMerge(mergeStores(store, pending.store, proposal).store)
+      return
+    }
+    setPlan(proposal)
+  }
+
+  const applyMerge = (merged: Store) => {
+    dispatch({ type: 'store/replace', store: merged })
+    closeImport()
+    toast.show(t('settings.merge.done'))
   }
 
   const clearAll = () => {
@@ -191,9 +273,21 @@ export function Settings({ go }: { go: (route: Route) => void }) {
       <section className="stack-tight">
         <h2 className="section-title">{t('settings.data')}</h2>
         <div className={styles.panel}>
+          {/* Deux sorties pour un seul fichier : le disque, et la feuille du
+              système quand elle accepte un .json. Le second bouton ne
+              s'affiche que là où il mène quelque part. */}
           <div className="stack-tight">
             <Button onClick={exportData}>{t('settings.export')}</Button>
             <p className={styles.help}>{t('settings.export.help')}</p>
+            {canSend && (
+              <>
+                <Button variant="secondary" onClick={sendData}>
+                  <Icon name="live" size={18} />
+                  {t('settings.send')}
+                </Button>
+                <p className={styles.help}>{t('settings.send.help')}</p>
+              </>
+            )}
           </div>
 
           <hr className={styles.divider} />
@@ -252,10 +346,16 @@ export function Settings({ go }: { go: (route: Route) => void }) {
         </Button>
       </section>
 
-      {/* L'import ne remplace rien avant que l'écran de confirmation ait dit
-          ce qu'on va écraser. */}
-      <Sheet open={Boolean(pending)} onClose={() => setPending(null)} title={t('settings.import.title')}>
-        {pending && (
+      {/* L'import n'écrit rien avant que la feuille ait dit ce qu'il va faire.
+          Deux chemins : la fusion, qui ajoute, et le remplacement, qui écrase.
+          Le second était le seul, et il obligeait une table qui marque sur
+          deux téléphones à en choisir un et à jeter l'autre. */}
+      <Sheet
+        open={Boolean(pending)}
+        onClose={closeImport}
+        title={chosen ? t('settings.merge.title') : t('settings.import.title')}
+      >
+        {pending && !chosen && (
           <div className="stack">
             <p className="t-body">
               {t('settings.import.summary', {
@@ -264,12 +364,136 @@ export function Settings({ go }: { go: (route: Route) => void }) {
                 finished: pending.summary.finishedGames,
               })}
             </p>
-            <p className={styles.help}>{t('settings.import.help')}</p>
-            <Button variant="primary" onClick={applyImport}>
-              {t('settings.import.replace')}
-            </Button>
-            <Button variant="quiet" onClick={() => setPending(null)}>
+            <div className="stack-tight">
+              <Button variant="primary" onClick={startMerge}>
+                {t('settings.import.merge')}
+              </Button>
+              <p className={styles.help}>{t('settings.import.merge.help')}</p>
+            </div>
+            <div className="stack-tight">
+              <Button variant="danger" full onClick={applyImport}>
+                {t('settings.import.replace')}
+              </Button>
+              <p className={styles.help}>{t('settings.import.replace.help')}</p>
+            </div>
+            <Button variant="quiet" onClick={closeImport}>
               {t('action.cancel')}
+            </Button>
+          </div>
+        )}
+
+        {pending && chosen && preview && (
+          <div className="stack">
+            <p className={styles.help}>{t('settings.merge.lede')}</p>
+
+            {chosen.players.length > 0 && (
+              <div className={styles.panel}>
+                {chosen.players.map((seat, index) => {
+                  // Un joueur d'ici déjà réclamé sort des autres listes : deux
+                  // sièges sur la même fiche donneraient une partie où
+                  // quelqu'un est assis deux fois.
+                  const options = store.players.filter(
+                    (player) => player.id === seat.linkTo || !claimed.has(player.id),
+                  )
+                  const renamed =
+                    seat.linkTo === null
+                      ? preview.summary.renamed.find((row) => row.from === seat.name)
+                      : undefined
+                  return (
+                    <Fragment key={seat.id}>
+                      {index > 0 && <hr className={styles.divider} />}
+                      <div className={styles.joinRow}>
+                        <span className={styles.joinText}>
+                          <span className={styles.joinName}>{seat.name}</span>
+                          {seat.games > 0 && (
+                            <span className={styles.joinMeta}>
+                              {t('settings.merge.games', { count: seat.games })}
+                            </span>
+                          )}
+                        </span>
+                        <select
+                          className={`input ${styles.joinSelect}`}
+                          aria-label={t('settings.merge.for', { name: seat.name })}
+                          value={seat.linkTo ?? ''}
+                          onChange={(event) =>
+                            setLinks((current) => ({
+                              ...current,
+                              [seat.id]: event.target.value || null,
+                            }))
+                          }
+                        >
+                          <option value="">{t('settings.merge.asNew')}</option>
+                          {options.map((player) => (
+                            <option key={player.id} value={player.id}>
+                              {player.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {/* La mention explique le rapprochement proposé : une
+                          ligne choisie à la main n'en a plus besoin. */}
+                      {!(seat.id in links) && (
+                        <p className={styles.joinWhy}>{t(`settings.merge.by.${seat.by}`)}</p>
+                      )}
+                      {renamed && (
+                        <p className={styles.joinWhy}>
+                          {t('settings.merge.renamed', { name: renamed.to })}
+                        </p>
+                      )}
+                    </Fragment>
+                  )
+                })}
+              </div>
+            )}
+
+            {chosen.twins.length > 0 && (
+              <div className="stack-tight">
+                <h3 className="section-title">{t('settings.merge.twins')}</h3>
+                <p className={styles.help}>{t('settings.merge.twins.help')}</p>
+                <div className={styles.panel}>
+                  {chosen.twins.map((twin) => (
+                    <OptionSwitch
+                      key={twin.id}
+                      label={t('settings.merge.twins.label', { date: date(twin.startedAt) })}
+                      help={t(`settings.merge.twins.${keep.includes(twin.id) ? 'on' : 'off'}`)}
+                      checked={keep.includes(twin.id)}
+                      onToggle={() =>
+                        setKeep((current) =>
+                          current.includes(twin.id)
+                            ? current.filter((id) => id !== twin.id)
+                            : [...current, twin.id],
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <p className={styles.help}>
+              {[
+                t('settings.merge.linked', { count: preview.summary.playersLinked }),
+                t('settings.merge.added', { count: preview.summary.playersAdded }),
+                t('settings.merge.games.added', { count: preview.summary.gamesAdded }),
+                t('settings.merge.games.skipped', { count: preview.summary.gamesSkipped }),
+              ].join(' · ')}
+            </p>
+            {preview.summary.closed && (
+              <p className={styles.help}>{t('settings.merge.closed')}</p>
+            )}
+
+            <Button variant="primary" onClick={() => applyMerge(preview.store)}>
+              {t('settings.merge.confirm')}
+            </Button>
+            <Button
+              variant="quiet"
+              onClick={() => {
+                setPlan(null)
+                setLinks({})
+                setKeep([])
+              }}
+            >
+              {t('settings.merge.back')}
             </Button>
           </div>
         )}
