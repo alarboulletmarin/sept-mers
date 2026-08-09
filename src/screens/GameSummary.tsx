@@ -8,17 +8,19 @@ import { Button } from '../components/Button.tsx'
 import { Icon } from '../components/Icon.tsx'
 import { ScoreTable } from '../components/ScoreTable.tsx'
 import { Sheet } from '../components/Sheet.tsx'
+import { useToast } from '../components/Toast.tsx'
 import { Caption, Figure, Tag, Widget, WidgetTitle } from '../components/Widget.tsx'
 import { standings, tieBreakers, winnerIds } from '../domain/stats.ts'
 import { isCutShort } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import { ShareSheet } from '../share/ShareSheet.tsx'
-import { gameById, runningGame } from '../store/reducer.ts'
+import { currentNames, gameById, runningGame } from '../store/reducer.ts'
 import styles from './GameSummary.module.css'
 
 export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route) => void }) {
   const { store, dispatch } = useStore()
   const { t, number, date } = useT()
+  const toast = useToast()
   const [shareOpen, setShareOpen] = useState(false)
 
   // Sans identifiant, c'est la partie qu'on vient de finir.
@@ -40,6 +42,27 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
   const finish = () => {
     if (!readOnly) dispatch({ type: 'game/finish' })
     go({ name: 'home' })
+  }
+
+  /*
+   * Les noms d'une soirée inscrite pour rire.
+   *
+   * Une partie terminée garde le nom porté ce soir-là, exprès. Mais une table
+   * qui s'est inscrite sous des noms de blague, puis s'est renommée, se
+   * retrouve avec une soirée que plus personne ne relie à ses joueurs, et rien
+   * ne la rattrapait. La proposition se fait ici, où on la lit, et elle
+   * s'annule d'un geste.
+   */
+  const stale = currentNames(store, game)
+
+  const refreshNames = () => {
+    if (!stale) return
+    const before = game.nameSnapshot
+    dispatch({ type: 'history/names', gameId: game.id, names: stale })
+    toast.show(t('summary.staleNames.done'), {
+      label: t('action.undo'),
+      run: () => dispatch({ type: 'history/names', gameId: game.id, names: before }),
+    })
   }
 
   const rematch = () => {
@@ -92,6 +115,25 @@ export function GameSummary({ gameId, go }: { gameId?: string; go: (route: Route
             total: game.format.rounds,
           })}
         </p>
+      )}
+
+      {stale && (
+        <div className={styles.stale}>
+          <p className={styles.staleText}>
+            {t('summary.staleNames', {
+              changes: game.playerIds
+                .filter((id) => stale[id] !== game.nameSnapshot[id])
+                .map((id) =>
+                  t('summary.staleNames.pair', {
+                    was: game.nameSnapshot[id] ?? '',
+                    now: stale[id],
+                  }),
+                )
+                .join(' · '),
+            })}
+          </p>
+          <Button onClick={refreshNames}>{t('summary.staleNames.action')}</Button>
+        </div>
       )}
 
       <div className="mosaic">

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { draftFor, nameTaken, reducer, runningGame, type Action } from './reducer.ts'
+import {
+  currentNames,
+  draftFor,
+  gameById,
+  nameTaken,
+  reducer,
+  runningGame,
+  type Action,
+} from './reducer.ts'
 import { emptyStore, normalise, parseStore, serialiseStore } from './storage.ts'
 import {
   DEFAULT_FORMAT,
@@ -1366,5 +1374,86 @@ describe('annulation d une correction', () => {
     )
     expect(corrected.draft?.roundIndex).toBe(4)
     expect(corrected.liveDraft).toBeUndefined()
+  })
+})
+
+/*
+ * Les noms d'une partie enregistrée.
+ *
+ * Une partie terminée garde le nom porté le soir où elle a été jouée : c'est
+ * ce qu'on attend d'un historique, et `players/rename` le protège exprès.
+ * Sauf quand la table s'est inscrite sous des noms de blague et s'est
+ * renommée après coup — la soirée reste alors illisible, et rien ne la
+ * rattrapait. On la remet à jour à la demande, jamais d'office.
+ */
+describe('noms d une partie enregistree', () => {
+  const played = (): Store => {
+    const store = playRound(started(), [
+      ['p1', 0, 1],
+      ['p2', 0, 0],
+      ['p3', 1, 0],
+    ])
+    return run(store, { type: 'game/finish', now: '2026-01-01T21:00:00.000Z' })
+  }
+
+  const renamed = (): Store =>
+    run(played(), { type: 'players/rename', id: 'p1', name: 'Marie' })
+
+  it('ne propose rien quand la partie est à jour', () => {
+    const store = played()
+    expect(currentNames(store, gameById(store, 'g1')!)).toBeNull()
+  })
+
+  it('propose les noms d aujourd hui après un renommage', () => {
+    const store = renamed()
+    // La partie n'a pas bougé toute seule : elle porte encore « Ana ».
+    expect(gameById(store, 'g1')!.nameSnapshot.p1).toBe('Ana')
+    expect(currentNames(store, gameById(store, 'g1')!)).toEqual({
+      p1: 'Marie',
+      p2: 'Bo',
+      p3: 'Cy',
+    })
+  })
+
+  it('laisse son nom d époque au joueur supprimé', () => {
+    const store = run(renamed(), { type: 'players/remove', id: 'p3' })
+    expect(currentNames(store, gameById(store, 'g1')!)).toEqual({
+      p1: 'Marie',
+      p2: 'Bo',
+      p3: 'Cy',
+    })
+  })
+
+  it('réécrit le tableau de la partie visée', () => {
+    const store = renamed()
+    const updated = run(store, {
+      type: 'history/names',
+      gameId: 'g1',
+      names: currentNames(store, gameById(store, 'g1')!)!,
+    })
+    expect(gameById(updated, 'g1')!.nameSnapshot.p1).toBe('Marie')
+  })
+
+  it('se rejoue à l envers, pour l annulation du bandeau', () => {
+    const store = renamed()
+    const before = gameById(store, 'g1')!.nameSnapshot
+    const updated = run(store, {
+      type: 'history/names',
+      gameId: 'g1',
+      names: { p1: 'Marie' },
+    })
+    const undone = run(updated, { type: 'history/names', gameId: 'g1', names: before })
+    expect(gameById(undone, 'g1')!.nameSnapshot).toEqual(before)
+  })
+
+  it('ignore un siège étranger, un nom vide et une partie inconnue', () => {
+    const store = renamed()
+    const touched = run(store, {
+      type: 'history/names',
+      gameId: 'g1',
+      names: { p1: '  ', p9: 'Intrus' },
+    })
+    expect(gameById(touched, 'g1')!.nameSnapshot).toEqual({ p1: 'Ana', p2: 'Bo', p3: 'Cy' })
+    expect(run(store, { type: 'history/names', gameId: 'absente', names: { p1: 'X' } })).toBe(store)
   })
 })

@@ -58,3 +58,48 @@
   width: 132px;
   max-width: 45%;
 }
+
+/* La revue des rapprochements, à la fusion de deux fichiers : un nom venu du
+   fichier, et le joueur d'ici auquel on le rattache. Deux colonnes tant qu'il
+   y a la place, l'une sous l'autre sur les écrans étroits — un nom long ne
+   doit pas écraser la liste déroulante. */
+.joinRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.joinText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.joinName {
+  font-size: var(--size-label);
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+
+.joinMeta {
+  font-size: var(--size-caption);
+  color: var(--card-muted);
+}
+
+.joinSelect {
+  flex: 1;
+  min-width: 160px;
+  max-width: 100%;
+}
+
+/* Ce sur quoi le rapprochement s'appuie, sous la ligne qu'il explique. */
+.joinWhy {
+  font-size: var(--size-caption);
+  line-height: 1.45;
+  color: var(--card-muted);
+  margin-top: calc(-1 * var(--space-2));
+}
