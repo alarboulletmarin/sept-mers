@@ -74,7 +74,9 @@ qu'elle est construite, jamais telle qu'elle était.
 - **Français et anglais**, thème clair, sombre ou système, changeables à chaud.
 - **Export / import** du fichier de données, avec **fusion** : deux téléphones
   qui ont marqué chacun leur soirée réunissent leurs historiques, en rattachant
-  à la main les joueurs d'un fichier à ceux de l'autre.
+  à la main les joueurs d'un fichier à ceux de l'autre. Le fichier s'exporte sur
+  le disque, ou part directement vers l'autre téléphone par la feuille de
+  partage du système.
 - **Aucun scroll latéral**, à aucune largeur : tout se plie à l'écran.
 - **Design en mosaïque, monochrome** : des widgets noir, blanc ou gris, un
   chiffre en héros par widget. Voir [le design system](docs/design-system.md).

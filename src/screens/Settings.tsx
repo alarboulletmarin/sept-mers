@@ -20,14 +20,16 @@ import {
 } from '../domain/types.ts'
 import { useT } from '../i18n/index.ts'
 import styles from './Settings.module.css'
+import { canShareFile, downloadFile, shareFile } from '../share/file.ts'
 import { findTwins, mergeStores, planMerge, type MergePlan } from '../store/merge.ts'
 import {
+  EXPORT_MIME,
   ImportError,
   emptyStore,
+  exportBlob,
   exportFileName,
   flushStore,
   parseStore,
-  serialiseStore,
   type ImportSummary,
 } from '../store/storage.ts'
 
@@ -49,6 +51,10 @@ export function Settings({ go }: { go: (route: Route) => void }) {
   const [keep, setKeep] = useState<Id[]>([])
   const [error, setError] = useState<string | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
+  // Sondé une fois, au premier rendu : la réponse tient au navigateur et au
+  // type du fichier, pas à l'état de l'écran. Un bouton mort — présent,
+  // cliquable, sans effet — serait pire que pas de bouton du tout.
+  const [canSend] = useState(() => canShareFile(exportFileName(), EXPORT_MIME))
 
   const chosen = useMemo<MergePlan | null>(() => {
     if (!plan || !pending) return null
@@ -75,14 +81,32 @@ export function Settings({ go }: { go: (route: Route) => void }) {
 
   const exportData = () => {
     flushStore()
-    const blob = new Blob([serialiseStore(store)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = exportFileName()
-    link.click()
-    URL.revokeObjectURL(url)
+    downloadFile(exportBlob(store), exportFileName())
     toast.show(t('settings.exported'))
+  }
+
+  /**
+   * Le même fichier, remis à la feuille du système plutôt qu'au disque : c'est
+   * le chemin le plus court d'un téléphone à l'autre, et le seul qui ne passe
+   * pas par le dossier des téléchargements.
+   *
+   * Rien d'asynchrone avant l'appel : l'activation du clic ne survit pas à une
+   * attente, et Safari iOS refuse alors d'ouvrir la feuille.
+   */
+  const sendData = () => {
+    flushStore()
+    const blob = exportBlob(store)
+    const name = exportFileName()
+    void shareFile(new File([blob], name, { type: EXPORT_MIME })).then((result) => {
+      // Feuille refermée : rien n'est parti, et il n'y a rien à en dire.
+      if (result === 'dismissed') return
+      if (result === 'shared') return toast.show(t('settings.sent'))
+      // Le partage n'a pas abouti : il reste le disque, qui ne rate pas.
+      // Personne ne doit repartir de ce bouton les mains vides, et il faut le
+      // dire — sans quoi on cherche le fichier sur l'autre téléphone.
+      downloadFile(blob, name)
+      toast.show(t('settings.send.failed'))
+    })
   }
 
   const closeImport = () => {
@@ -249,9 +273,21 @@ export function Settings({ go }: { go: (route: Route) => void }) {
       <section className="stack-tight">
         <h2 className="section-title">{t('settings.data')}</h2>
         <div className={styles.panel}>
+          {/* Deux sorties pour un seul fichier : le disque, et la feuille du
+              système quand elle accepte un .json. Le second bouton ne
+              s'affiche que là où il mène quelque part. */}
           <div className="stack-tight">
             <Button onClick={exportData}>{t('settings.export')}</Button>
             <p className={styles.help}>{t('settings.export.help')}</p>
+            {canSend && (
+              <>
+                <Button variant="secondary" onClick={sendData}>
+                  <Icon name="live" size={18} />
+                  {t('settings.send')}
+                </Button>
+                <p className={styles.help}>{t('settings.send.help')}</p>
+              </>
+            )}
           </div>
 
           <hr className={styles.divider} />
