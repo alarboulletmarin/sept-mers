@@ -138,6 +138,7 @@ Node 22.12, que toute version 22 récente satisfait.
 | `node scripts/contrast.mjs` | Absence de texte illisible, dans les deux thèmes |
 | `node scripts/licenses.mjs` | Licences distribuées avec le build : dépendances et fontes |
 | `python3 scripts/make-icons.py` | Regénère les icônes et le `favicon.ico` depuis le logotype |
+| `node scripts/social.mjs` | Regénère les images des réseaux, dans `docs/social/` |
 
 Les cinq parcours navigateur ont besoin d'un Chromium. Après
 `npx playwright install chromium` ils le trouvent seuls ; `scripts/browser.mjs`
