@@ -10,7 +10,7 @@ L'échelle typographique, elle, ne se reprend pas telle quelle : une affiche se
 regarde à un mètre et un téléphone à trente centimètres. Les rapports sont
 gardés, les tailles montent.
 
-## Les huit
+## Les huit, en portrait
 
 | Fichier | Format | Ce qu'elle dit |
 |---|---|---|
@@ -26,6 +26,22 @@ gardés, les tailles montent.
 Le carrousel se lit dans l'ordre : `01`, `04`, `03`, `08`, `06`. Les deux
 carrés (`02`, `06`) tiennent seuls en publication simple, et `07` ne sert qu'en
 story.
+
+## Les huit, en paysage — `16-9/`
+
+Le 16:9 n'est pas le portrait recadré. Un format large ne se remplit pas en
+empilant : il se coupe en deux colonnes — ce qui se dit à gauche, ce qui se
+montre à droite —, sinon tout se tasse en haut et la moitié de l'image ne porte
+rien. Les huit sont donc réécrites pour la largeur, pas redimensionnées.
+
+Toutes en 1920×1080. Elles reprennent les mêmes sujets, à deux exceptions près :
+`02` pose le score final et la courbe qui y mène côte à côte, `08` loge trois
+captures de front là où le portrait n'en tenait que deux, et la story cède la
+place à `07-couverture.png` — un format vertical n'a rien à faire en 16:9.
+
+C'est le format des bannières, des miniatures et de tout ce qui se regarde sur
+un écran couché ; Instagram, lui, recadre au-delà de 1.91:1 et n'aime le paysage
+qu'en publication simple.
 
 ## Ce qui est vérifié
 
