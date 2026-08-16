@@ -311,6 +311,53 @@ const tile = (name, value, posed) => `
     </div>
   </div>`
 
+/*
+ * Le tableau des scores. Une ligne par manche, une colonne par joueur, chaque
+ * résultat avec son signe et le cumul en dessous — c'est le widget `lg` de
+ * l'app, et il ne tient vraiment que dans un format haut.
+ *
+ * Le signe moins est le vrai, celui de la typographie : il a la largeur d'un
+ * chiffre, et une colonne où il tombe ne bouge pas d'un pixel.
+ */
+const BOARD = [
+  { name: 'Ana', rounds: [20, 40, -10, 60, 50, 30, 70, 40, 60, 40] },
+  { name: 'Bo', rounds: [10, 30, 40, -20, 50, 30, 40, 60, 30, 30] },
+  { name: 'Cy', rounds: [0, 30, 20, 30, 20, 30, 20, 30, 20, 20] },
+  { name: 'Dee', rounds: [-20, 20, 30, 10, 40, 10, 40, 10, 40, 40] },
+]
+
+const signed = (value) =>
+  value === 0 ? '0' : value < 0 ? `−${Math.abs(value)}` : `+${value}`
+
+const scoreboard = () => {
+  const head = BOARD.map(
+    (player) => `<th style="font-size:34px;font-weight:600;text-align:right;padding:0 0 20px">${player.name}</th>`,
+  ).join('')
+  const rows = BOARD[0].rounds
+    .map((_, round) => {
+      const cells = BOARD.map(
+        (player) =>
+          `<td class="figure" style="font-size:40px;text-align:right;padding:24px 0">${signed(player.rounds[round])}</td>`,
+      ).join('')
+      return `<tr style="border-top:2px solid var(--hairline)">
+          <td class="figure" style="font-size:34px;opacity:0.5;text-align:left;padding:24px 0">${round + 1}</td>${cells}
+        </tr>`
+    })
+    .join('')
+  const totals = BOARD.map(
+    (player) =>
+      `<td class="figure" style="font-size:48px;text-align:right;padding:28px 0">${player.rounds.reduce((sum, value) => sum + value, 0)}</td>`,
+  ).join('')
+  return `<table style="width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums">
+      <thead><tr><th></th>${head}</tr></thead>
+      <tbody>${rows}
+        <tr style="border-top:4px solid currentColor">
+          <td style="font-size:30px;font-weight:700;font-stretch:84%;text-transform:uppercase;letter-spacing:0.14em;padding:28px 0">Total</td>${totals}
+        </tr>
+      </tbody>
+    </table>`
+}
+
 /* La signature de pied d'affiche. Sans sa glose quand la ligne est partagée. */
 const signature = (gloss = true) =>
   `<div class="sign">${logo(52)}<b>Sept&nbsp;Mers</b>${gloss ? '<span>· compteur de points pour Skull King</span>' : ''}</div>`
@@ -762,12 +809,249 @@ const landscape = [
   },
 ]
 
-const posters = [...portrait, ...landscape]
+/* ------------------------------------------------- les affiches, en vertical
+ *
+ * Le 9:16 — le 16:9 debout. C'est le format le plus haut des trois, et il ne
+ * se remplit pas d'air : il se remplit de ce que les deux autres ne pouvaient
+ * pas tenir. Le tableau des scores entier y entre, la mosaïque y gagne une
+ * rangée, et l'écran de manche y retrouve son en-tête.
+ */
+
+const TALL = { width: 1080, height: 1920, dir: '9-16/' }
+
+const vertical = [
+  {
+    /* 1. Le logotype, à pleine hauteur. Le nom occupe le milieu, la houle
+       tient le pied : c'est le format qui laisse le plus de silence autour. */
+    ...TALL,
+    name: '01-logotype',
+    theme: 'light',
+    body: `
+      <div class="poster" style="padding:96px">
+        ${logo(148)}
+        <div class="spacer"></div>
+        <h1 class="display" style="font-size:212px">Sept<br/>Mers</h1>
+        <p class="lede" style="font-size:46px;margin-top:56px;max-width:860px">Le carnet de score de Skull King, posé au milieu de la table.</p>
+        <div class="spacer"></div>
+        <div class="row" style="gap:18px;flex-wrap:wrap;margin-bottom:72px">
+          <span class="tag">Hors ligne</span>
+          <span class="tag">Sans compte</span>
+          <span class="tag">Sans suivi</span>
+        </div>
+        ${rail(10, 4)}
+      </div>`,
+  },
+  {
+    /* 2. Le chiffre, et la courbe en dessous. En hauteur, les deux s'empilent
+       au lieu de se partager la largeur — et le chiffre peut alors être plus
+       gros qu'ailleurs. */
+    ...TALL,
+    name: '02-vainqueur',
+    theme: 'light',
+    body: `
+      <div class="poster" style="padding:44px">
+        <div class="widget accent" style="flex:1;padding:76px;gap:0">
+          <span class="tag">Fin de partie</span>
+          <div class="spacer"></div>
+          <div style="font-size:64px;font-weight:700;letter-spacing:-0.03em">Ana l'emporte</div>
+          <div class="figure" style="font-size:340px;margin-top:24px">400</div>
+          <div class="caption" style="font-size:38px;margin-top:36px">+100 sur le suivant · 10 manches · 4 joueurs</div>
+          <div class="spacer"></div>
+          <span class="tag">Évolution des scores</span>
+          <div style="margin-top:32px;width:100%">${chart(360)}</div>
+          <div class="spacer"></div>
+          <div class="row" style="gap:20px;color:var(--surface-on)">
+            ${logo(52)}<b style="font-size:34px">Sept&nbsp;Mers</b>
+          </div>
+        </div>
+      </div>`,
+  },
+  {
+    /* 3. La mosaïque, à quatre joueurs. La hauteur permet la rangée que le
+       portrait coupait : Dee prend sa tuile, large et basse. */
+    ...TALL,
+    name: '03-mosaique',
+    theme: 'light',
+    body: `
+      <div class="poster" style="padding:56px">
+        <div class="row" style="justify-content:space-between;width:100%">
+          ${signature(false)}
+          <span class="tag">Fin de partie</span>
+        </div>
+        <div class="grid" style="margin-top:44px;gap:24px">
+          <div class="widget accent span2" style="padding:44px;gap:20px">
+            <span class="tag">1er</span>
+            <div style="font-size:46px;font-weight:600">Ana</div>
+            <div class="figure hero" style="font-size:150px">400</div>
+            <div class="caption" style="font-size:34px">+100 sur le suivant</div>
+          </div>
+          <div class="widget card" style="padding:40px;gap:18px">
+            <span class="tag">2e</span>
+            <div style="font-size:40px;font-weight:600">Bo</div>
+            <div class="figure" style="font-size:96px">300</div>
+          </div>
+          <div class="widget sunken" style="padding:40px;gap:18px">
+            <span class="tag">3e</span>
+            <div style="font-size:40px;font-weight:600">Cy</div>
+            <div class="figure" style="font-size:96px">220</div>
+          </div>
+          <div class="widget card span2" style="padding:40px;flex-direction:row;align-items:center;justify-content:space-between">
+            <div class="row" style="gap:28px">
+              <span class="tag">3e</span>
+              <span style="font-size:40px;font-weight:600">Dee</span>
+            </div>
+            <div class="figure" style="font-size:96px;margin:0">220</div>
+          </div>
+          <div class="widget accent span2" style="padding:40px;gap:26px">
+            <span class="tag">Évolution des scores</span>
+            ${chart(300)}
+          </div>
+        </div>
+      </div>`,
+  },
+  {
+    /* 4. La saisie, avec son en-tête. L'écran de manche de l'app tient ici en
+       entier : la houle, le numéro de manche, puis les quatre tuiles. */
+    ...TALL,
+    name: '04-saisie',
+    theme: 'light',
+    body: `
+      <div class="poster" style="padding:56px">
+        <div class="widget accent" style="width:100%;padding:44px;gap:28px">
+          ${rail(10, 2)}
+          <div class="row" style="gap:16px">
+            <span class="tag">Manche</span>
+            <span class="tag">2 cartes</span>
+          </div>
+          <div class="figure" style="font-size:120px">2<span style="font-family:var(--font-sans);font-size:44px;font-weight:600;color:var(--surface-muted)"> sur 10</span></div>
+        </div>
+        <h2 class="title" style="margin-top:52px;font-size:76px">Pas de clavier.<br/>Moins, plus, suivant.</h2>
+        <div class="grid" style="margin-top:48px">
+          ${tile('Ana', '2', true)}
+          ${tile('Bo', '0', true)}
+          ${tile('Cy', '', false)}
+          ${tile('Dee', '', false)}
+        </div>
+        <p class="lede" style="margin-top:48px">Les tuiles restées blanches sont celles qui manquent. On les repère sans rien lire.</p>
+        <div class="spacer"></div>
+        <div class="pill" style="margin-top:48px">Valider les mises</div>
+        <div style="margin-top:40px">${signature()}</div>
+      </div>`,
+  },
+  {
+    /* 5. Le mode d'emploi, en thème sombre. Les trois étapes s'empilent, et le
+       partage de table a la place de s'expliquer. */
+    ...TALL,
+    name: '05-comment-ca-marche',
+    theme: 'dark',
+    body: `
+      <div class="poster" style="padding:88px">
+        <div class="rule"><span>Comment ça marche</span></div>
+        <ol class="col" style="gap:64px;margin-top:88px;list-style:none">
+          <li class="row" style="gap:40px;align-items:flex-start">
+            <span class="figure" style="flex:none;width:84px;height:84px;border-radius:999px;border:3px solid currentColor;display:grid;place-items:center;font-size:40px;opacity:0.75">1</span>
+            <span class="body" style="font-size:42px">Compose la table : qui joue, et dans quel ordre vous êtes assis.</span>
+          </li>
+          <li class="row" style="gap:40px;align-items:flex-start">
+            <span class="figure" style="flex:none;width:84px;height:84px;border-radius:999px;border:3px solid currentColor;display:grid;place-items:center;font-size:40px;opacity:0.75">2</span>
+            <span class="body" style="font-size:42px">Avant chaque manche, chacun annonce le nombre de plis qu'il pense remporter.</span>
+          </li>
+          <li class="row" style="gap:40px;align-items:flex-start">
+            <span class="figure" style="flex:none;width:84px;height:84px;border-radius:999px;border:3px solid currentColor;display:grid;place-items:center;font-size:40px;opacity:0.75">3</span>
+            <span class="body" style="font-size:42px">La manche jouée, tu entres les plis et les bonus. L'app compte les points.</span>
+          </li>
+        </ol>
+        <div class="spacer"></div>
+        <div class="widget sunken" style="width:100%;padding:48px">
+          <span class="tag">Reprise exacte</span>
+          <p style="font-size:38px;line-height:1.45;font-weight:400">Ferme l'app au milieu d'une manche : elle rouvre sur la manche et la phase où tu l'as laissée.</p>
+        </div>
+        <div class="widget sunken" style="width:100%;padding:48px;margin-top:32px">
+          <span class="tag">Partage de table</span>
+          <p style="font-size:38px;line-height:1.45;font-weight:400">Les autres suivent la partie en direct sur leur téléphone, en lecture seule. Un code de six caractères ou un QR pour rejoindre : pair-à-pair et chiffré, sans compte ni serveur.</p>
+        </div>
+        <div class="pill" style="margin-top:48px">Nouvelle partie</div>
+        <div style="margin-top:44px">${signature()}</div>
+      </div>`,
+  },
+  {
+    /* 6. Le manifeste. Trois lignes en encre pleine, et de l'air autour :
+       c'est tout ce qu'il lui faut. */
+    ...TALL,
+    name: '06-manifeste',
+    theme: 'light',
+    body: `
+      <div class="poster" style="background:var(--accent);color:var(--accent-on);padding:84px">
+        <div class="spacer"></div>
+        <h2 class="display" style="font-size:132px">Hors ligne.<br/>Sans compte.<br/>Sans suivi.</h2>
+        <p style="font-size:44px;line-height:1.45;margin-top:64px;color:var(--accent-muted);max-width:860px">Tout reste sur le téléphone. Pas de serveur, pas de publicité, pas une ligne de code qui vous regarde jouer.</p>
+        <div class="spacer"></div>
+        <div class="row" style="gap:20px;color:var(--accent-muted)">
+          ${logo(52)}<b style="font-size:34px;color:var(--accent-on);font-weight:700">Sept&nbsp;Mers</b><span style="font-size:30px">· gratuit et libre</span>
+        </div>
+      </div>`,
+  },
+  {
+    /* 7. Le tableau des scores. C'est l'affiche que seul le format haut permet :
+       dix manches, quatre colonnes, chaque résultat avec son signe. Le carré
+       l'aurait tronqué, le paysage l'aurait couché. */
+    ...TALL,
+    name: '07-tableau',
+    theme: 'light',
+    body: `
+      <div class="poster" style="padding:56px">
+        <div class="rule"><span>La partie, manche par manche</span></div>
+        <h2 class="title" style="margin-top:40px;font-size:76px">Dix manches,<br/>et le compte est bon.</h2>
+        <div class="widget card" style="width:100%;margin-top:48px;padding:48px;gap:36px">
+          <span class="tag">Tableau des scores</span>
+          ${scoreboard()}
+        </div>
+        <div class="spacer"></div>
+        <p class="lede" style="margin-top:44px">Chaque manche jouée se rouvre à la correction. Une erreur de saisie n'est jamais un aller simple.</p>
+        <div style="margin-top:44px">${signature()}</div>
+      </div>`,
+  },
+  {
+    /* 8. La story. L'appel à l'action en pied, là où le pouce l'attend. */
+    ...TALL,
+    name: '08-story',
+    theme: 'dark',
+    body: `
+      <div class="poster" style="padding:96px 84px 180px">
+        <div style="height:120px"></div>
+        ${logo(140)}
+        <h1 class="display" style="margin-top:64px">Sept<br/>Mers</h1>
+        <p class="lede" style="margin-top:48px">Compteur de points non officiel pour Skull King. De 2 à 8 joueurs, 10 manches, tout calculé.</p>
+        <div style="margin-top:72px">${rail(10, 7)}</div>
+        <div class="spacer"></div>
+        <div class="grid">
+          <div class="widget card">
+            <span class="tag">Manche</span>
+            <div class="figure" style="font-size:96px">7<span style="font-family:var(--font-sans);font-size:38px;font-weight:600;color:var(--surface-muted)"> sur 10</span></div>
+          </div>
+          <div class="widget accent">
+            <span class="tag">En tête</span>
+            <div class="figure" style="font-size:96px">240</div>
+            <div class="caption">Ana</div>
+          </div>
+        </div>
+        <div class="row" style="gap:18px;flex-wrap:wrap;margin-top:56px">
+          <span class="tag">Hors ligne</span>
+          <span class="tag">Sans compte</span>
+        </div>
+        <div class="spacer"></div>
+        <div class="pill">Nouvelle partie</div>
+      </div>`,
+  },
+]
+
+const posters = [...portrait, ...landscape, ...vertical]
 
 /* ------------------------------------------------------------------ le rendu */
 
 mkdirSync(OUT, { recursive: true })
 mkdirSync(`${OUT}${WIDE.dir}`, { recursive: true })
+mkdirSync(`${OUT}${TALL.dir}`, { recursive: true })
 
 const browser = await launchChromium()
 const overflows = []

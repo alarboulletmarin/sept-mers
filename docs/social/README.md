@@ -43,6 +43,26 @@ C'est le format des bannières, des miniatures et de tout ce qui se regarde sur
 un écran couché ; Instagram, lui, recadre au-delà de 1.91:1 et n'aime le paysage
 qu'en publication simple.
 
+## Les huit, en vertical — `9-16/`
+
+Le 16:9 debout, en 1080×1920. C'est le format le plus haut des trois, et il ne
+se remplit pas d'air : il se remplit de ce que les deux autres ne pouvaient pas
+tenir.
+
+| Fichier | Ce que la hauteur permet |
+|---|---|
+| `01-logotype.png` | Le nom au milieu, la houle au pied, du silence autour. |
+| `02-vainqueur.png` | Le chiffre **et** la courbe, empilés dans le même widget encre. |
+| `03-mosaique.png` | La rangée que le portrait coupait : Dee prend sa tuile, large et basse. |
+| `04-saisie.png` | L'écran de manche en entier, en-tête compris — houle, numéro, tuiles. |
+| `05-comment-ca-marche.png` | Les trois étapes, plus la reprise et le partage de table. |
+| `06-manifeste.png` | Hors ligne, sans compte, sans suivi. |
+| `07-tableau.png` | **Le tableau des scores complet** : dix manches, quatre colonnes, chaque résultat avec son signe. Aucun des deux autres formats ne le tenait. |
+| `08-story.png` | La story, l'appel à l'action là où le pouce l'attend. |
+
+C'est le format des stories et des reels — et le seul des trois où l'app se
+montre telle qu'on la tient.
+
 ## Ce qui est vérifié
 
 Une affiche est un cadre fermé : ce qui dépasse n'est pas coupé à l'affichage,
