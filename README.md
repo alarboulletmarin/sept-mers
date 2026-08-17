@@ -3,10 +3,14 @@
 **Compteur de points non officiel pour Skull King.**
 Front only, hors ligne, sans compte, sans serveur, sans suivi.
 
+<img src="docs/social/16-9/01-logotype.png" alt="Sept Mers — le carnet de score de Skull King, posé au milieu de la table. Hors ligne, sans compte, sans suivi." width="100%" />
+
 Sept Mers remplace le carnet de score papier autour d'une table. L'app répond à
 quatre questions, vite, sur un téléphone qui passe de main en main : qui a parié
 quoi, qui a tenu son pari, qui mène, et quelle était déjà la règle sur les
 sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
+
+## Ce que ça donne
 
 <p>
   <img src="docs/captures/accueil.png" alt="L'accueil au premier lancement : le nom, la baseline, et trois phrases qui disent comment ça marche." width="24%" />
@@ -15,9 +19,20 @@ sirènes. Elle ne joue pas, ne conseille pas, et ne suit pas les cartes jouées.
   <img src="docs/captures/reglages-sombre.png" alt="Les réglages en thème sombre : langue, thème, options par défaut, format." width="24%" />
 </p>
 
-Les images sont produites par le parcours navigateur lui-même —
+De gauche à droite : l'accueil au premier lancement, une manche en cours de
+saisie, la fin de partie, et les réglages en thème sombre.
+
+Ces quatre captures sont produites par le parcours navigateur lui-même —
 `node scripts/smoke.mjs --captures` —, donc elles montrent toujours l'app telle
-qu'elle est construite, jamais telle qu'elle était.
+qu'elle est construite, jamais telle qu'elle était. Les affiches, elles, sortent
+de [`scripts/social.mjs`](scripts/social.mjs) et des mêmes jetons de design.
+
+Et ce que les quatre captures ne montrent pas : le tableau complet, celui qu'on
+relit d'une manche à l'autre.
+
+| | |
+|---|---|
+| <img src="docs/social/9-16/07-tableau.png" alt="Le tableau des scores : dix manches en lignes, quatre joueurs en colonnes, chaque résultat avec son signe, et les totaux en pied." width="300" /> | **Une ligne par manche, une colonne par joueur.** Chaque résultat porte son signe — le vrai signe moins, celui qui a la largeur d'un chiffre et qui laisse la colonne tranquille. Le cumul suit en dessous, et la manche en cours prend un fond plein.<br /><br />**Aucun défilement latéral, à aucune largeur** : sur un téléphone, les noms de colonne passent en diagonale plutôt que de se réduire à une initiale — l'affiche, elle, a la largeur de les écrire droit.<br /><br />Et toute manche jouée s'y rouvre à la correction : une erreur de saisie n'est jamais un aller simple. |
 
 ## Ce qu'elle fait
 
@@ -138,6 +153,7 @@ Node 22.12, que toute version 22 récente satisfait.
 | `node scripts/contrast.mjs` | Absence de texte illisible, dans les deux thèmes |
 | `node scripts/licenses.mjs` | Licences distribuées avec le build : dépendances et fontes |
 | `python3 scripts/make-icons.py` | Regénère les icônes et le `favicon.ico` depuis le logotype |
+| `node scripts/social.mjs` | Regénère les images des réseaux, dans `docs/social/` |
 
 Les cinq parcours navigateur ont besoin d'un Chromium. Après
 `npx playwright install chromium` ils le trouvent seuls ; `scripts/browser.mjs`
@@ -371,6 +387,12 @@ caméra, sans aucun réseau.
 Le design system vit dans [`docs/design-system.md`](docs/design-system.md) :
 palette, typographie, anatomie du widget, composants, règles d'accessibilité.
 
+<img src="docs/social/16-9/03-mosaique.png" alt="La mosaïque : un widget encre pour le vainqueur, un blanc et un gris pour les suivants, et le graphique d'évolution où quatre séries se distinguent par leur motif de tiretés." width="100%" />
+
+**La mosaïque, pas le tableau.** L'information vit dans des blocs autonomes, de
+tailles inégales, chacun avec sa propre valeur de fond : un widget répond à une
+question et une seule, et il l'annonce par un chiffre qu'on lit de loin.
+
 L'app est **monochrome** : noir, blanc, gris. Aucune information ne peut donc
 dépendre d'une teinte — un score se lit à son signe, un état à son remplissage,
 une série à son motif de tiretés. C'est aussi ce qui la rend lisible en vision
@@ -389,6 +411,23 @@ donnerait, en thème sombre, du noir sur du noir.
 
 `src/styles/tokens.test.ts` interdit toute couleur saturée dans les jetons et
 vérifie le contraste de chaque couple texte/surface dans les deux thèmes.
+
+### Les images des réseaux
+
+<img src="docs/social/16-9/06-manifeste.png" alt="Hors ligne. Sans compte. Sans suivi. Tout reste sur le téléphone." width="100%" />
+
+[`docs/social/`](docs/social/) porte vingt-quatre affiches, en trois formats :
+carré et portrait pour le fil, `16-9/` pour les bannières, `9-16/` pour les
+stories. Elles ne sont pas dessinées à côté de l'app — elles sortent des mêmes
+jetons, des deux mêmes familles embarquées et du logotype de
+`public/icons/favicon.svg`. Le jour où l'un des trois change,
+`node scripts/social.mjs` refait les vingt-quatre.
+
+Un format n'y est jamais le recadrage d'un autre : chaque affiche est réécrite
+pour sa hauteur, faute de quoi le paysage se tasse en haut et le vertical se
+remplit d'air. Et parce qu'une affiche est un cadre fermé — ce qui dépasse n'est
+pas coupé à l'affichage, il est perdu à l'export —, le script mesure le
+débordement de chaque page avant de l'écrire.
 
 ## Mentions légales
 
